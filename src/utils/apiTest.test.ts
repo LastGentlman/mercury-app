@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { BACKEND_URL } from '../config'
-import { testAPIConnection, testRegistration, testLogin } from './apiTest'
+import { testAPIConnection, testLogin, testRegistration } from './apiTest'
 
 describe('Backend Connection Tests', () => {
   it('should connect to backend API endpoints', async () => {
@@ -52,6 +52,6 @@ describe('Backend Connection Tests', () => {
     const backendUrl = BACKEND_URL
     // Test that the URL is accessible
     expect(backendUrl).toContain('deno.dev')
-    expect(backendUrl).toContain('near-salmon')
+    expect(backendUrl).toContain('lucky-puma-82-3d463tbmgpgt')
   })
 }) 

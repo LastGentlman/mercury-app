@@ -1,1 +1,1 @@
-export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3030'; 
+export const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://lucky-puma-82-3d463tbmgpgt.deno.dev'; 
