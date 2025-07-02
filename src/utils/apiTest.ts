@@ -1,9 +1,11 @@
+import { BACKEND_URL } from '../config';
+
 // API Connection Test Utility
 export async function testAPIConnection() {
   const endpoints = [
-    { name: 'Health Check', url: 'https://near-salmon-61-1f2dh445h30z.deno.dev/health' },
-    { name: 'API Root', url: 'https://near-salmon-61-1f2dh445h30z.deno.dev/' },
-    { name: 'Auth Endpoint', url: 'https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth' }
+    { name: 'Health Check', url: `${BACKEND_URL}/health` },
+    { name: 'API Root', url: `${BACKEND_URL}/` },
+    { name: 'Auth Endpoint', url: `${BACKEND_URL}/api/auth` }
   ]
 
   console.log('🔍 Testing API Connection...')
@@ -38,7 +40,7 @@ export async function testRegistration() {
   console.log('🧪 Testing Registration Endpoint...')
   
   try {
-    const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/register', {
+    const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -51,9 +53,14 @@ export async function testRegistration() {
       data = await response.json()
     } catch (parseError) {
       // If JSON parsing fails, try to read as text
-      const errorText = await response.text()
-      console.log('❌ Registration returned plain text instead of JSON:', errorText)
-      data = { error: errorText, rawResponse: errorText }
+      try {
+        const errorText = await response.text()
+        console.log('❌ Registration returned plain text instead of JSON:', errorText)
+        data = { error: errorText, rawResponse: errorText }
+      } catch (textError) {
+        console.log('❌ Could not read response body:', textError)
+        data = { error: 'Could not read response body', rawResponse: null }
+      }
     }
     
     console.log('📝 Registration Test Result:', {
@@ -66,7 +73,7 @@ export async function testRegistration() {
     return { success: response.ok, data }
   } catch (error) {
     console.error('❌ Registration Test Failed:', error)
-    return { success: false, error }
+    return { success: false, error: error instanceof Error ? error.message : String(error) }
   }
 }
 
@@ -80,7 +87,7 @@ export async function testLogin() {
   console.log('🔐 Testing Login Endpoint...')
   
   try {
-    const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/login', {
+    const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,7 +122,7 @@ export async function testRegistrationErrorHandling() {
   }
 
   try {
-    const response1 = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/register', {
+    const response1 = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -140,7 +147,7 @@ export async function testRegistrationErrorHandling() {
     })
 
     // Test 2: Try to register the same email again (should fail)
-    const response2 = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/register', {
+    const response2 = await fetch(`${BACKEND_URL}/api/auth/register`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
