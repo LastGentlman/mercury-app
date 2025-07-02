@@ -175,7 +175,7 @@ function APITestPage() {
                       )}
                       <div className="flex-1">
                         <pre className="text-sm whitespace-pre-wrap">
-                          {log.args.map((arg: any, i: number) => 
+                          {log.args.map((arg: any, _i: number) => 
                             typeof arg === 'object' 
                               ? JSON.stringify(arg, null, 2)
                               : String(arg)
