@@ -1,9 +1,9 @@
 // API Connection Test Utility
 export async function testAPIConnection() {
   const endpoints = [
-    { name: 'Health Check', url: 'http://localhost:3030/health' },
-    { name: 'API Root', url: 'http://localhost:3030/' },
-    { name: 'Auth Endpoint', url: 'http://localhost:3030/api/auth' }
+    { name: 'Health Check', url: 'https://near-salmon-61-1f2dh445h30z.deno.dev/health' },
+    { name: 'API Root', url: 'https://near-salmon-61-1f2dh445h30z.deno.dev/' },
+    { name: 'Auth Endpoint', url: 'https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth' }
   ]
 
   console.log('🔍 Testing API Connection...')
@@ -38,7 +38,7 @@ export async function testRegistration() {
   console.log('🧪 Testing Registration Endpoint...')
   
   try {
-    const response = await fetch('http://localhost:3030/api/auth/register', {
+    const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ export async function testLogin() {
   console.log('🔐 Testing Login Endpoint...')
   
   try {
-    const response = await fetch('http://localhost:3030/api/auth/login', {
+    const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ export async function testRegistrationErrorHandling() {
   }
 
   try {
-    const response1 = await fetch('http://localhost:3030/api/auth/register', {
+    const response1 = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ export async function testRegistrationErrorHandling() {
     })
 
     // Test 2: Try to register the same email again (should fail)
-    const response2 = await fetch('http://localhost:3030/api/auth/register', {
+    const response2 = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useEffect, useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 interface User {
   id: string
@@ -81,7 +81,7 @@ export function useAuth() {
         return
       }
 
-      const response = await fetch('http://localhost:3030/api/auth/profile', {
+      const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/profile', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -108,7 +108,7 @@ export function useAuth() {
 
   const login = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await fetch('http://localhost:3030/api/auth/login', {
+      const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -156,7 +156,7 @@ export function useAuth() {
     mutationFn: async (userData: { email: string; password: string; name: string }) => {
       console.log('🔄 Sending registration request:', { email: userData.email, name: userData.name })
       
-      const response = await fetch('http://localhost:3030/api/auth/register', {
+      const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -209,7 +209,7 @@ export function useAuth() {
 
   const logout = useMutation({
     mutationFn: async () => {
-      const response = await fetch('http://localhost:3030/api/auth/logout', {
+      const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/logout', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -249,7 +249,7 @@ export function useAuth() {
   // Function to resend confirmation email
   const resendConfirmationEmail = useMutation({
     mutationFn: async (email: string) => {
-      const response = await fetch('http://localhost:3030/api/auth/resend-confirmation', {
+      const response = await fetch('https://near-salmon-61-1f2dh445h30z.deno.dev/api/auth/resend-confirmation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
