@@ -5,11 +5,13 @@ Este documento describe la implementación del sistema de error boundaries y loa
 ## 🎯 Problemas Resueltos
 
 ### ❌ Antes: Error boundary faltante
+
 - No había un error boundary global
 - Los errores no capturados podían crashear toda la aplicación
 - No había una forma consistente de manejar errores
 
 ### ❌ Antes: Loading scattered en components
+
 - Cada componente manejaba su propio loading state
 - No había consistencia en la UI de loading
 - Difícil de mantener y escalar
@@ -39,6 +41,7 @@ function AppErrorBoundary({ children }) {
 ```
 
 **Características:**
+
 - ✅ Integrado con Sentry para monitoreo de errores
 - ✅ UI amigable en español con opciones de retry y navegación
 - ✅ Detalles del error solo en desarrollo
@@ -58,6 +61,7 @@ const GlobalLoadingProvider = () => {
 ```
 
 **Características:**
+
 - ✅ Loading global con overlay sobre toda la aplicación
 - ✅ Loading local para componentes específicos
 - ✅ Integración con Suspense para loading asíncrono
@@ -138,7 +142,7 @@ import { LoadingSuspense, PageLoadingSuspense } from './LoadingSuspense'
 
 ## 📁 Estructura de Archivos
 
-```
+```bash
 src/
 ├── components/
 │   ├── AppErrorBoundary.tsx          # Error boundary global
@@ -153,23 +157,27 @@ src/
 ## 🎨 Componentes Disponibles
 
 ### AppErrorBoundary
+
 - Captura errores globalmente
 - UI de error en español
 - Integración con Sentry
 - Opciones de retry y navegación
 
 ### GlobalLoadingProvider
+
 - Estado de loading global
 - Overlay de loading
 - Context para componentes hijos
 
 ### LoadingSuspense
+
 - `LoadingSuspense`: Suspense básico con fallback personalizable
 - `PageLoadingSuspense`: Para páginas completas
 - `ComponentLoadingSuspense`: Para componentes individuales
 - `TableLoadingSuspense`: Para tablas de datos
 
 ### Hooks
+
 - `useLoadingState`: Hook principal para loading
 - `useMultipleLoadingStates`: Para múltiples estados de loading
 - `useGlobalLoading`: Acceso directo al contexto global
@@ -177,6 +185,7 @@ src/
 ## 🔧 Configuración
 
 ### 1. Instalación Automática
+
 Los componentes ya están integrados en `main.tsx`:
 
 ```tsx
@@ -190,6 +199,7 @@ Los componentes ya están integrados en `main.tsx`:
 ```
 
 ### 2. Sentry (Opcional)
+
 El error boundary está configurado para usar Sentry si está disponible:
 
 ```env
@@ -243,4 +253,4 @@ Puedes probar el sistema en el dashboard de la aplicación:
 
 **Implementado por:** Claude AI Assistant  
 **Fecha:** $(date)  
-**Versión:** 1.0.0 
+**Versión:** 1.0.0
