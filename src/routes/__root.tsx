@@ -3,6 +3,7 @@ import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import Header from '../components/Header'
 import { PWAInstallButton } from '../components/PWAInstallButton'
+import { ConnectionStatus } from '../components/ConnectionStatus'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 
@@ -22,6 +23,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
 
       <TanStackQueryLayout />
       <PWAInstallButton />
+      <ConnectionStatus />
     </>
   ),
 })
