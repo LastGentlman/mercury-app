@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface CSRFConfig {
   sessionId: string;
@@ -67,11 +67,11 @@ export function useCSRFRequest() {
     url: string, 
     options: RequestInit = {}
   ): Promise<Response> => {
-    const headers = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Session-ID': sessionId,
       'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-      ...options.headers
+      ...(options.headers as Record<string, string>)
     };
 
     // Agregar token CSRF para métodos que modifican datos
