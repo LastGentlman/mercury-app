@@ -12,6 +12,11 @@ import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
 import { listenForInstallPrompt, registerPWA } from './pwa.ts'
 
+// Importar testing de seguridad en desarrollo
+if (import.meta.env.DEV) {
+  import('./utils/security-test.ts');
+}
+
 // Create a new router instance
 const router = createRouter({
   routeTree,

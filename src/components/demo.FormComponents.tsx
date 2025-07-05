@@ -9,7 +9,6 @@ import * as ShadcnSelect from '@/components/ui/select'
 import { Slider as ShadcnSlider } from '@/components/ui/slider'
 import { Switch as ShadcnSwitch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
-
 export function SubscribeButton({ label }: { label: string }) {
   const form = useFormContext()
   return (
@@ -35,7 +34,7 @@ function ErrorMessages({
           key={typeof error === 'string' ? error : error.message}
           className="text-red-500 mt-1 font-bold"
         >
-          {typeof error === 'string' ? error : error.message}
+          <SafeText content={typeof error === 'string' ? error : error.message} />
         </div>
       ))}
     </>
