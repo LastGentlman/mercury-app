@@ -30,18 +30,43 @@ declare module '@tanstack/react-router' {
     router: typeof router
   }
 }
+// 🎯 Estrategia híbrida: DSN + environment check
+const shouldInitSentry = import.meta.env.VITE_SENTRY_DSN && 
+  (import.meta.env.PROD || import.meta.env.VITE_ENABLE_SENTRY_DEV === 'true');
 
-// Solo inicializar en producción
-if (import.meta.env.PROD) {
+if (shouldInitSentry) {
   Sentry.init({
-    dsn: "tu-dsn-de-sentry",
-    environment: "production",
-    // Solo captura errores en producción
-    enabled: true,
+    dsn: import.meta.env.VITE_SENTRY_DSN,
+    environment: import.meta.env.VITE_ENVIRONMENT || "development",
+    enabled: import.meta.env.VITE_ENVIROMENT === 'production',
+    tracesSampleRate: import.meta.env.VITE_ENVIROMENT === 'production' ? 0.1 : 0.01,
+    debug: import.meta.env.VITE_ENVIROMENT !== 'production',
+    beforeSend(event) {
+      if (!import.meta.env.PROD) {
+        console.group('🐛 Sentry Error Captured');
+        console.error('Error:', event.exception?.values?.[0]?.value);
+        console.error('Stack:', event.exception?.values?.[0]?.stacktrace);
+        console.groupEnd();
+      }
+      
+      if (event.exception?.values?.[0]?.value?.includes('Non-Error promise rejection')) {
+        return null;
+      }
+      
+      return event;
+    },
+    initialScope: {
+      tags: {
+        component: "frontend",
+        version: "1.0.0",
+        buildMode: import.meta.env.MODE
+      }
+    },
   });
+  
+  console.log(`✅ Sentry initialized for ${import.meta.env.VITE_ENVIRONMENT}`);
 } else {
-  // En desarrollo, Sentry está deshabilitado
-  console.log("Sentry disabled in development");
+  console.log("🚫 Sentry disabled");
 }
 
 // Render the app
