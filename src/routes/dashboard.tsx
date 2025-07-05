@@ -4,6 +4,7 @@ import { ProtectedRoute } from '../components/ProtectedRoute'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
+import { LoadingDemo } from '../components/LoadingDemo'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
@@ -138,6 +139,11 @@ function DashboardPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Loading Demo Section */}
+        <div className="mt-12">
+          <LoadingDemo />
         </div>
       </div>
     </ProtectedRoute>

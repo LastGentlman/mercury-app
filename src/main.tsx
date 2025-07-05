@@ -4,6 +4,8 @@ import { RouterProvider, createRouter } from '@tanstack/react-router'
 import * as Sentry from "@sentry/react";
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
+import { AppErrorBoundary } from './components/AppErrorBoundary'
+import { GlobalLoadingProvider } from './components/GlobalLoadingProvider'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'
@@ -80,9 +82,13 @@ if (rootElement && !rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
   root.render(
     <StrictMode>
-      <TanStackQueryProvider.Provider>
-        <RouterProvider router={router} />
-      </TanStackQueryProvider.Provider>
+      <AppErrorBoundary>
+        <GlobalLoadingProvider>
+          <TanStackQueryProvider.Provider>
+            <RouterProvider router={router} />
+          </TanStackQueryProvider.Provider>
+        </GlobalLoadingProvider>
+      </AppErrorBoundary>
     </StrictMode>,
   )
 }
