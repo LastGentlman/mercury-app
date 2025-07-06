@@ -77,18 +77,18 @@ npm run serve
    - Check the sync status indicator in the bottom-left corner
    - Background sync works even when the app is closed
 
-3. **App-like Experience**:
+4. **App-like Experience**:
 
    - Install the app on desktop/mobile
    - It should open in a standalone window without browser UI
 
-4. **Updates**:
+5. **Updates**:
 
    - Make changes to the app
    - Rebuild and deploy
    - Users will see an update prompt when they visit
 
-5. **Background Sync Testing**:
+6. **Background Sync Testing**:
 
    - Use Chrome DevTools → Application → Background Services
    - Check "Background Sync" section
