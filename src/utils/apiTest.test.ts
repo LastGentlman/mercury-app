@@ -51,7 +51,6 @@ describe('Backend Connection Tests', () => {
     // Verify that the backend URL is correctly set
     const backendUrl = BACKEND_URL
     // Test that the URL is accessible
-    expect(backendUrl).toContain('deno.dev')
-    expect(backendUrl).toContain('lucky-puma-82-3d463tbmgpgt')
+    expect(backendUrl).toContain('ingroy.com')
   })
 }) 
