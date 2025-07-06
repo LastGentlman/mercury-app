@@ -173,6 +173,12 @@ describe('useAuth', () => {
   })
 
   it('should logout and clear auth state', async () => {
+    server.use(
+      http.post('*/api/auth/logout', () => {
+        return HttpResponse.json({ message: 'Logged out successfully' })
+      })
+    )
+
     const { result } = renderHook(() => useAuth(), {
       wrapper: createWrapper(),
     })
