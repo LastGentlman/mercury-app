@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { useGlobalLoading } from '../components/GlobalLoadingProvider'
 
 interface UseLoadingStateOptions {
@@ -15,7 +15,7 @@ interface UseLoadingStateReturn {
 }
 
 export function useLoadingState(options: UseLoadingStateOptions = {}): UseLoadingStateReturn {
-  const { useGlobal = false, message } = options
+  const { useGlobal = false } = options
   const [localLoading, setLocalLoading] = useState(false)
   const { isGlobalLoading, startLoading: startGlobalLoading, stopLoading: stopGlobalLoading } = useGlobalLoading()
 

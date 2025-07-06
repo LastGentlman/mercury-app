@@ -9,6 +9,8 @@ import * as ShadcnSelect from '@/components/ui/select'
 import { Slider as ShadcnSlider } from '@/components/ui/slider'
 import { Switch as ShadcnSwitch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { SafeText } from '@/components/ui/safe-content'
+
 export function SubscribeButton({ label }: { label: string }) {
   const form = useFormContext()
   return (

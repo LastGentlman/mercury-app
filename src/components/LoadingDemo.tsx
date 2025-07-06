@@ -3,7 +3,7 @@ import { useLoadingState } from '../hooks/useLoadingState'
 import { useNotifications } from '../hooks/useNotifications'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import { ComponentLoadingSuspense, LoadingSuspense, PageLoadingSuspense } from './LoadingSuspense'
+import { ComponentLoadingSuspense, LoadingSuspense } from './LoadingSuspense'
 
 // Demo component that throws an error
 function ErrorDemo() {

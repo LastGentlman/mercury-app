@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { AlertCircle, CheckCircle, Eye, EyeOff, Loader2, Lock, Mail, User } from 'lucide-react'
+import { CheckCircle, Eye, EyeOff, Loader2, Lock, Mail, User } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
@@ -29,7 +29,7 @@ function AuthPage() {
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState<string>('')
   
-  const { isAuthenticated, login, register, resendConfirmationEmail } = useAuth()
+  const { isAuthenticated, login, register } = useAuth()
   const navigate = useNavigate()
   const notifications = useNotifications()
 
@@ -84,7 +84,7 @@ function AuthPage() {
       register.mutate(
         { email: formData.email, password: formData.password, name: formData.name || '' },
         {
-          onSuccess: (data) => {
+          onSuccess: () => {
             notifications.success('¡Registro exitoso! Revisa tu email para verificar tu cuenta.')
             setRegisteredEmail(formData.email)
             setShowEmailConfirmation(true)
@@ -114,18 +114,18 @@ function AuthPage() {
     setIsLogin(true)
   }
 
-  const handleResendConfirmation = () => {
-    if (formData.email) {
-      resendConfirmationEmail.mutate(formData.email, {
-        onSuccess: (data) => {
-          notifications.success(data.message || 'Email de confirmación reenviado. Revisa tu bandeja de entrada.')
-        },
-        onError: (error: Error) => {
-          notifications.error(error.message)
-        }
-      })
-    }
-  }
+  // const handleResendConfirmation = () => {
+  //   if (formData.email) {
+  //     resendConfirmationEmail.mutate(formData.email, {
+  //       onSuccess: (data) => {
+  //         notifications.success(data.message || 'Email de confirmación reenviado. Revisa tu bandeja de entrada.')
+  //       },
+  //       onError: (error: Error) => {
+  //         notifications.error(error.message)
+  //       }
+  //     })
+  //   }
+  // }
 
   const isLoading = login.isPending || register.isPending
 

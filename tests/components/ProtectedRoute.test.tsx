@@ -92,7 +92,7 @@ describe('ProtectedRoute', () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
-      user: { id: '1', email: 'test@example.com', name: 'Test User' },
+      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'owner' },
       login: { mutateAsync: vi.fn() } as any,
       register: { mutateAsync: vi.fn() } as any,
       logout: vi.fn() as any,
@@ -166,7 +166,7 @@ describe('ProtectedRoute', () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
-      user: { id: '1', email: 'test@example.com', name: 'Test User' },
+      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'owner' },
       login: { mutateAsync: vi.fn() } as any,
       register: { mutateAsync: vi.fn() } as any,
       logout: vi.fn() as any,
@@ -187,7 +187,7 @@ describe('ProtectedRoute', () => {
     mockUseAuth.mockReturnValue({
       isAuthenticated: true,
       isLoading: false,
-      user: { id: '1', email: 'test@example.com', name: 'Test User' },
+      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'owner' },
       login: { mutateAsync: vi.fn() } as any,
       register: { mutateAsync: vi.fn() } as any,
       logout: vi.fn() as any,

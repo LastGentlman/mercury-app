@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Bell, BellOff } from 'lucide-react'
+import { Bell } from 'lucide-react'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
