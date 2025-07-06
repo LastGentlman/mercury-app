@@ -2,11 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BACKEND_URL } from '../config'
 
-interface User {
-  id: string
-  email: string
-  name?: string
-}
+import type { User } from '../types'
 
 interface AuthState {
   user: User | null
