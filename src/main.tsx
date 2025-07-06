@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import * as Sentry from "@sentry/react";
+import { Toaster } from 'sonner'
 
 import * as TanStackQueryProvider from './integrations/tanstack-query/root-provider.tsx'
 import { AppErrorBoundary } from './components/AppErrorBoundary'
@@ -86,6 +87,12 @@ if (rootElement && !rootElement.innerHTML) {
         <GlobalLoadingProvider>
           <TanStackQueryProvider.Provider>
             <RouterProvider router={router} />
+            <Toaster 
+              position="top-right"
+              richColors
+              closeButton
+              duration={4000}
+            />
           </TanStackQueryProvider.Provider>
         </GlobalLoadingProvider>
       </AppErrorBoundary>

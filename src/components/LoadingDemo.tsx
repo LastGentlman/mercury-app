@@ -1,5 +1,6 @@
 import { AlertTriangle, Loader2, Play } from 'lucide-react'
 import { useLoadingState } from '../hooks/useLoadingState'
+import { useNotifications } from '../hooks/useNotifications'
 import { Button } from './ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
 import { ComponentLoadingSuspense, LoadingSuspense, PageLoadingSuspense } from './LoadingSuspense'
@@ -21,6 +22,7 @@ function ErrorDemo() {
 // Demo component with async loading
 function AsyncDemo() {
   const { isLoading, withLoading } = useLoadingState({ useGlobal: true })
+  const notifications = useNotifications()
 
   const simulateAsyncOperation = async () => {
     await new Promise(resolve => setTimeout(resolve, 2000))
@@ -30,8 +32,10 @@ function AsyncDemo() {
   const handleAsyncOperation = async () => {
     try {
       const result = await withLoading(simulateAsyncOperation)
+      notifications.success('Operación completada exitosamente')
       console.log('Resultado:', result)
     } catch (error) {
+      notifications.error('Error en la operación')
       console.error('Error:', error)
     }
   }
@@ -56,6 +60,7 @@ function AsyncDemo() {
 // Demo component with local loading
 function LocalLoadingDemo() {
   const { isLoading, withLoading } = useLoadingState({ useGlobal: false })
+  const notifications = useNotifications()
 
   const simulateLocalOperation = async () => {
     await new Promise(resolve => setTimeout(resolve, 1500))
@@ -65,8 +70,10 @@ function LocalLoadingDemo() {
   const handleLocalOperation = async () => {
     try {
       const result = await withLoading(simulateLocalOperation)
+      notifications.success('Operación local completada')
       console.log('Resultado local:', result)
     } catch (error) {
+      notifications.error('Error en operación local')
       console.error('Error local:', error)
     }
   }
@@ -81,6 +88,36 @@ function LocalLoadingDemo() {
       ) : (
         'Operación Local'
       )}
+    </Button>
+  )
+}
+
+// Demo component with Sonner promise
+function PromiseDemo() {
+  const notifications = useNotifications()
+
+  const simulatePromiseOperation = async () => {
+    await new Promise(resolve => setTimeout(resolve, 2500))
+    // Simular éxito o error aleatorio
+    if (Math.random() > 0.3) {
+      return { success: true, data: 'Datos procesados correctamente' }
+    } else {
+      throw new Error('Error simulado en el procesamiento')
+    }
+  }
+
+  const handlePromiseOperation = () => {
+    notifications.promise(simulatePromiseOperation(), {
+      loading: 'Procesando datos...',
+      success: (data) => `✅ ${data.data}`,
+      error: (error) => `❌ ${error.message}`
+    })
+  }
+
+  return (
+    <Button onClick={handlePromiseOperation} variant="outline">
+      <Play className="h-4 w-4 mr-2" />
+      Procesar con Promise
     </Button>
   )
 }
@@ -143,6 +180,22 @@ export function LoadingDemo() {
           </CardHeader>
           <CardContent>
             <ErrorDemo />
+          </CardContent>
+        </Card>
+
+        {/* Sonner Promise Demo */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Loader2 className="h-5 w-5 text-purple-600" />
+              Sonner Promise
+            </CardTitle>
+            <CardDescription>
+              Demo del método promise de Sonner para operaciones asíncronas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PromiseDemo />
           </CardContent>
         </Card>
       </div>
@@ -245,6 +298,28 @@ const result = await withLoading(async () => {
                 Los error boundaries están configurados globalmente en <code>main.tsx</code> y 
                 automáticamente capturan errores en toda la aplicación.
               </p>
+            </div>
+
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-2">5. Sonner Notifications</h4>
+              <pre className="bg-gray-100 p-3 rounded text-sm overflow-x-auto">
+{`import { useNotifications } from '../hooks/useNotifications'
+
+const notifications = useNotifications()
+
+// Notificaciones básicas
+notifications.success('Operación exitosa')
+notifications.error('Error en la operación')
+notifications.warning('Advertencia')
+notifications.info('Información')
+
+// Con promesas
+notifications.promise(asyncOperation(), {
+  loading: 'Procesando...',
+  success: (data) => \`✅ \${data.message}\`,
+  error: (error) => \`❌ \${error.message}\`
+})`}
+              </pre>
             </div>
           </div>
         </CardContent>

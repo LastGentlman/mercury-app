@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { Package, ShoppingCart, TrendingUp, User } from 'lucide-react'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import { useAuth } from '../hooks/useAuth'
+import { useNotifications } from '../hooks/useNotifications'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { LoadingDemo } from '../components/LoadingDemo'
@@ -12,6 +13,7 @@ export const Route = createFileRoute('/dashboard')({
 
 function DashboardPage() {
   const { user } = useAuth()
+  const notifications = useNotifications()
 
   return (
     <ProtectedRoute>
@@ -91,15 +93,27 @@ function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button className="w-full justify-start" variant="outline">
+              <Button 
+                className="w-full justify-start" 
+                variant="outline"
+                onClick={() => notifications.info('Funcionalidad en desarrollo - Ver todos los pedidos')}
+              >
                 <Package className="mr-2 h-4 w-4" />
                 View All Orders
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button 
+                className="w-full justify-start" 
+                variant="outline"
+                onClick={() => notifications.info('Funcionalidad en desarrollo - Crear nuevo pedido')}
+              >
                 <ShoppingCart className="mr-2 h-4 w-4" />
                 Create New Order
               </Button>
-              <Button className="w-full justify-start" variant="outline">
+              <Button 
+                className="w-full justify-start" 
+                variant="outline"
+                onClick={() => notifications.info('Funcionalidad en desarrollo - Editar perfil')}
+              >
                 <User className="mr-2 h-4 w-4" />
                 Edit Profile
               </Button>

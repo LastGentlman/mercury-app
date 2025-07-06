@@ -1,11 +1,12 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { AlertCircle, CheckCircle, Eye, EyeOff, Loader2, Lock, Mail, User } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { SuccessMessage } from '../components/SuccessMessage'
-import { AlertCircle, CheckCircle, Eye, EyeOff, Loader2, Lock, Mail, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useNotifications } from '../hooks/useNotifications'
 
 interface AuthFormData {
   email: string
@@ -25,13 +26,12 @@ function AuthPage() {
     password: '',
     name: ''
   })
-  const [error, setError] = useState<string>('')
-  const [success, setSuccess] = useState<string>('')
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState<string>('')
   
   const { isAuthenticated, login, register, resendConfirmationEmail } = useAuth()
   const navigate = useNavigate()
+  const notifications = useNotifications()
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -42,25 +42,23 @@ function AuthPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setSuccess('')
     
     // Basic validation
     if (!formData.email || !formData.password) {
-      setError('Por favor completa todos los campos requeridos.')
+      notifications.error('Por favor completa todos los campos requeridos.')
       return
     }
     
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(formData.email)) {
-      setError('Por favor ingresa un email válido.')
+      notifications.error('Por favor ingresa un email válido.')
       return
     }
     
     // Password validation for registration
     if (!isLogin && formData.password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.')
+      notifications.error('La contraseña debe tener al menos 6 caracteres.')
       return
     }
     
@@ -68,15 +66,18 @@ function AuthPage() {
       login.mutate(
         { email: formData.email, password: formData.password },
         {
+          onSuccess: () => {
+            notifications.success('¡Inicio de sesión exitoso!')
+          },
           onError: (error: Error) => {
             console.error('Login error:', error)
-            setError(error.message || 'An error occurred during login. Please try again.')
+            notifications.error(error.message || 'Error durante el inicio de sesión. Inténtalo de nuevo.')
           }
         }
       )
     } else {
       if (!formData.name) {
-        setError('Name is required for registration')
+        notifications.error('El nombre es requerido para el registro')
         return
       }
       
@@ -84,7 +85,7 @@ function AuthPage() {
         { email: formData.email, password: formData.password, name: formData.name || '' },
         {
           onSuccess: (data) => {
-            setSuccess(data.message || 'Registration successful! Please check your email to verify your account.')
+            notifications.success('¡Registro exitoso! Revisa tu email para verificar tu cuenta.')
             setRegisteredEmail(formData.email)
             setShowEmailConfirmation(true)
             // Reset form
@@ -92,7 +93,7 @@ function AuthPage() {
           },
           onError: (error: Error) => {
             console.error('Registration error:', error)
-            setError(error.message || 'An error occurred during registration. Please try again.')
+            notifications.error(error.message || 'Error durante el registro. Inténtalo de nuevo.')
           }
         }
       )
@@ -110,8 +111,6 @@ function AuthPage() {
 
   const handleBackToLogin = () => {
     setShowEmailConfirmation(false)
-    setSuccess('')
-    setError('')
     setIsLogin(true)
   }
 
@@ -119,11 +118,10 @@ function AuthPage() {
     if (formData.email) {
       resendConfirmationEmail.mutate(formData.email, {
         onSuccess: (data) => {
-          setSuccess(data.message || 'Email de confirmación reenviado. Revisa tu bandeja de entrada.')
-          setError('')
+          notifications.success(data.message || 'Email de confirmación reenviado. Revisa tu bandeja de entrada.')
         },
         onError: (error: Error) => {
-          setError(error.message)
+          notifications.error(error.message)
         }
       })
     }
@@ -168,8 +166,6 @@ function AuthPage() {
                 variant="outline"
                 onClick={() => {
                   setShowEmailConfirmation(false)
-                  setSuccess('')
-                  setError('')
                   setIsLogin(false)
                 }}
                 className="w-full"
@@ -205,69 +201,7 @@ function AuthPage() {
             </p>
           </div>
 
-          {/* Success Message */}
-          {success && (
-            <div className="mb-6">
-              <SuccessMessage
-                type="success"
-                title="¡Éxito!"
-                message={success}
-              />
-            </div>
-          )}
 
-          {/* Error Message */}
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="text-sm font-medium text-red-800 mb-1">
-                    Error en la {isLogin ? 'autenticación' : 'registro'}
-                  </h3>
-                  <p className="text-sm text-red-700">{error}</p>
-                  {error.includes('already exists') && (
-                    <p className="text-xs text-red-600 mt-2">
-                      ¿Ya tienes una cuenta? <button 
-                        onClick={() => setIsLogin(true)} 
-                        className="underline hover:no-underline"
-                      >
-                        Inicia sesión aquí
-                      </button>
-                    </p>
-                  )}
-                  {error.includes('no confirmado') && (
-                    <div className="text-xs text-red-600 mt-2 space-y-1">
-                      <p>📧 <strong>Pasos para confirmar tu email:</strong></p>
-                      <ol className="list-decimal list-inside ml-2 space-y-1">
-                        <li>Revisa tu bandeja de entrada</li>
-                        <li>Busca un email de "PedidoList" o "Confirmación de cuenta"</li>
-                        <li>Haz clic en el enlace de confirmación</li>
-                        <li>Vuelve aquí e intenta iniciar sesión nuevamente</li>
-                      </ol>
-                      <div className="mt-2 space-y-2">
-                        <button 
-                          onClick={handleResendConfirmation}
-                          disabled={resendConfirmationEmail.isPending}
-                          className="text-blue-600 hover:text-blue-800 underline text-xs"
-                        >
-                          {resendConfirmationEmail.isPending ? 'Enviando...' : '¿No recibiste el email? Reenviar'}
-                        </button>
-                        <p>
-                          ¿Problemas con el registro? <button 
-                            onClick={() => setIsLogin(false)} 
-                            className="underline hover:no-underline"
-                          >
-                            Regístrate de nuevo
-                          </button>
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -368,8 +302,6 @@ function AuthPage() {
                 type="button"
                 onClick={() => {
                   setIsLogin(!isLogin)
-                  setError('')
-                  setSuccess('')
                   setFormData({ email: '', password: '', name: '' })
                 }}
                 className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
