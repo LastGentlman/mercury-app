@@ -7,6 +7,12 @@ export function registerPWA() {
         .then((registration) => {
           console.log('SW registered: ', registration)
           
+          // Register Background Sync
+          registerBackgroundSync(registration)
+          
+          // Register Periodic Background Sync (if supported)
+          registerPeriodicBackgroundSync(registration)
+          
           // Handle updates
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing
@@ -26,6 +32,46 @@ export function registerPWA() {
           console.log('SW registration failed: ', registrationError)
         })
     })
+  }
+}
+
+// Register Background Sync
+async function registerBackgroundSync(registration: ServiceWorkerRegistration) {
+  if ('sync' in registration) {
+    try {
+      // Register background sync
+      await (registration as any).sync.register('background-sync')
+      console.log('✅ Background Sync registered')
+    } catch (error) {
+      console.log('❌ Background Sync registration failed:', error)
+    }
+  } else {
+    console.log('⚠️ Background Sync not supported')
+  }
+}
+
+// Register Periodic Background Sync
+async function registerPeriodicBackgroundSync(registration: ServiceWorkerRegistration) {
+  if ('periodicSync' in registration) {
+    try {
+      // Check if we have permission
+      const status = await navigator.permissions.query({
+        name: 'periodic-background-sync' as PermissionName
+      })
+      
+      if (status.state === 'granted') {
+        await (registration as any).periodicSync.register('periodic-sync', {
+          minInterval: 24 * 60 * 60 * 1000 // 24 hours minimum
+        })
+        console.log('✅ Periodic Background Sync registered')
+      } else {
+        console.log('⚠️ Periodic Background Sync permission not granted')
+      }
+    } catch (error) {
+      console.log('❌ Periodic Background Sync registration failed:', error)
+    }
+  } else {
+    console.log('⚠️ Periodic Background Sync not supported')
   }
 }
 

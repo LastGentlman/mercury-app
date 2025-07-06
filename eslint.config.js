@@ -12,4 +12,12 @@ export default [
       },
     },
   },
+  {
+    files: ["public/**/*.js"],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+  },
 ];

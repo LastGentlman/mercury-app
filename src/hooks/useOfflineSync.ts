@@ -85,6 +85,20 @@ export function useOfflineSync() {
     }
   }, [isOnline, syncStatus, user, updatePendingCount])
 
+  // Trigger background sync when coming back online
+  useEffect(() => {
+    if (isOnline && pendingCount > 0) {
+      // Trigger background sync if available
+      navigator.serviceWorker.ready.then((registration) => {
+        if ('sync' in registration) {
+          (registration as any).sync.register('background-sync')
+            .then(() => console.log('🔄 Background sync triggered on reconnection'))
+            .catch((error: Error) => console.log('❌ Background sync failed:', error))
+        }
+      })
+    }
+  }, [isOnline, pendingCount])
+
   // Sincronizar un pedido específico
   const syncOrder = async (item: SyncQueueItem) => {
     let localOrder = await db.orders.get(item.entityId)
