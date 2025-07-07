@@ -32,7 +32,7 @@ export function useOrders(businessId: string) {
         try {
           const response = await fetch(`/api/orders/${businessId}/today`, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
           });
           if (response.ok) {
@@ -92,7 +92,7 @@ export function useOrders(businessId: string) {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
             body: JSON.stringify(newOrder),
           });
@@ -157,7 +157,7 @@ export function useOrders(businessId: string) {
             method: 'PATCH',
             headers: { 
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             },
             body: JSON.stringify({ status }),
           });

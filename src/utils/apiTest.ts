@@ -4,8 +4,7 @@ import { BACKEND_URL } from '../config';
 export async function testAPIConnection() {
   const endpoints = [
     { name: 'Health Check', url: `${BACKEND_URL}/health` },
-    { name: 'API Root', url: `${BACKEND_URL}/` },
-    { name: 'Auth Endpoint', url: `${BACKEND_URL}/api/auth` }
+    { name: 'API Root', url: `${BACKEND_URL}/` }
   ]
 
   console.log('🔍 Testing API Connection...')
@@ -32,7 +31,7 @@ export async function testAPIConnection() {
 // Test registration endpoint
 export async function testRegistration() {
   const testUser = {
-    email: 'test@example.com',
+    email: 'testuser123@gmail.com',
     password: 'testpassword123',
     name: 'Test User'
   }
@@ -49,12 +48,15 @@ export async function testRegistration() {
     })
 
     let data
+    // Clone the response to avoid "body stream already read" error
+    const responseClone = response.clone()
+    
     try {
       data = await response.json()
     } catch (parseError) {
-      // If JSON parsing fails, try to read as text
+      // If JSON parsing fails, try to read as text from the cloned response
       try {
-        const errorText = await response.text()
+        const errorText = await responseClone.text()
         console.log('❌ Registration returned plain text instead of JSON:', errorText)
         data = { error: errorText, rawResponse: errorText }
       } catch (textError) {
@@ -80,7 +82,7 @@ export async function testRegistration() {
 // Test login endpoint
 export async function testLogin() {
   const testCredentials = {
-    email: 'test@example.com',
+    email: 'testuser123@gmail.com',
     password: 'testpassword123'
   }
 
@@ -116,7 +118,7 @@ export async function testRegistrationErrorHandling() {
   
   // Test 1: Duplicate email registration
   const testUser1 = {
-    email: 'test@example.com',
+    email: 'testuser456@gmail.com',
     password: 'testpassword123',
     name: 'Test User'
   }
@@ -131,10 +133,13 @@ export async function testRegistrationErrorHandling() {
     })
 
     let data1
+    // Clone the response to avoid "body stream already read" error
+    const response1Clone = response1.clone()
+    
     try {
       data1 = await response1.json()
     } catch (parseError) {
-      const errorText = await response1.text()
+      const errorText = await response1Clone.text()
       console.log('❌ First registration returned plain text:', errorText)
       data1 = { error: errorText, rawResponse: errorText }
     }
@@ -156,10 +161,13 @@ export async function testRegistrationErrorHandling() {
     })
 
     let data2
+    // Clone the response to avoid "body stream already read" error
+    const response2Clone = response2.clone()
+    
     try {
       data2 = await response2.json()
     } catch (parseError) {
-      const errorText = await response2.text()
+      const errorText = await response2Clone.text()
       console.log('❌ Duplicate registration returned plain text:', errorText)
       data2 = { error: errorText, rawResponse: errorText }
     }

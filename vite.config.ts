@@ -144,6 +144,13 @@ export default defineConfig({
     allowedHosts: [
       '.ngrok-free.app', // permite cualquier subdominio de ngrok (solo string, no RegExp)
     ],
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3030',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   resolve: {
     alias: {

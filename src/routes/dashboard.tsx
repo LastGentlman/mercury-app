@@ -17,7 +17,36 @@ function DashboardPage() {
 
   // En una app real, esto vendría del contexto de autenticación
   const businessId = user?.businessId || 'demo-business-id'
-  const isOwner = user?.role === 'owner' // Solo los owners reciben notificaciones
+  
+  // Si no hay businessId, mostrar un mensaje de configuración
+  if (!user?.businessId) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="max-w-md mx-auto text-center">
+            <div className="bg-white rounded-lg shadow-lg p-8">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                Configuración Requerida
+              </h2>
+              <p className="text-gray-600 mb-6">
+                Tu cuenta necesita estar asociada a un negocio para continuar.
+              </p>
+              <button 
+                onClick={() => {
+                  // Aquí podrías abrir un modal para crear/join business
+                  alert('Funcionalidad de configuración de negocio en desarrollo');
+                }}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Configurar Negocio
+              </button>
+            </div>
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+  const isOwner = user.role === 'owner' // Solo los owners reciben notificaciones
 
   const handleNotificationToggle = () => {
     notifications.info('Funcionalidad de notificaciones push en desarrollo')

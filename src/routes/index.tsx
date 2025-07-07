@@ -1,9 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
+import { ArrowRight, Package, ShoppingCart, TrendingUp } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { ShoppingCart, Package, TrendingUp, ArrowRight } from 'lucide-react'
+import { useAuth } from '../hooks/useAuth'
 
 export const Route = createFileRoute('/')({
   component: HomePage,
