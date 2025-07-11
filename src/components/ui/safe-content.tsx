@@ -6,20 +6,22 @@ interface SafeContentProps {
   allowHTML?: boolean;
   className?: string;
   tag?: keyof React.JSX.IntrinsicElements;
+  context?: string;
 }
 
 export const SafeContent: React.FC<SafeContentProps> = ({
   content,
   allowHTML = false,
   className,
-  tag: Tag = 'div'
+  tag: Tag = 'div',
+  context = 'SafeContent'
 }) => {
   if (!content) {
     return null;
   }
 
   if (allowHTML) {
-    const sanitizedHTML = sanitizeHTML(content);
+    const sanitizedHTML = sanitizeHTML(content, context, 'SafeContent_HTML');
     return (
       <Tag
         className={className}
@@ -28,16 +30,15 @@ export const SafeContent: React.FC<SafeContentProps> = ({
     );
   }
 
-  const sanitizedText = sanitizeText(content);
+  const sanitizedText = sanitizeText(content, context, 'SafeContent_Text');
   return <Tag className={className}>{sanitizedText}</Tag>;
 };
 
-// Componente específico para texto plano
-export const SafeText: React.FC<Omit<SafeContentProps, 'allowHTML'> & { tag?: keyof React.JSX.IntrinsicElements }> = (props) => {
-  return <SafeContent {...props} allowHTML={false} />;
+// Componentes especializados para casos de uso específicos
+export const SafeText: React.FC<Omit<SafeContentProps, 'allowHTML'> & { allowHTML?: false }> = (props) => {
+  return <SafeContent {...props} allowHTML={false} context={props.context || 'SafeText'} />;
 };
 
-// Componente específico para HTML seguro
-export const SafeHTML: React.FC<Omit<SafeContentProps, 'allowHTML'> & { tag?: keyof React.JSX.IntrinsicElements }> = (props) => {
-  return <SafeContent {...props} allowHTML={true} />;
+export const SafeHTML: React.FC<Omit<SafeContentProps, 'allowHTML'> & { allowHTML: true }> = (props) => {
+  return <SafeContent {...props} allowHTML={true} context={props.context || 'SafeHTML'} />;
 }; 
