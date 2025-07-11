@@ -51,6 +51,6 @@ describe('Backend Connection Tests', () => {
     // Verify that the backend URL is correctly set
     const backendUrl = BACKEND_URL
     // Test that the URL is accessible
-    expect(backendUrl).toContain('ingroy.com')
+    expect(backendUrl).toContain('pedidolist.com')
   })
 }) 
