@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useOfflineSync } from './useOfflineSync';
+import { useCSRFRequest } from './useCSRF';
 import type { Order, OrderItem } from '@/types';
 import { db } from '@/lib/offline/db';
 
@@ -16,6 +17,7 @@ interface CreateOrderData {
 
 export function useOrders(businessId: string) {
   const { isOnline } = useOfflineSync();
+  const { csrfRequest } = useCSRFRequest();
   const queryClient = useQueryClient();
 
   // Obtener pedidos del día actual
@@ -30,11 +32,7 @@ export function useOrders(businessId: string) {
       // Si hay conexión, intentar sincronizar
       if (isOnline) {
         try {
-          const response = await fetch(`/api/orders/${businessId}/today`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            }
-          });
+          const response = await csrfRequest(`/api/orders/${businessId}/today`);
           if (response.ok) {
             const serverOrders = await response.json();
             // Merge con datos locales (prioridad a cambios locales no sincronizados)
@@ -88,12 +86,8 @@ export function useOrders(businessId: string) {
       // Si hay conexión, intentar sincronizar inmediatamente
       if (isOnline) {
         try {
-          const response = await fetch(`/api/orders`, {
+          const response = await csrfRequest(`/api/orders`, {
             method: 'POST',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            },
             body: JSON.stringify(newOrder),
           });
 
@@ -109,9 +103,8 @@ export function useOrders(businessId: string) {
             await db.markAsSynced('order', orderId.toString());
             
             // Trigger notificación push
-            await fetch(`/api/notifications/new-order`, {
+            await csrfRequest(`/api/notifications/new-order`, {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ 
                 orderId: serverOrder.id, 
                 businessId 
@@ -153,12 +146,8 @@ export function useOrders(businessId: string) {
 
       if (isOnline) {
         try {
-          await fetch(`/api/orders/${orderId}/status`, {
+          await csrfRequest(`/api/orders/${orderId}/status`, {
             method: 'PATCH',
-            headers: { 
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            },
             body: JSON.stringify({ status }),
           });
           

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BACKEND_URL } from '../config'
+import { useCSRFRequest } from './useCSRF'
 
 import type { User } from '../types'
 
@@ -22,6 +23,7 @@ export function useAuth() {
     isAuthenticated: false,
     isLoading: true
   })
+  const { csrfRequest } = useCSRFRequest()
   const queryClient = useQueryClient()
 
   // Helper function to translate error messages to Spanish
@@ -78,11 +80,7 @@ export function useAuth() {
         return
       }
 
-      const response = await fetch(`${BACKEND_URL}/api/auth/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      })
+      const response = await csrfRequest(`${BACKEND_URL}/api/auth/profile`)
 
       if (response.ok) {
         const data = await response.json()
@@ -105,11 +103,8 @@ export function useAuth() {
 
   const login = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
+      const response = await csrfRequest(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(credentials),
       })
 
@@ -153,11 +148,8 @@ export function useAuth() {
     mutationFn: async (userData: { email: string; password: string; name: string }) => {
       console.log('🔄 Sending registration request:', { email: userData.email, name: userData.name })
       
-      const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
+      const response = await csrfRequest(`${BACKEND_URL}/api/auth/register`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(userData),
       })
 
@@ -206,11 +198,8 @@ export function useAuth() {
 
   const logout = useMutation({
     mutationFn: async () => {
-      const response = await fetch(`${BACKEND_URL}/api/auth/logout`, {
+      const response = await csrfRequest(`${BACKEND_URL}/api/auth/logout`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       })
 
       if (!response.ok) {
@@ -246,11 +235,8 @@ export function useAuth() {
   // Function to resend confirmation email
   const resendConfirmationEmail = useMutation({
     mutationFn: async (email: string) => {
-      const response = await fetch(`${BACKEND_URL}/api/auth/resend-confirmation`, {
+      const response = await csrfRequest(`${BACKEND_URL}/api/auth/resend-confirmation`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ email }),
       })
 

@@ -3,6 +3,7 @@ import { BACKEND_URL } from '../config'
 import { db } from '../lib/offline/db'
 import { ConflictResolver } from '../lib/offline/conflictResolver'
 import { useAuth } from './useAuth'
+import { useCSRFRequest } from './useCSRF'
 import type { Order, Product, SyncQueueItem } from '../types'
 
 export function useOfflineSync() {
@@ -10,6 +11,7 @@ export function useOfflineSync() {
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle')
   const [pendingCount, setPendingCount] = useState(0)
   const { user } = useAuth()
+  const { csrfRequest } = useCSRFRequest()
 
   // Detectar cambios de conexión
   useEffect(() => {
@@ -109,11 +111,7 @@ export function useOfflineSync() {
       let serverOrder: Order | null = null
       if (item.action === 'update' && localOrder.id) {
         try {
-          const getResponse = await fetch(`${BACKEND_URL}/api/orders/${localOrder.id}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          })
+          const getResponse = await csrfRequest(`${BACKEND_URL}/api/orders/${localOrder.id}`)
           if (getResponse.ok) {
             serverOrder = await getResponse.json()
           }
@@ -142,12 +140,8 @@ export function useOfflineSync() {
       }
 
       // Enviar datos al servidor
-      const response = await fetch(`${BACKEND_URL}/api/orders`, {
+      const response = await csrfRequest(`${BACKEND_URL}/api/orders`, {
         method: item.action === 'create' ? 'POST' : 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: JSON.stringify({
           ...localOrder,
           client_generated_id: localOrder.clientGeneratedId,
@@ -204,11 +198,7 @@ export function useOfflineSync() {
       let serverProduct: Product | null = null
       if (item.action === 'update' && localProduct.id) {
         try {
-          const getResponse = await fetch(`${BACKEND_URL}/api/products/${localProduct.id}`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-          })
+          const getResponse = await csrfRequest(`${BACKEND_URL}/api/products/${localProduct.id}`)
           if (getResponse.ok) {
             serverProduct = await getResponse.json()
           }
@@ -237,12 +227,8 @@ export function useOfflineSync() {
       }
 
       // Enviar datos al servidor
-      const response = await fetch(`${BACKEND_URL}/api/products`, {
+      const response = await csrfRequest(`${BACKEND_URL}/api/products`, {
         method: item.action === 'create' ? 'POST' : 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
         body: JSON.stringify({
           ...localProduct,
           modified_by: user?.id,
