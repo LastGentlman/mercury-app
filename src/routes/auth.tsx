@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
-import { CheckCircle, Eye, EyeOff, Loader2, Lock, Mail, User } from 'lucide-react'
+import { CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
@@ -45,7 +45,7 @@ function AuthPage() {
     
     // Basic validation
     if (!formData.email || !formData.password) {
-      notifications.error('Por favor completa todos los campos requeridos.')
+      notifications.error('Completa todos los campos')
       return
     }
     
@@ -67,7 +67,7 @@ function AuthPage() {
         { email: formData.email, password: formData.password },
         {
           onSuccess: () => {
-            notifications.success('¡Inicio de sesión exitoso!')
+            notifications.success('¡Bienvenido a PedidoList!')
           },
           onError: (error: Error) => {
             console.error('Login error:', error)
@@ -114,25 +114,23 @@ function AuthPage() {
     setIsLogin(true)
   }
 
-  // const handleResendConfirmation = () => {
-  //   if (formData.email) {
-  //     resendConfirmationEmail.mutate(formData.email, {
-  //       onSuccess: (data) => {
-  //         notifications.success(data.message || 'Email de confirmación reenviado. Revisa tu bandeja de entrada.')
-  //       },
-  //       onError: (error: Error) => {
-  //         notifications.error(error.message)
-  //       }
-  //     })
-  //   }
-  // }
+  const handleGoogleLogin = () => {
+    notifications.info('Iniciando con Google...')
+  }
+
+  const handleForgotPassword = () => {
+    const email = prompt('Ingresa tu email:')
+    if (email) {
+      notifications.success(`Instrucciones enviadas a ${email}`)
+    }
+  }
 
   const isLoading = login.isPending || register.isPending
 
   // Show email confirmation message
   if (showEmailConfirmation) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-xl p-8 text-center">
             <div className="mb-6">
@@ -185,86 +183,83 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8">
-          {/* Header */}
+          {/* Logo */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              {isLogin ? 'Welcome Back' : 'Create Account'}
-            </h1>
-            <p className="text-gray-600">
-              {isLogin 
-                ? 'Sign in to your account to continue' 
-                : 'Join us and start managing your orders'
-              }
-            </p>
+            <div className="text-3xl mb-2">📋</div>
+            <div className="text-2xl font-semibold text-[#1f2937]">PedidoList</div>
           </div>
 
+          {/* Status */}
+          <div className="text-center mb-6">
+            <div className="flex items-center justify-center text-xs text-[#6b7280] mb-6">
+              <div className="w-2 h-2 bg-[#10b981] rounded-full mr-2"></div>
+              Sistema disponible
+            </div>
+          </div>
 
+          {/* Title */}
+          <h1 className="text-2xl font-semibold text-[#1f2937] text-center mb-8">
+            {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
+          </h1>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Name field (only for registration) */}
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-sm font-medium text-gray-700">
-                  Full Name
+                <Label htmlFor="name" className="text-sm font-medium text-[#374151]">
+                  Nombre completo
                 </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    id="name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    value={formData.name}
-                    onChange={handleInputChange('name')}
-                    className="pl-10"
-                    required={!isLogin}
-                  />
-                </div>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Tu nombre completo"
+                  value={formData.name}
+                  onChange={handleInputChange('name')}
+                  className="w-full px-4 py-3 border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10"
+                  required={!isLogin}
+                />
               </div>
             )}
 
             {/* Email field */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email Address
+              <Label htmlFor="email" className="text-sm font-medium text-[#374151]">
+                Email
               </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleInputChange('email')}
-                  className="pl-10"
-                  required
-                />
-              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="tu@email.com"
+                value={formData.email}
+                onChange={handleInputChange('email')}
+                className="w-full px-4 py-3 border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10"
+                required
+              />
             </div>
 
             {/* Password field */}
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
+              <Label htmlFor="password" className="text-sm font-medium text-[#374151]">
+                Contraseña
               </Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
+                  placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange('password')}
-                  className="pl-10 pr-10"
+                  className="w-full px-4 py-3 border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10 pr-10"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280]"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -278,35 +273,63 @@ function AuthPage() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full h-12 text-base font-medium"
+              className="w-full py-3 bg-[#3b82f6] text-white border-none rounded-lg text-base font-medium cursor-pointer transition-colors hover:bg-[#2563eb] disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={isLoading}
             >
               {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isLogin ? 'Signing in...' : 'Creating account...'}
-                </>
+                <div className="flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  {isLogin ? 'Entrando...' : 'Creando cuenta...'}
+                </div>
               ) : (
-                isLogin ? 'Sign In' : 'Create Account'
+                isLogin ? 'Entrar' : 'Crear cuenta'
               )}
             </Button>
           </form>
 
+          {/* Divider */}
+          <div className="relative text-center my-6">
+            <div className="absolute top-1/2 left-0 right-0 h-px bg-[#e5e7eb]"></div>
+            <span className="bg-white px-4 text-sm text-[#6b7280]">o</span>
+          </div>
+
+          {/* Google Button */}
+          <button
+            onClick={handleGoogleLogin}
+            className="w-full py-3 bg-white text-[#374151] border border-[#d1d5db] rounded-lg text-base font-medium cursor-pointer transition-all hover:bg-[#f9fafb] hover:border-[#9ca3af] flex items-center justify-center gap-2"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16">
+              <path fill="#4285F4" d="M14.9 8.16c0-.44-.04-.86-.11-1.26H8.18v2.38h3.77c-.16.84-.64 1.56-1.36 2.04v1.69h2.2c1.29-1.19 2.03-2.94 2.03-5.01l.08.16z"/>
+              <path fill="#34A853" d="M8.18 15c1.84 0 3.38-.61 4.51-1.65l-2.2-1.69c-.61.41-1.39.65-2.31.65-1.78 0-3.28-1.2-3.82-2.82H2.06v1.74A6.98 6.98 0 0 0 8.18 15z"/>
+              <path fill="#FBBC05" d="M4.36 9.49c-.14-.41-.22-.85-.22-1.31 0-.46.08-.9.22-1.31V5.13H2.06a6.98 6.98 0 0 0 0 6.1l2.3-1.74z"/>
+              <path fill="#EA4335" d="M8.18 3.64c1 0 1.9.34 2.61 1.02l1.96-1.96A6.98 6.98 0 0 0 8.18 1 6.98 6.98 0 0 0 2.06 5.13l2.3 1.74c.54-1.62 2.04-2.82 3.82-2.82v-.41z"/>
+            </svg>
+            Continuar con Google
+          </button>
+
+          {/* Forgot Password */}
+          <div className="text-center mt-6">
+            <button
+              onClick={handleForgotPassword}
+              className="text-[#3b82f6] text-sm hover:underline"
+            >
+              ¿Olvidaste tu contraseña?
+            </button>
+          </div>
+
           {/* Toggle between login and register */}
-          <div className="mt-8 text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <span className="text-sm text-gray-600">
-                {isLogin ? "Don't have an account?" : "Already have an account?"}
-              </span>
+          <div className="text-center mt-8 pt-6 border-t border-[#e5e7eb]">
+            <div className="text-sm text-[#6b7280]">
+              {isLogin ? '¿No tienes cuenta?' : '¿Ya tienes cuenta?'}{' '}
               <button
                 type="button"
                 onClick={() => {
                   setIsLogin(!isLogin)
                   setFormData({ email: '', password: '', name: '' })
                 }}
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
+                className="text-[#3b82f6] font-medium hover:underline"
               >
-                {isLogin ? 'Sign up' : 'Sign in'}
+                {isLogin ? 'Crear cuenta' : 'Iniciar sesión'}
               </button>
             </div>
           </div>
