@@ -26,12 +26,19 @@ export function useCSRF(): CSRFConfig {
   // Obtener token CSRF del servidor
   const refreshToken = async () => {
     try {
-      const response = await fetch('/api/csrf/token', {
+      const authToken = localStorage.getItem('authToken');
+      const headers: Record<string, string> = {
+        'X-Session-ID': sessionId,
+      };
+      
+      // Solo incluir Authorization si hay un token de autenticación
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+
+      const response = await fetch('/api/auth/csrf/token', {
         method: 'GET',
-        headers: {
-          'X-Session-ID': sessionId,
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+        headers
       });
 
       if (response.ok) {
@@ -67,12 +74,17 @@ export function useCSRFRequest() {
     url: string, 
     options: RequestInit = {}
   ): Promise<Response> => {
+    const authToken = localStorage.getItem('authToken');
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Session-ID': sessionId,
-      'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
       ...(options.headers as Record<string, string>)
     };
+    
+    // Solo incluir Authorization si hay un token de autenticación
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
 
     // Agregar token CSRF para métodos que modifican datos
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || 'GET')) {
