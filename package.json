@@ -11,7 +11,9 @@
     "lint": "eslint",
     "format": "prettier",
     "check": "prettier --write . && eslint --fix",
-    "analyze": "vite build && npx vite-bundle-analyzer dist"
+    "analyze": "vite build && npx vite-bundle-analyzer dist",
+    "generate-icons": "chmod +x generate-icons.sh && ./generate-icons.sh",
+    "convert-favicon": "npx tsx scripts/convert-favicon.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^9.6.0",
@@ -50,6 +52,7 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@tanstack/eslint-config": "^0.1.0",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -61,7 +64,9 @@
     "@vitejs/plugin-react": "^4.3.4",
     "jsdom": "^26.0.0",
     "msw": "^2.10.3",
+    "png-to-ico": "^2.1.8",
     "prettier": "^3.5.3",
+    "pwa-asset-generator": "^6.0.0",
     "typescript": "^5.7.2",
     "uuid": "^11.1.0",
     "vite": "^6.1.0",
