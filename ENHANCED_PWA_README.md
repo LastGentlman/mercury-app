@@ -235,4 +235,3 @@ Potential improvements:
 - App shortcuts
 - File handling
 - Share target
-- Advanced caching strategies 
