@@ -105,6 +105,10 @@ if (rootElement && !rootElement.innerHTML) {
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals()
 
-// Register PWA
-registerPWA()
-listenForInstallPrompt()
+// Only register PWA if not disabled
+if (!import.meta.env.VITE_PWA_DISABLED) {
+  registerPWA()
+  listenForInstallPrompt()
+} else {
+  console.log('🚫 PWA disabled via environment variable')
+}

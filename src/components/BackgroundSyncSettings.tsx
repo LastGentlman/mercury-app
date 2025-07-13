@@ -4,11 +4,11 @@ import { useBackgroundSync } from '../hooks/useBackgroundSync'
 import { BACKGROUND_SYNC_CONFIG } from '../config/backgroundSync'
 
 export function BackgroundSyncSettings() {
-  const { syncStatus, triggerBackgroundSync, requestPeriodicSyncPermission } = useBackgroundSync()
+  const { syncStatus, triggerBackgroundSync, requestPeriodicSync } = useBackgroundSync()
   const [isExpanded, setIsExpanded] = useState(false)
 
   const handleEnablePeriodicSync = async () => {
-    const enabled = await requestPeriodicSyncPermission()
+    const enabled = await requestPeriodicSync()
     if (enabled) {
       console.log('✅ Periodic background sync enabled')
     } else {
