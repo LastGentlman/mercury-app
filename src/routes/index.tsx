@@ -1,141 +1,97 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { ArrowRight, Package, ShoppingCart, TrendingUp } from 'lucide-react'
-import { Button } from '../components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
-import { useAuth } from '../hooks/useAuth'
+import { Link, createFileRoute } from '@tanstack/react-router'
+import { Loader2 } from 'lucide-react'
+import { usePWARoute } from '../hooks/usePWARoute'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/')({
-  component: HomePage,
+  component: Index,
 })
 
-function HomePage() {
-  const { isAuthenticated, isLoading } = useAuth()
-  const navigate = useNavigate()
+function Index() {
+  const { isPWA, isAuthenticated, isLoading } = usePWARoute()
 
-  useEffect(() => {
-    if (!isLoading && isAuthenticated) {
-      navigate({ to: '/dashboard' })
-    }
-  }, [isAuthenticated, isLoading, navigate])
-
+  // Show loading while checking auth status
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading...</span>
         </div>
       </div>
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-16">
-          <h1 className="text-5xl font-bold text-gray-900 mb-6">
-            Welcome to <span className="text-blue-600">PedidoList</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            The ultimate order management system for businesses. 
-            Streamline your operations, track orders, and boost productivity.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              className="text-lg px-8 py-3"
-              onClick={() => navigate({ to: '/auth' })}
-            >
-              Get Started
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button 
-              variant="outline" 
-              size="lg" 
-              className="text-lg px-8 py-3"
-              onClick={() => navigate({ to: '/auth' })}
-            >
-              Sign In
-            </Button>
+  // If authenticated, show dashboard content or redirect to dashboard
+  if (isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-16">
+          <div className="text-center">
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">
+              Welcome to Mercury App
+            </h1>
+            <p className="text-xl text-gray-600 mb-8">
+              You're logged in! {isPWA && '(PWA Mode)'}
+            </p>
+            <Link to="/dashboard">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
+                Go to Dashboard
+              </Button>
+            </Link>
           </div>
         </div>
+      </div>
+    )
+  }
 
-        {/* Features Section */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
-                <ShoppingCart className="h-6 w-6 text-blue-600" />
-              </div>
-              <CardTitle>Order Management</CardTitle>
-              <CardDescription>
-                Create, track, and manage orders with ease
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">
-                Streamline your order processing workflow with our intuitive interface.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
-                <Package className="h-6 w-6 text-green-600" />
-              </div>
-              <CardTitle>Inventory Tracking</CardTitle>
-              <CardDescription>
-                Keep track of your inventory in real-time
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">
-                Monitor stock levels and get alerts when items are running low.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardHeader>
-              <div className="mx-auto w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
-              </div>
-              <CardTitle>Analytics & Reports</CardTitle>
-              <CardDescription>
-                Get insights into your business performance
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">
-                Detailed reports and analytics to help you make informed decisions.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* CTA Section */}
+  // Show regular home page for web users (not PWA)
+  // PWA users will be redirected to /auth by the hook
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-16">
         <div className="text-center">
-          <Card className="max-w-2xl mx-auto">
-            <CardHeader>
-              <CardTitle className="text-2xl">Ready to get started?</CardTitle>
-              <CardDescription>
-                Join thousands of businesses already using PedidoList
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                size="lg" 
-                className="w-full sm:w-auto"
-                onClick={() => navigate({ to: '/auth' })}
-              >
-                Create Your Account
-                <ArrowRight className="ml-2 h-5 w-5" />
+          <h1 className="text-5xl font-bold text-gray-900 mb-6">
+            Mercury App
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+            A modern Progressive Web App built with React, TanStack Router, 
+            and powerful offline capabilities.
+          </p>
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Link to="/auth">
+              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 px-8">
+                Get Started
               </Button>
-            </CardContent>
-          </Card>
+            </Link>
+            <Link to="/auth">
+              <Button variant="outline" size="lg" className="px-8">
+                Sign In
+              </Button>
+            </Link>
+          </div>
+
+          <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <h3 className="text-xl font-semibold mb-3">📱 PWA Ready</h3>
+              <p className="text-gray-600">
+                Install on your device for an app-like experience with offline support
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <h3 className="text-xl font-semibold mb-3">🔄 Background Sync</h3>
+              <p className="text-gray-600">
+                Your data syncs automatically when you go back online
+              </p>
+            </div>
+            <div className="bg-white p-6 rounded-lg shadow-lg">
+              <h3 className="text-xl font-semibold mb-3">⚡ Fast & Modern</h3>
+              <p className="text-gray-600">
+                Built with the latest technologies for optimal performance
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

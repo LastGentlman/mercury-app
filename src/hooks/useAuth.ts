@@ -23,7 +23,7 @@ export function useAuth() {
     isAuthenticated: false,
     isLoading: true
   })
-  const { csrfRequest } = useCSRFRequest()
+  const { csrfRequest: _csrfRequest } = useCSRFRequest()
   const queryClient = useQueryClient()
 
   // Helper function to translate error messages to Spanish
