@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
-import { isPWAInstalled, showInstallPrompt } from '../pwa'
+import { getPWALaunchMethod, isPWAInstalled, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa'
 
 export function PWAInstallButton() {
   const [canInstall, setCanInstall] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
+  const [_launchMethod, setLaunchMethod] = useState<'browser' | 'installed' | 'unknown'>('unknown')
 
   useEffect(() => {
     // Check if already installed
     setIsInstalled(isPWAInstalled())
+    setLaunchMethod(getPWALaunchMethod())
 
     // Listen for install prompt availability
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -29,6 +31,7 @@ export function PWAInstallButton() {
       if (installed) {
         setCanInstall(false)
         setIsInstalled(true)
+        setLaunchMethod('installed')
       }
     } catch (error) {
       console.error('Install failed:', error)
@@ -40,14 +43,18 @@ export function PWAInstallButton() {
     return null
   }
 
+  // Optional: Show different text based on previous installation
+  const wasEverInstalled = wasEverInstalledAsPWA()
+  const buttonText = wasEverInstalled ? 'Reinstall App' : 'Install App'
+
   return (
     <button
       onClick={handleInstall}
       className="fixed bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 z-50 transition-colors"
-      title="Install Mercury App"
+      title={`${buttonText} - Mercury App`}
     >
       <Download size={20} />
-      <span className="hidden sm:inline">Install App</span>
+      <span className="hidden sm:inline">{buttonText}</span>
     </button>
   )
 } 
