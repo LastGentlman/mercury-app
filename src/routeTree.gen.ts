@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ApiTestRouteImport } from './routes/api-test'
@@ -19,6 +20,11 @@ import { Route as DemoStoreRouteImport } from './routes/demo.store'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo.form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo.form.address'
 
+const DesignSystemRoute = DesignSystemRouteImport.update({
+  id: '/design-system',
+  path: '/design-system',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/design-system': typeof DesignSystemRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/design-system': typeof DesignSystemRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRoute
   '/dashboard': typeof DashboardRoute
+  '/design-system': typeof DesignSystemRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/api-test'
     | '/auth'
     | '/dashboard'
+    | '/design-system'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/api-test'
     | '/auth'
     | '/dashboard'
+    | '/design-system'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/api-test'
     | '/auth'
     | '/dashboard'
+    | '/design-system'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -140,6 +152,7 @@ export interface RootRouteChildren {
   ApiTestRoute: typeof ApiTestRoute
   AuthRoute: typeof AuthRoute
   DashboardRoute: typeof DashboardRoute
+  DesignSystemRoute: typeof DesignSystemRoute
   DemoStoreRoute: typeof DemoStoreRoute
   DemoTableRoute: typeof DemoTableRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
@@ -149,6 +162,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/design-system': {
+      id: '/design-system'
+      path: '/design-system'
+      fullPath: '/design-system'
+      preLoaderRoute: typeof DesignSystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -220,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiTestRoute: ApiTestRoute,
   AuthRoute: AuthRoute,
   DashboardRoute: DashboardRoute,
+  DesignSystemRoute: DesignSystemRoute,
   DemoStoreRoute: DemoStoreRoute,
   DemoTableRoute: DemoTableRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
