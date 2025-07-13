@@ -80,7 +80,11 @@ export function useAuth() {
         return
       }
 
-      const response = await csrfRequest(`${BACKEND_URL}/api/auth/profile`)
+      const response = await fetch(`${BACKEND_URL}/api/auth/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      })
 
       if (response.ok) {
         const data = await response.json()
@@ -103,8 +107,11 @@ export function useAuth() {
 
   const login = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
-      const response = await csrfRequest(`${BACKEND_URL}/api/auth/login`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(credentials),
       })
 
@@ -148,8 +155,11 @@ export function useAuth() {
     mutationFn: async (userData: { email: string; password: string; name: string }) => {
       console.log('🔄 Sending registration request:', { email: userData.email, name: userData.name })
       
-      const response = await csrfRequest(`${BACKEND_URL}/api/auth/register`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/register`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(userData),
       })
 
@@ -200,8 +210,18 @@ export function useAuth() {
     mutationFn: async () => {
       console.log('🔄 Sending logout request...')
       
-      const response = await csrfRequest(`${BACKEND_URL}/api/auth/logout`, {
+      const authToken = localStorage.getItem('authToken')
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`
+      }
+      
+      const response = await fetch(`${BACKEND_URL}/api/auth/logout`, {
         method: 'POST',
+        headers
       })
 
       console.log('📡 Logout response:', {
@@ -252,8 +272,11 @@ export function useAuth() {
   // Function to resend confirmation email
   const resendConfirmationEmail = useMutation({
     mutationFn: async (email: string) => {
-      const response = await csrfRequest(`${BACKEND_URL}/api/auth/resend-confirmation`, {
+      const response = await fetch(`${BACKEND_URL}/api/auth/resend-confirmation`, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ email }),
       })
 
