@@ -198,8 +198,16 @@ export function useAuth() {
 
   const logout = useMutation({
     mutationFn: async () => {
+      console.log('🔄 Sending logout request...')
+      
       const response = await csrfRequest(`${BACKEND_URL}/api/auth/logout`, {
         method: 'POST',
+      })
+
+      console.log('📡 Logout response:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
       })
 
       if (!response.ok) {
@@ -207,6 +215,8 @@ export function useAuth() {
         
         try {
           const errorData = await response.json()
+          console.log('❌ Logout error response:', errorData)
+          
           // Handle different error response structures
           if (errorData.error) {
             errorMessage = errorData.error
@@ -216,6 +226,7 @@ export function useAuth() {
             errorMessage = errorData
           }
         } catch (parseError) {
+          console.error('❌ Failed to parse logout error response:', parseError)
           // If we can't parse the JSON, use status text
           errorMessage = response.statusText || `HTTP ${response.status}: Logout failed`
         }
@@ -223,12 +234,18 @@ export function useAuth() {
         throw new Error(errorMessage)
       }
 
-      return response.json()
+      const successData = await response.json()
+      console.log('✅ Logout success:', successData)
+      return successData
     },
     onSuccess: () => {
+      console.log('✅ Logout successful, clearing auth state...')
       localStorage.removeItem('authToken')
       setAuthState({ user: null, isAuthenticated: false, isLoading: false })
       queryClient.clear() // Clear all queries
+    },
+    onError: (error) => {
+      console.error('❌ Logout error:', error)
     }
   })
 
