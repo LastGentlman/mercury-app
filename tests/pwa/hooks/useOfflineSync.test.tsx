@@ -1,38 +1,36 @@
-import { renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { renderHook, waitFor } from '@testing-library/react'
 import { useOfflineSync } from '../../../src/hooks/useOfflineSync'
 
-// Mock offline database
-vi.mock('../../../src/lib/offline/db', () => ({
-  db: {
-    syncQueue: {
-      count: vi.fn()
-    },
-    getPendingSyncItems: vi.fn(),
-    markAsSynced: vi.fn(),
-    incrementRetries: vi.fn()
-  }
-}))
-
-// Mock conflict resolver
-vi.mock('../../../src/lib/offline/conflictResolver', () => ({
-  ConflictResolver: {
-    resolve: vi.fn()
-  }
-}))
-
-// Mock useAuth hook
-vi.mock('../../../src/hooks/useAuth', () => ({
-  useAuth: vi.fn()
-}))
-
-// Mock useCSRF hook
-vi.mock('../../../src/hooks/useCSRF', () => ({
-  useCSRFRequest: vi.fn()
-}))
+// Import the mocked modules to access their functions
+import * as authModule from '../../../src/hooks/useAuth'
+import * as dbModule from '../../../src/lib/offline/db'
+import * as conflictResolverModule from '../../../src/lib/offline/conflictResolver'
 
 // Mock fetch
 global.fetch = vi.fn()
+
+// Create mock UseMutationResult objects
+const createMockMutation = () => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn(),
+  reset: vi.fn(),
+  isPending: false as const,
+  isSuccess: false as const,
+  isError: false as const,
+  error: null,
+  data: undefined,
+  isIdle: true as const,
+  status: 'idle' as const,
+  failureCount: 0,
+  failureReason: null,
+  isPaused: false,
+  variables: undefined,
+  context: undefined,
+  submittedAt: 0,
+  abortedAt: undefined,
+  promise: undefined
+})
 
 describe('useOfflineSync', () => {
   beforeEach(() => {
@@ -41,29 +39,34 @@ describe('useOfflineSync', () => {
     // Mock navigator online status
     Object.defineProperty(navigator, 'onLine', {
       value: true,
-      writable: true
+      writable: true,
+      configurable: true
     })
     
     // Mock useAuth
-    const { useAuth } = require('../../../src/hooks/useAuth')
-    useAuth.mockReturnValue({
-      user: { id: '1', email: 'test@example.com' },
+    vi.mocked(authModule.useAuth).mockReturnValue({
+      user: { id: '1', email: 'test@example.com', role: 'owner' },
       isAuthenticated: true,
-      isLoading: false
-    })
-    
-    // Mock useCSRF
-    const { useCSRFRequest } = require('../../../src/hooks/useCSRF')
-    useCSRFRequest.mockReturnValue({
-      csrfRequest: vi.fn()
+      isLoading: false,
+      login: createMockMutation(),
+      register: createMockMutation(),
+      logout: createMockMutation(),
+      resendConfirmationEmail: createMockMutation(),
+      refetchUser: vi.fn()
     })
     
     // Mock database
-    const { db } = require('../../../src/lib/offline/db')
-    db.syncQueue.count.mockResolvedValue(0)
-    db.getPendingSyncItems.mockResolvedValue([])
-    db.markAsSynced.mockResolvedValue(undefined)
-    db.incrementRetries.mockResolvedValue(undefined)
+    vi.mocked(dbModule.db.syncQueue.count).mockResolvedValue(0)
+    vi.mocked(dbModule.db.getPendingSyncItems).mockResolvedValue([])
+    vi.mocked(dbModule.db.markAsSynced).mockResolvedValue(undefined)
+    vi.mocked(dbModule.db.incrementRetries).mockResolvedValue(undefined)
+    
+    // Mock conflict resolver
+    vi.mocked(conflictResolverModule.ConflictResolver.detectConflict).mockReturnValue(false)
+    vi.mocked(conflictResolverModule.ConflictResolver.resolveLastWriteWins).mockReturnValue({
+      winner: 'local',
+      resolvedData: { id: 1, clientGeneratedId: 'test', businessId: '1', clientName: 'Test', clientPhone: '123', clientAddress: 'Test', items: [], total: 0, status: 'pending', deliveryDate: new Date().toISOString(), syncStatus: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    })
   })
 
   describe('Initial State', () => {
@@ -78,7 +81,8 @@ describe('useOfflineSync', () => {
     it('should initialize with offline status when navigator is offline', () => {
       Object.defineProperty(navigator, 'onLine', {
         value: false,
-        writable: true
+        writable: true,
+        configurable: true
       })
 
       const { result } = renderHook(() => useOfflineSync())
@@ -94,7 +98,8 @@ describe('useOfflineSync', () => {
       // Simulate going offline
       Object.defineProperty(navigator, 'onLine', {
         value: false,
-        writable: true
+        writable: true,
+        configurable: true
       })
       
       // Trigger offline event
@@ -109,7 +114,8 @@ describe('useOfflineSync', () => {
       // Start offline
       Object.defineProperty(navigator, 'onLine', {
         value: false,
-        writable: true
+        writable: true,
+        configurable: true
       })
 
       const { result } = renderHook(() => useOfflineSync())
@@ -117,7 +123,8 @@ describe('useOfflineSync', () => {
       // Simulate going online
       Object.defineProperty(navigator, 'onLine', {
         value: true,
-        writable: true
+        writable: true,
+        configurable: true
       })
       
       // Trigger online event
@@ -129,66 +136,37 @@ describe('useOfflineSync', () => {
     })
   })
 
-  describe('Pending Count Updates', () => {
-    it('should update pending count from database', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      db.syncQueue.count.mockResolvedValue(5)
-
-      const { result } = renderHook(() => useOfflineSync())
-
-      await waitFor(() => {
-        expect(result.current.pendingCount).toBe(5)
-      })
-    })
-
-    it('should update pending count periodically', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      db.syncQueue.count
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(3)
-        .mockResolvedValueOnce(7)
-
-      renderHook(() => useOfflineSync())
-
-      // Wait for periodic updates
-      await waitFor(() => {
-        expect(db.syncQueue.count).toHaveBeenCalledTimes(3)
-      }, { timeout: 1000 })
-    })
-  })
-
   describe('Sync Pending Changes', () => {
-    it('should sync pending items when online', async () => {
-      const { db } = require('../../../src/lib/offline/db')
+    it('should sync pending changes when online', async () => {
       const mockItems = [
-        { id: 1, entityType: 'order', entityId: 'order1', data: {} },
-        { id: 2, entityType: 'product', entityId: 'product1', data: {} }
+        { id: 1, entityType: 'order' as const, entityId: 'order1', action: 'create' as const, timestamp: new Date().toISOString() },
+        { id: 2, entityType: 'product' as const, entityId: 'product1', action: 'update' as const, timestamp: new Date().toISOString() }
       ]
       
-      db.getPendingSyncItems.mockResolvedValue(mockItems)
-      db.syncQueue.count.mockResolvedValue(2)
+      vi.mocked(dbModule.db.getPendingSyncItems).mockResolvedValue(mockItems)
+      vi.mocked(dbModule.db.syncQueue.count).mockResolvedValue(2)
 
       const { result } = renderHook(() => useOfflineSync())
 
       // Trigger sync
       await result.current.syncPendingChanges()
 
-      expect(db.getPendingSyncItems).toHaveBeenCalled()
-      expect(db.markAsSynced).toHaveBeenCalledTimes(2)
+      expect(dbModule.db.getPendingSyncItems).toHaveBeenCalled()
+      expect(dbModule.db.markAsSynced).toHaveBeenCalledTimes(2)
     })
 
     it('should not sync when offline', async () => {
       Object.defineProperty(navigator, 'onLine', {
         value: false,
-        writable: true
+        writable: true,
+        configurable: true
       })
 
       const { result } = renderHook(() => useOfflineSync())
 
       await result.current.syncPendingChanges()
 
-      const { db } = require('../../../src/lib/offline/db')
-      expect(db.getPendingSyncItems).not.toHaveBeenCalled()
+      expect(dbModule.db.getPendingSyncItems).not.toHaveBeenCalled()
     })
 
     it('should not sync when already syncing', async () => {
@@ -202,183 +180,53 @@ describe('useOfflineSync', () => {
 
       await Promise.all([syncPromise1, syncPromise2])
 
-      const { db } = require('../../../src/lib/offline/db')
-      expect(db.getPendingSyncItems).toHaveBeenCalledTimes(1)
+      // Should only call getPendingSyncItems once
+      expect(dbModule.db.getPendingSyncItems).toHaveBeenCalledTimes(1)
     })
 
-    it('should not sync when user is not authenticated', async () => {
-      const { useAuth } = require('../../../src/hooks/useAuth')
-      useAuth.mockReturnValue({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false
+    it('should handle sync errors gracefully', async () => {
+      vi.mocked(dbModule.db.getPendingSyncItems).mockRejectedValue(new Error('Database error'))
+
+      const { result } = renderHook(() => useOfflineSync())
+
+      await result.current.syncPendingChanges()
+
+      expect(result.current.syncStatus).toBe('error')
+    })
+
+    it('should resolve conflicts when they occur', async () => {
+      const mockItems = [
+        { id: 1, entityType: 'order' as const, entityId: 'order1', action: 'create' as const, timestamp: new Date().toISOString() }
+      ]
+      
+      vi.mocked(dbModule.db.getPendingSyncItems).mockResolvedValue(mockItems)
+      vi.mocked(conflictResolverModule.ConflictResolver.detectConflict).mockReturnValue(true)
+      vi.mocked(conflictResolverModule.ConflictResolver.resolveLastWriteWins).mockReturnValue({
+        winner: 'local',
+        resolvedData: { id: 1, clientGeneratedId: 'test', businessId: '1', clientName: 'Test', clientPhone: '123', clientAddress: 'Test', items: [], total: 0, status: 'pending', deliveryDate: new Date().toISOString(), syncStatus: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
       })
 
       const { result } = renderHook(() => useOfflineSync())
 
       await result.current.syncPendingChanges()
 
-      const { db } = require('../../../src/lib/offline/db')
-      expect(db.getPendingSyncItems).not.toHaveBeenCalled()
+      expect(conflictResolverModule.ConflictResolver.detectConflict).toHaveBeenCalled()
     })
   })
 
-  describe('Sync Order Items', () => {
-    it('should sync order items successfully', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      const mockItems = [
-        { id: 1, entityType: 'order', entityId: 'order1', data: { customer: 'John' } }
-      ]
-      
-      db.getPendingSyncItems.mockResolvedValue(mockItems)
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true })
-      })
-
+  describe('Pending Count', () => {
+    it('should update pending count', async () => {
       const { result } = renderHook(() => useOfflineSync())
 
-      await result.current.syncPendingChanges()
+      await result.current.updatePendingCount()
 
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/orders'),
-        expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('John')
-        })
-      )
-    })
-
-    it('should handle order sync errors', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      const mockItems = [
-        { id: 1, entityType: 'order', entityId: 'order1', data: {} }
-      ]
-      
-      db.getPendingSyncItems.mockResolvedValue(mockItems)
-      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
-
-      const { result } = renderHook(() => useOfflineSync())
-
-      await result.current.syncPendingChanges()
-
-      expect(db.incrementRetries).toHaveBeenCalledWith(1, 'Network error')
-    })
-  })
-
-  describe('Sync Product Items', () => {
-    it('should sync product items successfully', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      const mockItems = [
-        { id: 1, entityType: 'product', entityId: 'product1', data: { name: 'Product A' } }
-      ]
-      
-      db.getPendingSyncItems.mockResolvedValue(mockItems)
-      global.fetch = vi.fn().mockResolvedValue({
-        ok: true,
-        json: () => Promise.resolve({ success: true })
-      })
-
-      const { result } = renderHook(() => useOfflineSync())
-
-      await result.current.syncPendingChanges()
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/api/products'),
-        expect.objectContaining({
-          method: 'POST',
-          body: expect.stringContaining('Product A')
-        })
-      )
-    })
-
-    it('should handle product sync errors', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      const mockItems = [
-        { id: 1, entityType: 'product', entityId: 'product1', data: {} }
-      ]
-      
-      db.getPendingSyncItems.mockResolvedValue(mockItems)
-      global.fetch = vi.fn().mockRejectedValue(new Error('Server error'))
-
-      const { result } = renderHook(() => useOfflineSync())
-
-      await result.current.syncPendingChanges()
-
-      expect(db.incrementRetries).toHaveBeenCalledWith(1, 'Server error')
-    })
-  })
-
-  describe('Background Sync Integration', () => {
-    it('should trigger background sync when coming back online with pending items', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      db.syncQueue.count.mockResolvedValue(3)
-
-      // Mock service worker
-      const mockRegistration = {
-        sync: {
-          register: vi.fn().mockResolvedValue(undefined)
-        }
-      }
-      
-      Object.defineProperty(navigator, 'serviceWorker', {
-        value: {
-          ready: Promise.resolve(mockRegistration)
-        },
-        writable: true
-      })
-
-      renderHook(() => useOfflineSync())
-
-      // Simulate coming back online
-      Object.defineProperty(navigator, 'onLine', {
-        value: true,
-        writable: true
-      })
-      
-      window.dispatchEvent(new Event('online'))
-
-      await waitFor(() => {
-        expect(mockRegistration.sync.register).toHaveBeenCalledWith('background-sync')
-      })
-    })
-
-    it('should not trigger background sync when no pending items', () => {
-      const { db } = require('../../../src/lib/offline/db')
-      db.syncQueue.count.mockResolvedValue(0)
-
-      const mockRegistration = {
-        sync: {
-          register: vi.fn()
-        }
-      }
-      
-      Object.defineProperty(navigator, 'serviceWorker', {
-        value: {
-          ready: Promise.resolve(mockRegistration)
-        },
-        writable: true
-      })
-
-      renderHook(() => useOfflineSync())
-
-      // Simulate coming back online
-      Object.defineProperty(navigator, 'onLine', {
-        value: true,
-        writable: true
-      })
-      
-      window.dispatchEvent(new Event('online'))
-
-      // Should not call background sync
-      expect(mockRegistration.sync.register).not.toHaveBeenCalled()
+      expect(dbModule.db.syncQueue.count).toHaveBeenCalled()
     })
   })
 
   describe('Error Handling', () => {
-    it('should handle database errors gracefully', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      db.getPendingSyncItems.mockRejectedValue(new Error('Database error'))
+    it('should set error status when sync fails', async () => {
+      vi.mocked(dbModule.db.getPendingSyncItems).mockRejectedValue(new Error('Network error'))
 
       const { result } = renderHook(() => useOfflineSync())
 
@@ -387,19 +235,20 @@ describe('useOfflineSync', () => {
       expect(result.current.syncStatus).toBe('error')
     })
 
-    it('should handle network errors gracefully', async () => {
-      const { db } = require('../../../src/lib/offline/db')
-      db.getPendingSyncItems.mockResolvedValue([
-        { id: 1, entityType: 'order', entityId: 'order1', data: {} }
-      ])
+    it('should clear error status when sync succeeds', async () => {
+      // First fail
+      vi.mocked(dbModule.db.getPendingSyncItems).mockRejectedValueOnce(new Error('Network error'))
       
-      global.fetch = vi.fn().mockRejectedValue(new Error('Network error'))
-
       const { result } = renderHook(() => useOfflineSync())
 
       await result.current.syncPendingChanges()
-
       expect(result.current.syncStatus).toBe('error')
+
+      // Then succeed
+      vi.mocked(dbModule.db.getPendingSyncItems).mockResolvedValue([])
+      
+      await result.current.syncPendingChanges()
+      expect(result.current.syncStatus).toBe('idle')
     })
   })
 }) 

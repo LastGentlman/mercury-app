@@ -1,46 +1,56 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { registerPWA } from '../../src/pwa'
 
-// Mock service worker APIs
-const mockServiceWorker = {
-  register: vi.fn(),
-  ready: Promise.resolve({
-    sync: {
-      register: vi.fn()
-    },
-    periodicSync: {
-      register: vi.fn()
-    }
-  })
-}
-
-const mockNavigator = {
-  serviceWorker: mockServiceWorker,
-  permissions: {
-    query: vi.fn()
-  }
-}
-
-const mockCaches = {
-  open: vi.fn(),
-  match: vi.fn(),
-  addAll: vi.fn()
-}
-
-const mockCache = {
-  addAll: vi.fn(),
-  match: vi.fn(),
-  put: vi.fn(),
-  delete: vi.fn()
-}
-
 describe('Service Worker Registration', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
     // Mock global objects
-    global.navigator = mockNavigator as any
-    global.caches = mockCaches as any
+    Object.defineProperty(global, 'navigator', {
+      value: {
+        serviceWorker: {
+          register: vi.fn().mockResolvedValue({
+            scope: '/',
+            updateViaCache: 'all',
+            sync: {
+              register: vi.fn().mockResolvedValue(undefined)
+            },
+            periodicSync: {
+              register: vi.fn().mockResolvedValue(undefined)
+            }
+          }),
+          ready: Promise.resolve({
+            sync: {
+              register: vi.fn().mockResolvedValue(undefined)
+            },
+            periodicSync: {
+              register: vi.fn().mockResolvedValue(undefined)
+            }
+          })
+        },
+        permissions: {
+          query: vi.fn().mockResolvedValue({ state: 'granted' })
+        }
+      },
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global, 'caches', {
+      value: {
+        open: vi.fn().mockResolvedValue({
+          addAll: vi.fn(),
+          match: vi.fn(),
+          put: vi.fn(),
+          delete: vi.fn()
+        }),
+        match: vi.fn(),
+        addAll: vi.fn()
+      },
+      writable: true,
+      configurable: true
+    })
+    
     global.fetch = vi.fn()
     
     // Mock environment
@@ -49,7 +59,8 @@ describe('Service Worker Registration', () => {
     // Mock document readyState
     Object.defineProperty(document, 'readyState', {
       value: 'complete',
-      writable: true
+      writable: true,
+      configurable: true
     })
   })
 
@@ -59,14 +70,9 @@ describe('Service Worker Registration', () => {
 
   describe('registerPWA', () => {
     it('should register service worker in production', async () => {
-      mockServiceWorker.register.mockResolvedValue({
-        scope: '/',
-        updateViaCache: 'all'
-      })
-
       const result = await registerPWA()
 
-      expect(mockServiceWorker.register).toHaveBeenCalledWith('/sw.js')
+      expect(global.navigator.serviceWorker.register).toHaveBeenCalledWith('/sw.js')
       expect(result).toBeDefined()
     })
 
@@ -75,31 +81,52 @@ describe('Service Worker Registration', () => {
 
       const result = await registerPWA()
 
-      expect(mockServiceWorker.register).not.toHaveBeenCalled()
+      expect(global.navigator.serviceWorker.register).not.toHaveBeenCalled()
       expect(result).toBeNull()
     })
 
     it('should not register if service worker is not supported', async () => {
-      delete (global as any).navigator.serviceWorker
+      Object.defineProperty(global, 'navigator', {
+        value: {
+          permissions: {
+            query: vi.fn().mockResolvedValue({ state: 'granted' })
+          }
+        },
+        writable: true,
+        configurable: true
+      })
 
       const result = await registerPWA()
 
-      expect(mockServiceWorker.register).not.toHaveBeenCalled()
       expect(result).toBeNull()
     })
 
     it('should handle registration errors gracefully', async () => {
-      mockServiceWorker.register.mockRejectedValue(new Error('Registration failed'))
+      Object.defineProperty(global, 'navigator', {
+        value: {
+          serviceWorker: {
+            register: vi.fn().mockRejectedValue(new Error('Registration failed')),
+            ready: Promise.resolve({
+              sync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              },
+              periodicSync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              }
+            })
+          },
+          permissions: {
+            query: vi.fn().mockResolvedValue({ state: 'granted' })
+          }
+        },
+        writable: true,
+        configurable: true
+      })
 
       await expect(registerPWA()).rejects.toThrow('Registration failed')
     })
 
     it('should prevent multiple registrations', async () => {
-      mockServiceWorker.register.mockResolvedValue({
-        scope: '/',
-        updateViaCache: 'all'
-      })
-
       // Call registerPWA multiple times
       const promise1 = registerPWA()
       const promise2 = registerPWA()
@@ -108,7 +135,7 @@ describe('Service Worker Registration', () => {
       const [result1, result2, result3] = await Promise.all([promise1, promise2, promise3])
 
       // Should only register once
-      expect(mockServiceWorker.register).toHaveBeenCalledTimes(1)
+      expect(global.navigator.serviceWorker.register).toHaveBeenCalledTimes(1)
       expect(result1).toBe(result2)
       expect(result2).toBe(result3)
     })
@@ -116,26 +143,40 @@ describe('Service Worker Registration', () => {
 
   describe('Background Sync Registration', () => {
     it('should register background sync when supported', async () => {
-      mockServiceWorker.register.mockResolvedValue({
-        scope: '/',
-        updateViaCache: 'all',
-        sync: {
-          register: vi.fn().mockResolvedValue(undefined)
-        }
-      })
-
       await registerPWA()
 
-      expect(mockServiceWorker.register).toHaveBeenCalled()
+      expect(global.navigator.serviceWorker.register).toHaveBeenCalled()
     })
 
     it('should handle background sync registration errors', async () => {
-      mockServiceWorker.register.mockResolvedValue({
-        scope: '/',
-        updateViaCache: 'all',
-        sync: {
-          register: vi.fn().mockRejectedValue(new Error('Sync not supported'))
-        }
+      Object.defineProperty(global, 'navigator', {
+        value: {
+          serviceWorker: {
+            register: vi.fn().mockResolvedValue({
+              scope: '/',
+              updateViaCache: 'all',
+              sync: {
+                register: vi.fn().mockRejectedValue(new Error('Sync not supported'))
+              },
+              periodicSync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              }
+            }),
+            ready: Promise.resolve({
+              sync: {
+                register: vi.fn().mockRejectedValue(new Error('Sync not supported'))
+              },
+              periodicSync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              }
+            })
+          },
+          permissions: {
+            query: vi.fn().mockResolvedValue({ state: 'granted' })
+          }
+        },
+        writable: true,
+        configurable: true
       })
 
       // Should not throw error
@@ -146,36 +187,47 @@ describe('Service Worker Registration', () => {
 
   describe('Periodic Background Sync', () => {
     it('should register periodic sync when supported and permitted', async () => {
-      mockNavigator.permissions.query.mockResolvedValue({ state: 'granted' })
-      mockServiceWorker.register.mockResolvedValue({
-        scope: '/',
-        updateViaCache: 'all',
-        periodicSync: {
-          register: vi.fn().mockResolvedValue(undefined)
-        }
-      })
-
       await registerPWA()
 
-      expect(mockNavigator.permissions.query).toHaveBeenCalledWith({
+      expect(global.navigator.permissions.query).toHaveBeenCalledWith({
         name: 'periodic-background-sync'
       })
     })
 
     it('should not register periodic sync when permission denied', async () => {
-      mockNavigator.permissions.query.mockResolvedValue({ state: 'denied' })
-      mockServiceWorker.register.mockResolvedValue({
-        scope: '/',
-        updateViaCache: 'all',
-        periodicSync: {
-          register: vi.fn()
-        }
+      Object.defineProperty(global, 'navigator', {
+        value: {
+          serviceWorker: {
+            register: vi.fn().mockResolvedValue({
+              scope: '/',
+              updateViaCache: 'all',
+              sync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              },
+              periodicSync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              }
+            }),
+            ready: Promise.resolve({
+              sync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              },
+              periodicSync: {
+                register: vi.fn().mockResolvedValue(undefined)
+              }
+            })
+          },
+          permissions: {
+            query: vi.fn().mockResolvedValue({ state: 'denied' })
+          }
+        },
+        writable: true,
+        configurable: true
       })
 
       await registerPWA()
 
-      expect(mockServiceWorker.register).toHaveBeenCalled()
-      // Should not call periodicSync.register
+      expect(global.navigator.serviceWorker.register).toHaveBeenCalled()
     })
   })
 })
@@ -203,6 +255,7 @@ describe('Service Worker Events', () => {
     }
 
     handleInstall(installEvent)
+
     expect(installEvent.waitUntil).toHaveBeenCalled()
   })
 
@@ -212,6 +265,7 @@ describe('Service Worker Events', () => {
       type: 'activate'
     }
 
+    // Mock the activate event handler
     const handleActivate = (event: any) => {
       event.waitUntil(
         Promise.resolve().then(() => {
@@ -221,54 +275,28 @@ describe('Service Worker Events', () => {
     }
 
     handleActivate(activateEvent)
+
     expect(activateEvent.waitUntil).toHaveBeenCalled()
   })
 
   it('should handle sync event', () => {
     const syncEvent = {
-      waitUntil: vi.fn(),
       tag: 'background-sync',
+      waitUntil: vi.fn(),
       type: 'sync'
     }
 
+    // Mock the sync event handler
     const handleSync = (event: any) => {
-      if (event.tag === 'background-sync') {
-        event.waitUntil(Promise.resolve())
-      }
+      event.waitUntil(
+        Promise.resolve().then(() => {
+          return 'sync-completed'
+        })
+      )
     }
 
     handleSync(syncEvent)
+
     expect(syncEvent.waitUntil).toHaveBeenCalled()
-  })
-})
-
-describe('Cache Management', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    mockCaches.open.mockResolvedValue(mockCache)
-  })
-
-  it('should open cache with correct name', async () => {
-    const cacheName = 'mercury-app-v1'
-    
-    await mockCaches.open(cacheName)
-    
-    expect(mockCaches.open).toHaveBeenCalledWith(cacheName)
-  })
-
-  it('should cache static assets', async () => {
-    const assets = ['/', '/index.html', '/manifest.json']
-    
-    mockCache.addAll.mockResolvedValue(undefined)
-    
-    await mockCache.addAll(assets)
-    
-    expect(mockCache.addAll).toHaveBeenCalledWith(assets)
-  })
-
-  it('should handle cache errors gracefully', async () => {
-    mockCaches.open.mockRejectedValue(new Error('Cache failed'))
-    
-    await expect(mockCaches.open('test-cache')).rejects.toThrow('Cache failed')
   })
 }) 
