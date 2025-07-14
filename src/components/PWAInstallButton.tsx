@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
 import { getPWALaunchMethod, isPWAInstalled, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa'
+import { useWindowEventListener } from '../hooks/useEventListener'
 
 export function PWAInstallButton() {
   const [canInstall, setCanInstall] = useState(false)
@@ -11,19 +12,15 @@ export function PWAInstallButton() {
     // Check if already installed
     setIsInstalled(isPWAInstalled())
     setLaunchMethod(getPWALaunchMethod())
-
-    // Listen for install prompt availability
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault()
-      setCanInstall(true)
-    }
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
-    }
   }, [])
+
+  // ✅ CORREGIDO: Usar hook seguro para event listeners
+  const handleBeforeInstallPrompt = (e: Event) => {
+    e.preventDefault()
+    setCanInstall(true)
+  }
+
+  useWindowEventListener('beforeinstallprompt', handleBeforeInstallPrompt)
 
   const handleInstall = async () => {
     try {

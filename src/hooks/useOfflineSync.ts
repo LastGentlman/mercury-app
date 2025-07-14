@@ -1,39 +1,34 @@
 import { useCallback, useEffect, useState } from 'react'
 import { BACKEND_URL } from '../config'
-import { db } from '../lib/offline/db'
 import { ConflictResolver } from '../lib/offline/conflictResolver'
+import { db } from '../lib/offline/db'
 import { useAuth } from './useAuth'
 import { useCSRFRequest } from './useCSRF'
+import { useWindowEventListener } from './useEventListener'
 import type { Order, Product, SyncQueueItem } from '../types'
 
 export function useOfflineSync() {
+  const { user } = useAuth()
+  const { csrfRequest } = useCSRFRequest()
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle')
   const [pendingCount, setPendingCount] = useState(0)
-  const { user } = useAuth()
-  const { csrfRequest } = useCSRFRequest()
 
-  // Detectar cambios de conexión
-  useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      console.log('🌐 Conexión restaurada. Sincronizando...')
-      syncPendingChanges()
-    }
-
-    const handleOffline = () => {
-      setIsOnline(false)
-      console.log('📴 Sin conexión. Los cambios se guardarán localmente.')
-    }
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-    }
+  // ✅ CORREGIDO: Usar hook seguro para event listeners
+  const handleOnline = useCallback(() => {
+    setIsOnline(true)
+    console.log('🌐 Conexión restaurada. Sincronizando...')
+    syncPendingChanges()
   }, [])
+
+  const handleOffline = useCallback(() => {
+    setIsOnline(false)
+    console.log('📴 Sin conexión. Los cambios se guardarán localmente.')
+  }, [])
+
+  // ✅ CORREGIDO: Usar hook seguro para event listeners
+  useWindowEventListener('online', handleOnline)
+  useWindowEventListener('offline', handleOffline)
 
   // Actualizar contador de items pendientes
   const updatePendingCount = useCallback(async () => {

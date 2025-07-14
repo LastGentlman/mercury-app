@@ -148,26 +148,57 @@ beforeEach(() => {
 
   // Mock window - preserve existing window and add what we need
   if (global.window) {
-    Object.assign(global.window, {
-      beforeinstallprompt: mockBeforeInstallPrompt,
-      matchMedia: vi.fn().mockReturnValue({
+    // Use Object.defineProperty for read-only properties
+    Object.defineProperty(global.window, 'beforeinstallprompt', {
+      value: mockBeforeInstallPrompt,
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.window, 'matchMedia', {
+      value: vi.fn().mockReturnValue({
         matches: false,
         addListener: vi.fn(),
         removeListener: vi.fn(),
         addEventListener: vi.fn(),
         removeEventListener: vi.fn()
       }),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-      location: {
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.window, 'addEventListener', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.window, 'removeEventListener', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.window, 'dispatchEvent', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.window, 'location', {
+      value: {
         href: 'http://localhost:3000',
         origin: 'http://localhost:3000',
         pathname: '/',
         search: '',
         hash: ''
       },
-      localStorage: {
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.window, 'localStorage', {
+      value: {
         getItem: vi.fn(),
         setItem: vi.fn(),
         removeItem: vi.fn(),
@@ -175,14 +206,21 @@ beforeEach(() => {
         key: vi.fn(),
         length: 0
       },
-      sessionStorage: {
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.window, 'sessionStorage', {
+      value: {
         getItem: vi.fn(),
         setItem: vi.fn(),
         removeItem: vi.fn(),
         clear: vi.fn(),
         key: vi.fn(),
         length: 0
-      }
+      },
+      writable: true,
+      configurable: true
     })
   }
 
@@ -193,12 +231,35 @@ beforeEach(() => {
       value: 'complete',
       configurable: true
     })
-    Object.assign(global.document, {
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      getElementById: vi.fn(),
-      querySelector: vi.fn(),
-      querySelectorAll: vi.fn()
+    
+    Object.defineProperty(global.document, 'addEventListener', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.document, 'removeEventListener', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.document, 'getElementById', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.document, 'querySelector', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.document, 'querySelectorAll', {
+      value: vi.fn(),
+      writable: true,
+      configurable: true
     })
   }
 

@@ -1,82 +1,163 @@
-// src/pwa.ts - FIXED VERSION (Crash-Safe)
+// src/pwa.ts - ENHANCED VERSION (Debounced & Race-Condition Safe)
 
-let registrationPromise: Promise<ServiceWorkerRegistration> | null = null;
+// ✅ MEJORADO: Variables de control para debouncing y race conditions
+let registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
 let isRegistering = false;
+let registrationTimeout: NodeJS.Timeout | null = null;
+let lastRegistrationAttempt = 0;
+const REGISTRATION_DEBOUNCE_MS = 1000; // 1 segundo de debounce
+const MAX_REGISTRATION_ATTEMPTS = 3;
+let registrationAttempts = 0;
 
-// PWA registration with proper error handling and debouncing
-export function registerPWA() {
-  // Prevent multiple registrations
-  if (isRegistering || registrationPromise) {
+// ✅ MEJORADO: PWA registration con debouncing y protección robusta
+export function registerPWA(): Promise<ServiceWorkerRegistration | null> {
+  const now = Date.now();
+  
+  // ✅ Protección contra múltiples llamadas simultáneas
+  if (isRegistering) {
+    console.log('🔄 Service Worker registration already in progress, returning existing promise');
+    return registrationPromise || Promise.resolve(null);
+  }
+  
+  // ✅ Si ya hay una promesa de registro, retornarla
+  if (registrationPromise) {
+    console.log('🔄 Service Worker already registered or registration in progress');
     return registrationPromise;
   }
-
-  // Only register in production and if service worker is supported
-  if (!('serviceWorker' in navigator) || !import.meta.env.PROD) {
-    console.log('⚠️ Service Worker not supported or not in production mode');
+  
+  // ✅ Debouncing: prevenir registros muy frecuentes
+  if (now - lastRegistrationAttempt < REGISTRATION_DEBOUNCE_MS) {
+    console.log('⏱️ Registration debounced, too soon since last attempt');
     return Promise.resolve(null);
   }
-
+  
+  // ✅ Límite de intentos para prevenir loops infinitos
+  if (registrationAttempts >= MAX_REGISTRATION_ATTEMPTS) {
+    console.error('❌ Maximum registration attempts reached, aborting');
+    return Promise.resolve(null);
+  }
+  
+  // ✅ Verificaciones de soporte y entorno
+  if (!('serviceWorker' in navigator)) {
+    console.log('⚠️ Service Worker not supported');
+    return Promise.resolve(null);
+  }
+  
+  if (!import.meta.env.PROD) {
+    console.log('⚠️ Service Worker registration skipped in development mode');
+    return Promise.resolve(null);
+  }
+  
+  // ✅ Actualizar estado de control
   isRegistering = true;
-
-  registrationPromise = new Promise((resolve, reject) => {
-    const registerSW = () => {
-      navigator.serviceWorker
-        .register('/sw.js')
-        .then(async (registration) => {
-          console.log('✅ SW registered:', registration);
-          
-          try {
-            // Register Background Sync with error handling
-            await registerBackgroundSync(registration);
-            
-            // Register Periodic Background Sync with error handling
-            await registerPeriodicBackgroundSync(registration);
-            
-            // Handle updates with proper error handling
-            setupUpdateHandler(registration);
-            
-            resolve(registration);
-          } catch (error) {
-            console.error('❌ Post-registration setup failed:', error);
-            resolve(registration); // Still resolve as registration succeeded
-          }
-        })
-        .catch((registrationError) => {
-          console.error('❌ SW registration failed:', registrationError);
-          reject(registrationError);
-        })
-        .finally(() => {
-          isRegistering = false;
+  lastRegistrationAttempt = now;
+  registrationAttempts++;
+  
+  console.log(`🔄 Starting Service Worker registration (attempt ${registrationAttempts}/${MAX_REGISTRATION_ATTEMPTS})`);
+  
+  // ✅ MEJORADO: Promise con timeout y mejor manejo de errores
+  registrationPromise = new Promise<ServiceWorkerRegistration | null>((resolve, reject) => {
+    // ✅ Timeout para prevenir bloqueos infinitos
+    const timeoutId = setTimeout(() => {
+      console.error('❌ Service Worker registration timeout');
+      cleanupRegistrationState();
+      reject(new Error('Service Worker registration timeout'));
+    }, 10000); // 10 segundos timeout
+    
+    const registerSW = async () => {
+      try {
+        // ✅ Limpiar timeout anterior si existe
+        if (registrationTimeout) {
+          clearTimeout(registrationTimeout);
+        }
+        
+        // ✅ Intentar registro con retry automático
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+          scope: '/',
+          updateViaCache: 'all'
         });
+        
+        console.log('✅ Service Worker registered successfully:', registration);
+        
+        // ✅ Configurar funcionalidades adicionales
+        await setupServiceWorkerFeatures(registration);
+        
+        clearTimeout(timeoutId);
+        cleanupRegistrationState();
+        resolve(registration);
+        
+      } catch (registrationError) {
+        console.error('❌ Service Worker registration failed:', registrationError);
+        clearTimeout(timeoutId);
+        cleanupRegistrationState();
+        
+        // ✅ Reintento automático para errores específicos
+        if (registrationAttempts < MAX_REGISTRATION_ATTEMPTS && 
+            registrationError instanceof Error && 
+            registrationError.message.includes('network')) {
+          console.log('🔄 Retrying registration due to network error...');
+          setTimeout(() => {
+            registrationPromise = null;
+            registerPWA().then(resolve).catch(reject);
+          }, 2000); // Esperar 2 segundos antes del retry
+        } else {
+          reject(registrationError);
+        }
+      }
     };
-
-    // Register on load or immediately if already loaded
+    
+    // ✅ Registrar cuando el DOM esté listo
     if (document.readyState === 'loading') {
       window.addEventListener('load', registerSW, { once: true });
     } else {
       registerSW();
     }
   });
-
+  
   return registrationPromise;
 }
 
-// Setup update handler with proper cleanup
+// ✅ MEJORADO: Función de limpieza centralizada
+function cleanupRegistrationState() {
+  isRegistering = false;
+  if (registrationTimeout) {
+    clearTimeout(registrationTimeout);
+    registrationTimeout = null;
+  }
+}
+
+// ✅ MEJORADO: Configuración de funcionalidades del Service Worker
+async function setupServiceWorkerFeatures(registration: ServiceWorkerRegistration) {
+  try {
+    // ✅ Configurar manejador de actualizaciones
+    setupUpdateHandler(registration);
+    
+    // ✅ Registrar Background Sync
+    await registerBackgroundSync(registration);
+    
+    // ✅ Registrar Periodic Background Sync
+    await registerPeriodicBackgroundSync(registration);
+    
+    console.log('✅ Service Worker features configured successfully');
+  } catch (error) {
+    console.error('❌ Service Worker features setup failed:', error);
+    // ✅ No fallar el registro principal por errores en features
+  }
+}
+
+// ✅ MEJORADO: Setup update handler con mejor cleanup
 function setupUpdateHandler(registration: ServiceWorkerRegistration) {
   try {
-    registration.addEventListener('updatefound', () => {
+    const updateHandler = () => {
       const newWorker = registration.installing;
       if (newWorker) {
         const stateChangeHandler = () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // New content is available, show update prompt
-            const shouldUpdate = confirm('New version available! Reload to update?');
-            if (shouldUpdate) {
-              window.location.reload();
-            }
+            // ✅ Mostrar prompt de actualización de forma no bloqueante
+            showUpdateNotification();
           }
           
-          // Clean up listener when worker is activated or redundant
+          // ✅ Cleanup automático del listener
           if (newWorker.state === 'activated' || newWorker.state === 'redundant') {
             newWorker.removeEventListener('statechange', stateChangeHandler);
           }
@@ -84,9 +165,45 @@ function setupUpdateHandler(registration: ServiceWorkerRegistration) {
 
         newWorker.addEventListener('statechange', stateChangeHandler);
       }
-    });
+    };
+
+    registration.addEventListener('updatefound', updateHandler);
+    
+    // ✅ Cleanup cuando sea necesario
+    return () => {
+      registration.removeEventListener('updatefound', updateHandler);
+    };
   } catch (error) {
     console.error('❌ Update handler setup failed:', error);
+  }
+}
+
+// ✅ MEJORADO: Notificación de actualización no bloqueante
+function showUpdateNotification() {
+  try {
+    // ✅ Usar una notificación más elegante en lugar de confirm()
+    const updateNotification = document.createElement('div');
+    updateNotification.innerHTML = `
+      <div style="position: fixed; top: 20px; right: 20px; background: #4CAF50; color: white; padding: 15px; border-radius: 5px; z-index: 10000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+        <strong>🔄 Nueva versión disponible</strong><br>
+        <button onclick="window.location.reload()" style="background: white; color: #4CAF50; border: none; padding: 5px 10px; border-radius: 3px; margin-top: 5px; cursor: pointer;">Actualizar</button>
+        <button onclick="this.parentElement.remove()" style="background: transparent; color: white; border: 1px solid white; padding: 5px 10px; border-radius: 3px; margin-top: 5px; margin-left: 5px; cursor: pointer;">Más tarde</button>
+      </div>
+    `;
+    document.body.appendChild(updateNotification);
+    
+    // ✅ Auto-remover después de 30 segundos
+    setTimeout(() => {
+      if (updateNotification.parentElement) {
+        updateNotification.remove();
+      }
+    }, 30000);
+  } catch (error) {
+    console.error('❌ Update notification failed:', error);
+    // ✅ Fallback a confirm() si falla la notificación elegante
+    if (confirm('Nueva versión disponible! ¿Recargar para actualizar?')) {
+      window.location.reload();
+    }
   }
 }
 

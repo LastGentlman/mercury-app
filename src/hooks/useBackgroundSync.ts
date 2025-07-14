@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from './useAuth'
+import { useServiceWorkerEventListener } from './useEventListener'
 
 export interface BackgroundSyncStatus {
   isSyncing: boolean
@@ -9,20 +10,16 @@ export interface BackgroundSyncStatus {
 }
 
 export function useBackgroundSync() {
+  const { user } = useAuth()
   const [syncStatus, setSyncStatus] = useState<BackgroundSyncStatus>({
     isSyncing: false,
     lastSyncTime: null,
     lastSyncError: null,
     itemsSynced: 0
   })
-  const { user } = useAuth()
-  
+
   // Use refs to track mounted state and prevent memory leaks
   const isMountedRef = useRef(true)
-  const handlersRef = useRef<{
-    messageHandler?: (event: MessageEvent) => void
-    authTokenHandler?: (event: MessageEvent) => void
-  }>({})
 
   // Safe state update function
   const safeSetSyncStatus = useCallback((updater: (prev: BackgroundSyncStatus) => BackgroundSyncStatus) => {
@@ -31,93 +28,64 @@ export function useBackgroundSync() {
     }
   }, [])
 
-  useEffect(() => {
-    // Ensure service worker is available
-    if (!('serviceWorker' in navigator)) {
-      console.log('⚠️ Service Worker not supported')
-      return
-    }
-
-    // Message handler with proper error handling
-    const handleMessage = (event: MessageEvent) => {
-      try {
-        if (!event.data || typeof event.data !== 'object') {
-          return
-        }
-
-        const { type, timestamp, itemsCount, error } = event.data
-
-        switch (type) {
-          case 'SYNC_STARTED':
-            safeSetSyncStatus(prev => ({
-              ...prev,
-              isSyncing: true,
-              lastSyncError: null
-            }))
-            console.log('🔄 Background sync started')
-            break
-
-          case 'SYNC_COMPLETED':
-            safeSetSyncStatus(prev => ({
-              ...prev,
-              isSyncing: false,
-              lastSyncTime: timestamp,
-              itemsSynced: itemsCount || 0
-            }))
-            console.log(`✅ Background sync completed: ${itemsCount || 0} items`)
-            break
-
-          case 'SYNC_ERROR':
-            safeSetSyncStatus(prev => ({
-              ...prev,
-              isSyncing: false,
-              lastSyncError: error || 'Unknown sync error',
-              lastSyncTime: timestamp
-            }))
-            console.error('❌ Background sync failed:', error)
-            break
-        }
-      } catch (handleError) {
-        console.error('❌ Message handler error:', handleError)
+  // ✅ CORREGIDO: Un solo message handler que maneja ambos casos
+  const handleServiceWorkerMessage = useCallback((event: MessageEvent) => {
+    try {
+      if (!event.data || typeof event.data !== 'object') {
+        return
       }
-    }
 
-    // Auth token handler with proper error handling
-    const handleAuthTokenRequest = (event: MessageEvent) => {
-      try {
-        if (event.data?.type === 'GET_AUTH_TOKEN' && event.ports[0]) {
-          const token = localStorage.getItem('authToken')
-          event.ports[0].postMessage({ token })
-        }
-      } catch (authError) {
-        console.error('❌ Auth token handler error:', authError)
-        if (event.ports[0]) {
-          event.ports[0].postMessage({ token: null })
-        }
+      const { type, timestamp, itemsCount, error } = event.data
+
+      // ✅ Manejar petición de auth token
+      if (type === 'GET_AUTH_TOKEN' && event.ports[0]) {
+        const token = localStorage.getItem('authToken')
+        event.ports[0].postMessage({ token })
+        return
       }
-    }
 
-    // Store handlers in ref for cleanup
-    handlersRef.current.messageHandler = handleMessage
-    handlersRef.current.authTokenHandler = handleAuthTokenRequest
+      // ✅ Manejar mensajes de sync
+      switch (type) {
+        case 'SYNC_STARTED':
+          safeSetSyncStatus(prev => ({
+            ...prev,
+            isSyncing: true,
+            lastSyncError: null
+          }))
+          console.log('🔄 Background sync started')
+          break
 
-    // Add event listeners
-    navigator.serviceWorker.addEventListener('message', handleMessage)
-    navigator.serviceWorker.addEventListener('message', handleAuthTokenRequest)
+        case 'SYNC_COMPLETED':
+          safeSetSyncStatus(prev => ({
+            ...prev,
+            isSyncing: false,
+            lastSyncTime: timestamp,
+            itemsSynced: itemsCount || 0
+          }))
+          console.log(`✅ Background sync completed: ${itemsCount || 0} items`)
+          break
 
-    return () => {
-      // Cleanup event listeners
-      if (handlersRef.current.messageHandler) {
-        navigator.serviceWorker.removeEventListener('message', handlersRef.current.messageHandler)
+        case 'SYNC_ERROR':
+          safeSetSyncStatus(prev => ({
+            ...prev,
+            isSyncing: false,
+            lastSyncError: error || 'Unknown sync error',
+            lastSyncTime: timestamp
+          }))
+          console.error('❌ Background sync failed:', error)
+          break
       }
-      if (handlersRef.current.authTokenHandler) {
-        navigator.serviceWorker.removeEventListener('message', handlersRef.current.authTokenHandler)
+    } catch (handleError) {
+      console.error('❌ Message handler error:', handleError)
+      // ✅ Manejar errores de auth token
+      if (event.ports[0]) {
+        event.ports[0].postMessage({ token: null })
       }
-      
-      // Clear refs
-      handlersRef.current = {}
     }
   }, [safeSetSyncStatus])
+
+  // ✅ CORREGIDO: Usar hook seguro para event listeners
+  useServiceWorkerEventListener('message', handleServiceWorkerMessage)
 
   // Cleanup on unmount
   useEffect(() => {
@@ -216,4 +184,4 @@ export function useBackgroundSync() {
     getSyncStats,
     isSupported: 'serviceWorker' in navigator && 'sync' in (window as any)
   }
-} 
+}

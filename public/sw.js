@@ -1,8 +1,8 @@
-// public/sw.js - FIXED VERSION (Crash-Free)
+// public/sw.js - VERSIÓN COMPLETA Y SEGURA
 const CACHE_NAME = 'mercury-app-v1';
 const OFFLINE_CACHE = 'mercury-offline-v1';
 
-// Assets to cache
+// ✅ Assets estáticos a cachear
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -12,30 +12,42 @@ const STATIC_ASSETS = [
   '/logo512.png'
 ];
 
-// Install event - cache static assets
+// ✅ URLs que deben ir directo a la red
+const NETWORK_ONLY_URLS = [
+  '/api/auth/',
+  '/api/login',
+  '/api/logout'
+];
+
+// ✅ Evento INSTALL - Cache de assets estáticos
 self.addEventListener('install', (event) => {
   console.log('🔄 Service Worker installing...');
+  
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    Promise.resolve()
+      .then(() => caches.open(CACHE_NAME))
       .then((cache) => {
         console.log('📦 Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       })
       .then(() => {
-        console.log('✅ Service Worker installed');
+        console.log('✅ Service Worker installed successfully');
         return self.skipWaiting();
       })
       .catch((error) => {
         console.error('❌ Service Worker install failed:', error);
+        // No re-throw para evitar crash
       })
   );
 });
 
-// Activate event - clean up old caches
+// ✅ Evento ACTIVATE - Limpieza de caches antiguos
 self.addEventListener('activate', (event) => {
   console.log('🚀 Service Worker activating...');
+  
   event.waitUntil(
-    caches.keys()
+    Promise.resolve()
+      .then(() => caches.keys())
       .then((cacheNames) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
@@ -47,16 +59,17 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => {
-        console.log('✅ Service Worker activated');
+        console.log('✅ Service Worker activated successfully');
         return self.clients.claim();
       })
       .catch((error) => {
         console.error('❌ Service Worker activation failed:', error);
+        // No re-throw para evitar crash
       })
   );
 });
 
-// Background Sync registration - FIXED WITH PROPER ERROR HANDLING
+// ✅ Background Sync - Implementación COMPLETA
 self.addEventListener('sync', (event) => {
   console.log('🔄 Background sync triggered:', event.tag);
   
@@ -65,117 +78,165 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// FIXED: Complete syncOfflineData function
+// ✅ FUNCIÓN COMPLETA de sincronización offline
 async function syncOfflineData() {
   try {
     console.log('🔄 Starting background sync...');
     
-    // Notify client that sync started
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SYNC_STARTED',
-        timestamp: new Date().toISOString()
-      });
+    // ✅ Timeout para evitar bloqueos infinitos
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Sync timeout after 30 seconds')), 30000);
     });
-
-    // Get auth token from client (if available)
-    const authToken = await getAuthToken();
+    
+    // ✅ Obtener token de autenticación de forma segura
+    const authTokenPromise = getAuthTokenSafely();
+    
+    // ✅ Race entre sync y timeout
+    const authToken = await Promise.race([authTokenPromise, timeoutPromise]);
     
     if (!authToken) {
       console.log('⚠️ No auth token available, skipping sync');
       return;
     }
-
-    // Simulate actual sync work
-    const result = await performDataSync(authToken);
     
-    // Notify clients of successful sync
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SYNC_COMPLETED',
-        timestamp: new Date().toISOString(),
-        itemsCount: result.itemsCount || 0
-      });
+    // ✅ Realizar sincronización real
+    const syncPromise = performDataSync(authToken);
+    const result = await Promise.race([syncPromise, timeoutPromise]);
+    
+    console.log('✅ Background sync completed successfully:', result);
+    
+    // ✅ Notificar al cliente sobre el éxito
+    notifyClients({
+      type: 'SYNC_SUCCESS',
+      data: result
     });
-
-    console.log('✅ Background sync completed');
+    
+    return result;
     
   } catch (error) {
     console.error('❌ Background sync failed:', error);
     
-    // Notify clients of sync failure
-    const clients = await self.clients.matchAll();
-    clients.forEach(client => {
-      client.postMessage({
-        type: 'SYNC_ERROR',
-        timestamp: new Date().toISOString(),
-        error: error.message
-      });
+    // ✅ Notificación de error completa
+    await self.registration.showNotification('Sync Failed', {
+      body: 'Some data could not be synchronized. Will retry automatically.',
+      icon: '/favicon.ico',
+      badge: '/favicon.ico',
+      tag: 'sync-failed',
+      actions: [
+        {
+          action: 'retry',
+          title: 'Retry Now'
+        }
+      ]
     });
+    
+    // ✅ Notificar al cliente sobre el error
+    notifyClients({
+      type: 'SYNC_ERROR',
+      error: error.message
+    });
+    
+    // ✅ NO re-throw para evitar crash
+    return { error: error.message };
   }
 }
 
-// FIXED: Proper auth token retrieval
-function getAuthToken() {
-  return new Promise((resolve) => {
-    // Set a timeout to prevent hanging
-    const timeout = setTimeout(() => {
-      console.log('⚠️ Auth token request timed out');
-      resolve(null);
-    }, 5000);
-
-    self.clients.matchAll().then(clients => {
-      if (clients.length === 0) {
-        clearTimeout(timeout);
-        resolve(null);
-        return;
-      }
-
+// ✅ Función segura para obtener token de auth
+async function getAuthTokenSafely() {
+  try {
+    // ✅ Obtener clientes activos
+    const clients = await self.clients.matchAll({ 
+      includeUncontrolled: true,
+      type: 'window'
+    });
+    
+    if (clients.length === 0) {
+      console.log('⚠️ No active clients found');
+      return null;
+    }
+    
+    // ✅ Timeout para la petición de token
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Auth token request timeout'));
+      }, 5000); // 5 segundos timeout
+      
       const messageChannel = new MessageChannel();
       
       messageChannel.port1.onmessage = (event) => {
         clearTimeout(timeout);
         resolve(event.data.token);
       };
-
+      
+      // ✅ Enviar petición al primer cliente
       clients[0].postMessage(
         { type: 'GET_AUTH_TOKEN' },
         [messageChannel.port2]
       );
     });
-  });
+    
+  } catch (error) {
+    console.error('❌ Failed to get auth token:', error);
+    return null;
+  }
 }
 
-// FIXED: Actual sync implementation with proper error handling
+// ✅ Implementación real de sincronización
 async function performDataSync(authToken) {
   try {
-    // Example sync logic - replace with your actual API calls
-    const response = await fetch('/api/sync', {
+    // ✅ Configuración base de la petición
+    const syncResponse = await fetch('/api/sync', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        lastSync: Date.now()
+        lastSync: Date.now(),
+        source: 'service-worker'
       })
     });
-
-    if (!response.ok) {
-      throw new Error(`Sync failed: ${response.status}`);
+    
+    if (!syncResponse.ok) {
+      throw new Error(`Sync failed with status: ${syncResponse.status}`);
     }
-
-    const data = await response.json();
-    return { itemsCount: data.itemsCount || 0 };
+    
+    const syncData = await syncResponse.json();
+    
+    return {
+      itemsCount: syncData.itemsCount || 0,
+      lastSync: Date.now(),
+      status: 'success'
+    };
     
   } catch (error) {
-    console.error('❌ Data sync failed:', error);
+    console.error('❌ Data sync request failed:', error);
     throw error;
   }
 }
 
-// Periodic Background Sync (if supported) - FIXED
+// ✅ Función para notificar a todos los clientes
+async function notifyClients(message) {
+  try {
+    const clients = await self.clients.matchAll({
+      includeUncontrolled: true,
+      type: 'window'
+    });
+    
+    clients.forEach(client => {
+      try {
+        client.postMessage(message);
+      } catch (error) {
+        console.error('❌ Failed to notify client:', error);
+      }
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to get clients for notification:', error);
+  }
+}
+
+// ✅ Periodic Background Sync (si está soportado)
 self.addEventListener('periodicsync', (event) => {
   console.log('⏰ Periodic background sync triggered:', event.tag);
   
@@ -184,80 +245,162 @@ self.addEventListener('periodicsync', (event) => {
   }
 });
 
-// FIXED: Handle messages from clients with proper error handling
+// ✅ Manejo de mensajes del cliente - IMPLEMENTACIÓN COMPLETA
 self.addEventListener('message', (event) => {
   try {
     console.log('📨 Message from client:', event.data);
     
-    if (event.data.type === 'GET_AUTH_TOKEN') {
-      // This message is handled by the client-side code
-      // The service worker doesn't have direct access to localStorage
-      if (event.ports && event.ports[0]) {
-        event.ports[0].postMessage({ token: null });
-      }
+    const { type, data } = event.data || {};
+    
+    switch (type) {
+      case 'GET_AUTH_TOKEN':
+        // ✅ Este mensaje se maneja en la función getAuthTokenSafely
+        if (event.ports && event.ports[0]) {
+          // El SW no tiene acceso directo a localStorage
+          // Responder que no tiene el token
+          event.ports[0].postMessage({ token: null });
+        }
+        break;
+        
+      case 'SKIP_WAITING':
+        // ✅ Forzar activación del nuevo SW
+        self.skipWaiting();
+        break;
+        
+      case 'CHECK_UPDATE':
+        // ✅ Verificar actualizaciones
+        checkForUpdates();
+        break;
+        
+      default:
+        console.log('⚠️ Unknown message type:', type);
     }
+    
   } catch (error) {
     console.error('❌ Message handler error:', error);
+    // ✅ No re-throw para evitar crash
   }
 });
 
-// FIXED: Fetch event with proper error handling and caching strategy
+// ✅ Función para verificar actualizaciones
+async function checkForUpdates() {
+  try {
+    const registration = await self.registration.update();
+    console.log('✅ Update check completed');
+    return registration;
+  } catch (error) {
+    console.error('❌ Update check failed:', error);
+    return null;
+  }
+}
+
+// ✅ Evento FETCH - Estrategia de caching inteligente
 self.addEventListener('fetch', (event) => {
   try {
-    // Skip non-GET requests
-    if (event.request.method !== 'GET') {
-      return;
-    }
-
-    // Skip external requests (API calls)
-    if (!event.request.url.startsWith(self.location.origin)) {
-      return;
-    }
-
-    // Skip if URL contains 'api' (API endpoints)
-    if (event.request.url.includes('/api/')) {
-      return;
-    }
-
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          // Return cached version if available
-          if (response) {
-            return response;
-          }
-
-          // Fetch from network
-          return fetch(event.request)
-            .then((fetchResponse) => {
-              // Cache successful responses
-              if (fetchResponse && fetchResponse.status === 200 && fetchResponse.type === 'basic') {
-                const responseClone = fetchResponse.clone();
-                caches.open(CACHE_NAME)
-                  .then((cache) => {
-                    cache.put(event.request, responseClone);
-                  })
-                  .catch((error) => {
-                    console.error('❌ Cache put failed:', error);
-                  });
-              }
-              return fetchResponse;
-            })
-            .catch((error) => {
-              console.error('❌ Fetch failed:', error);
-              // Return offline page if available for navigation requests
-              if (event.request.destination === 'document') {
-                return caches.match('/') || new Response('Offline', { status: 503 });
-              }
-              throw error;
-            });
-        })
-        .catch((error) => {
-          console.error('❌ Cache match failed:', error);
-          return new Response('Error', { status: 500 });
-        })
+    const url = new URL(event.request.url);
+    
+    // ✅ Verificar si es una URL que debe ir directo a la red
+    const isNetworkOnly = NETWORK_ONLY_URLS.some(networkUrl => 
+      url.pathname.includes(networkUrl)
     );
+    
+    if (isNetworkOnly) {
+      // ✅ Network only para APIs de auth
+      event.respondWith(fetch(event.request));
+      return;
+    }
+    
+    // ✅ Cache First para assets estáticos
+    if (STATIC_ASSETS.includes(url.pathname) || url.pathname.includes('.')) {
+      event.respondWith(cacheFirst(event.request));
+      return;
+    }
+    
+    // ✅ Network First para páginas y APIs
+    event.respondWith(networkFirst(event.request));
+    
   } catch (error) {
-    console.error('❌ Fetch event handler error:', error);
+    console.error('❌ Fetch handler error:', error);
+    // ✅ Fallback seguro
+    event.respondWith(fetch(event.request));
   }
-}); 
+});
+
+// ✅ Estrategia Cache First
+async function cacheFirst(request) {
+  try {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    const networkResponse = await fetch(request);
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, networkResponse.clone());
+    
+    return networkResponse;
+    
+  } catch (error) {
+    console.error('❌ Cache first strategy failed:', error);
+    return new Response('Offline', { status: 503 });
+  }
+}
+
+// ✅ Estrategia Network First
+async function networkFirst(request) {
+  try {
+    const networkResponse = await fetch(request);
+    
+    // ✅ Cache successful responses
+    if (networkResponse.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+    
+  } catch (error) {
+    console.error('❌ Network request failed, trying cache:', error);
+    
+    // ✅ Fallback a cache
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    // ✅ Fallback final
+    if (request.mode === 'navigate') {
+      return caches.match('/') || new Response('Offline', { 
+        status: 503,
+        headers: { 'Content-Type': 'text/html' }
+      });
+    }
+    
+    return new Response('Service Unavailable', { status: 503 });
+  }
+}
+
+// ✅ Manejo de notificaciones (si se usan)
+self.addEventListener('notificationclick', (event) => {
+  try {
+    console.log('🔔 Notification clicked:', event.notification.tag);
+    
+    event.notification.close();
+    
+    if (event.action === 'retry') {
+      // ✅ Retry sync on notification action
+      event.waitUntil(syncOfflineData());
+    }
+    
+    // ✅ Abrir o enfocar la app
+    event.waitUntil(
+      self.clients.openWindow('/')
+    );
+    
+  } catch (error) {
+    console.error('❌ Notification click handler error:', error);
+  }
+});
+
+// ✅ Log de inicio del service worker
+console.log('🚀 Service Worker script loaded successfully'); 
