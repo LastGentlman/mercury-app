@@ -8,6 +8,16 @@ import { PWAInstallButton } from '../../../src/components/PWAInstallButton'
 // Import the mocked modules to access their functions
 import * as pwaModule from '../../../src/pwa'
 
+// Mock PWA module
+vi.mock('../../../src/pwa', () => ({
+  isPWAInstalled: vi.fn(() => false),
+  getPWALaunchMethod: vi.fn(() => 'browser'),
+  markAsInstalledPWA: vi.fn(),
+  wasEverInstalledAsPWA: vi.fn(() => false),
+  registerPWA: vi.fn().mockResolvedValue(null),
+  showInstallPrompt: vi.fn().mockResolvedValue(true)
+}))
+
 describe('PWAInstallButton', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -24,36 +34,39 @@ describe('PWAInstallButton', () => {
       writable: true,
       configurable: true
     })
-    
-    // Trigger the beforeinstallprompt event
-    const event = new Event('beforeinstallprompt')
-    Object.defineProperty(event, 'preventDefault', {
-      value: vi.fn(),
-      writable: true
-    })
-    window.dispatchEvent(event)
   })
 
   it('should render install button when PWA can be installed', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
     
     render(<PWAInstallButton />)
     
+    // Initially, the button should not be visible because canInstall is false
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      expect(screen.getByTestId('button')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toBeInTheDocument()
     })
   })
 
   it('should not render when PWA is already installed', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
     
     render(<PWAInstallButton />)
     
-    expect(screen.queryByTestId('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('should not render when beforeinstallprompt is not available', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
     
     // Remove beforeinstallprompt
     Object.defineProperty(window, 'beforeinstallprompt', {
@@ -64,17 +77,25 @@ describe('PWAInstallButton', () => {
     
     render(<PWAInstallButton />)
     
-    expect(screen.queryByTestId('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 
   it('should handle install button click', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.showInstallPrompt).mockResolvedValue(true)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    ;(pwaModule.showInstallPrompt as any).mockResolvedValue(true)
     
     render(<PWAInstallButton />)
     
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      const button = screen.getByTestId('button')
+      const button = screen.getByRole('button')
       fireEvent.click(button)
     })
     
@@ -84,13 +105,21 @@ describe('PWAInstallButton', () => {
   })
 
   it('should mark as installed when user accepts installation', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.showInstallPrompt).mockResolvedValue(true)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    ;(pwaModule.showInstallPrompt as any).mockResolvedValue(true)
     
     render(<PWAInstallButton />)
     
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      const button = screen.getByTestId('button')
+      const button = screen.getByRole('button')
       fireEvent.click(button)
     })
     
@@ -100,24 +129,40 @@ describe('PWAInstallButton', () => {
   })
 
   it('should show different text for reinstall', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.wasEverInstalledAsPWA).mockReturnValue(true)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    ;(pwaModule.wasEverInstalledAsPWA as any).mockReturnValue(true)
     
     render(<PWAInstallButton />)
     
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      expect(screen.getByTestId('button')).toBeInTheDocument()
+      expect(screen.getByRole('button')).toBeInTheDocument()
     })
   })
 
   it('should handle installation errors gracefully', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.showInstallPrompt).mockRejectedValue(new Error('Installation failed'))
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    ;(pwaModule.showInstallPrompt as any).mockRejectedValue(new Error('Installation failed'))
     
     render(<PWAInstallButton />)
     
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      const button = screen.getByTestId('button')
+      const button = screen.getByRole('button')
       fireEvent.click(button)
     })
     
@@ -128,13 +173,21 @@ describe('PWAInstallButton', () => {
   })
 
   it('should handle user rejection gracefully', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.showInstallPrompt).mockResolvedValue(false) // User rejected
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    ;(pwaModule.showInstallPrompt as any).mockResolvedValue(false) // User rejected
     
     render(<PWAInstallButton />)
     
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      const button = screen.getByTestId('button')
+      const button = screen.getByRole('button')
       fireEvent.click(button)
     })
     
@@ -147,23 +200,39 @@ describe('PWAInstallButton', () => {
   })
 
   it('should have correct accessibility attributes', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
     
     render(<PWAInstallButton />)
     
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      const button = screen.getByTestId('button')
+      const button = screen.getByRole('button')
       expect(button).toBeInTheDocument()
     })
   })
 
   it('should apply correct CSS classes', async () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
     
     render(<PWAInstallButton />)
     
+    // Trigger beforeinstallprompt event to enable the button
+    const beforeInstallPromptEvent = new Event('beforeinstallprompt')
+    Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
+      value: vi.fn(),
+      writable: true
+    })
+    window.dispatchEvent(beforeInstallPromptEvent)
+    
     await waitFor(() => {
-      const button = screen.getByTestId('button')
+      const button = screen.getByRole('button')
       expect(button).toBeInTheDocument()
     })
   })

@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { fireEvent as _fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent as _fireEvent, render, screen, waitFor } from '@testing-library/react'
 
 // Import the mocked modules to access their functions
 import * as pwaModule from '../../../src/pwa'
@@ -32,14 +32,6 @@ describe('PWAInstallButton - Simple Test', () => {
       writable: true,
       configurable: true
     })
-    
-    // Trigger the beforeinstallprompt event
-    const event = new Event('beforeinstallprompt')
-    Object.defineProperty(event, 'preventDefault', {
-      value: vi.fn(),
-      writable: true
-    })
-    window.dispatchEvent(event)
   })
 
   it('should render without crashing', () => {
@@ -49,10 +41,15 @@ describe('PWAInstallButton - Simple Test', () => {
     expect(document.body).toBeInTheDocument()
   })
 
-  it('should show install button when PWA is not installed', () => {
+  it('should show install button when PWA is not installed', async () => {
     // Mock isPWAInstalled to return false
     (pwaModule.isPWAInstalled as any).mockReturnValue(false)
-        
+    
+    render(<PWAInstallButton />)
+    
+    // Initially, the button should not be visible because canInstall is false
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    
     // Trigger beforeinstallprompt event to enable the button
     const beforeInstallPromptEvent = new Event('beforeinstallprompt')
     Object.defineProperty(beforeInstallPromptEvent, 'preventDefault', {
@@ -60,11 +57,11 @@ describe('PWAInstallButton - Simple Test', () => {
       writable: true
     })
     window.dispatchEvent(beforeInstallPromptEvent)
-
-    render(<PWAInstallButton />)
     
-    // The button should be visible when PWA is not installed and can install
-    expect(screen.getByRole('button')).toBeInTheDocument()
+    // Wait for the button to appear after the event is handled
+    await waitFor(() => {
+      expect(screen.getByRole('button')).toBeInTheDocument()
+    })
   })
 
   it('should not show install button when PWA is already installed', () => {
@@ -74,6 +71,6 @@ describe('PWAInstallButton - Simple Test', () => {
     render(<PWAInstallButton />)
     
     // The button should not be visible when PWA is already installed
-    expect(screen.queryByTestId('button')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 }) 

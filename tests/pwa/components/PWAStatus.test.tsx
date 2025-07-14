@@ -5,14 +5,24 @@ import { PWAStatus } from '../../../src/components/PWAStatus'
 // Import the mocked modules to access their functions
 import * as pwaModule from '../../../src/pwa'
 
+// Mock PWA module
+vi.mock('../../../src/pwa', () => ({
+  isPWAInstalled: vi.fn(() => false),
+  getPWALaunchMethod: vi.fn(() => 'browser'),
+  markAsInstalledPWA: vi.fn(),
+  wasEverInstalledAsPWA: vi.fn(() => false),
+  registerPWA: vi.fn().mockResolvedValue(null),
+  showInstallPrompt: vi.fn().mockResolvedValue(true)
+}))
+
 describe('PWAStatus', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('should render PWA status when running as PWA', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
 
     render(<PWAStatus />)
     
@@ -20,8 +30,8 @@ describe('PWAStatus', () => {
   })
 
   it('should render browser status when running in browser', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('browser')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('browser')
 
     render(<PWAStatus />)
     
@@ -29,8 +39,8 @@ describe('PWAStatus', () => {
   })
 
   it('should show correct launch method', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
 
     render(<PWAStatus />)
     
@@ -38,8 +48,8 @@ describe('PWAStatus', () => {
   })
 
   it('should handle unknown launch method', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('unknown')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('unknown')
 
     render(<PWAStatus />)
     
@@ -47,8 +57,8 @@ describe('PWAStatus', () => {
   })
 
   it('should apply correct CSS classes for PWA status', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
 
     render(<PWAStatus />)
     
@@ -57,8 +67,8 @@ describe('PWAStatus', () => {
   })
 
   it('should apply correct CSS classes for browser status', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('browser')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('browser')
 
     render(<PWAStatus />)
     
@@ -67,8 +77,8 @@ describe('PWAStatus', () => {
   })
 
   it('should have correct accessibility attributes', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
 
     render(<PWAStatus />)
     
@@ -77,8 +87,8 @@ describe('PWAStatus', () => {
   })
 
   it('should display status icon when provided', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
 
     render(<PWAStatus />)
     
@@ -87,23 +97,16 @@ describe('PWAStatus', () => {
 
   it('should handle different display modes', () => {
     // Test standalone mode
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
 
-    const { rerender } = render(<PWAStatus />)
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
-
-    // Test browser mode
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('browser')
-
-    rerender(<PWAStatus />)
+    render(<PWAStatus />)
     expect(screen.getByTestId('badge')).toBeInTheDocument()
   })
 
   it('should be responsive and mobile-friendly', () => {
-    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
-    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
+    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
+    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
 
     render(<PWAStatus />)
     

@@ -5,6 +5,28 @@ import { BackgroundSyncSettings } from '../../../src/components/BackgroundSyncSe
 // Import the mocked modules to access their functions
 import * as backgroundSyncModule from '../../../src/hooks/useBackgroundSync'
 
+// Mock useBackgroundSync hook
+vi.mock('../../../src/hooks/useBackgroundSync', () => ({
+  useBackgroundSync: vi.fn(() => ({
+    syncStatus: {
+      isSyncing: false,
+      lastSyncTime: null,
+      lastSyncError: null,
+      itemsSynced: 0
+    },
+    triggerBackgroundSync: vi.fn().mockResolvedValue(true),
+    requestPeriodicSync: vi.fn().mockResolvedValue(true),
+    getSyncStats: vi.fn().mockReturnValue({
+      isEnabled: true,
+      hasUser: true,
+      lastSync: null,
+      errorCount: 0,
+      totalItems: 0
+    }),
+    isSupported: true
+  }))
+}))
+
 describe('BackgroundSyncSettings', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -20,7 +42,7 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should render background sync settings', () => {
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
         lastSyncTime: null,
@@ -45,7 +67,7 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should show sync status when syncing', () => {
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: true,
         lastSyncTime: new Date().toISOString(),
@@ -70,7 +92,7 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should show sync error when present', () => {
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
         lastSyncTime: null,
@@ -95,8 +117,8 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should trigger manual sync when button is clicked', async () => {
-    const mockTriggerBackgroundSync = vi.fn().mockResolvedValue(true)
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    const mockTriggerBackgroundSync = vi.fn().mockResolvedValue(true) as any
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
         lastSyncTime: null,
@@ -126,8 +148,8 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should request periodic sync when enabled', async () => {
-    const mockRequestPeriodicSync = vi.fn().mockResolvedValue(true)
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    const mockRequestPeriodicSync = vi.fn().mockResolvedValue(true) as any
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
         lastSyncTime: null,
@@ -157,8 +179,8 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should handle sync errors gracefully', async () => {
-    const mockTriggerBackgroundSync = vi.fn().mockRejectedValue(new Error('Sync failed'))
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    const mockTriggerBackgroundSync = vi.fn().mockRejectedValue(new Error('Sync failed')) as any
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
         lastSyncTime: null,
@@ -188,7 +210,7 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should show not supported message when background sync is not supported', () => {
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
         lastSyncTime: null,
@@ -199,7 +221,7 @@ describe('BackgroundSyncSettings', () => {
       requestPeriodicSync: vi.fn().mockResolvedValue(true),
       getSyncStats: vi.fn().mockReturnValue({
         isEnabled: false,
-        hasUser: true,
+        hasUser: false,
         lastSync: null,
         errorCount: 0,
         totalItems: 0
@@ -209,24 +231,24 @@ describe('BackgroundSyncSettings', () => {
 
     render(<BackgroundSyncSettings />)
     
-    expect(screen.getByTestId('card')).toBeInTheDocument()
+    expect(screen.getByText(/not supported/i)).toBeInTheDocument()
   })
 
   it('should show sync statistics', () => {
     const mockGetSyncStats = vi.fn().mockReturnValue({
       isEnabled: true,
       hasUser: true,
-      lastSync: new Date(),
-      errorCount: 0,
-      totalItems: 25
-    })
+      lastSync: new Date('2023-01-01'),
+      errorCount: 2,
+      totalItems: 10
+    }) as any
     
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
-        lastSyncTime: null,
+        lastSyncTime: new Date('2023-01-01').toISOString(),
         lastSyncError: null,
-        itemsSynced: 0
+        itemsSynced: 10
       },
       triggerBackgroundSync: vi.fn().mockResolvedValue(true),
       requestPeriodicSync: vi.fn().mockResolvedValue(true),
@@ -240,17 +262,17 @@ describe('BackgroundSyncSettings', () => {
   })
 
   it('should handle permission denied gracefully', () => {
-    vi.mocked(backgroundSyncModule.useBackgroundSync).mockReturnValue({
+    (backgroundSyncModule.useBackgroundSync as any).mockReturnValue({
       syncStatus: {
         isSyncing: false,
         lastSyncTime: null,
         lastSyncError: 'Permission denied',
         itemsSynced: 0
       },
-      triggerBackgroundSync: vi.fn().mockResolvedValue(true),
-      requestPeriodicSync: vi.fn().mockResolvedValue(true),
+      triggerBackgroundSync: vi.fn().mockResolvedValue(false),
+      requestPeriodicSync: vi.fn().mockResolvedValue(false),
       getSyncStats: vi.fn().mockReturnValue({
-        isEnabled: true,
+        isEnabled: false,
         hasUser: true,
         lastSync: null,
         errorCount: 1,

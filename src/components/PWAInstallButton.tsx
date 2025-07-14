@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
-import { getPWALaunchMethod, isPWAInstalled, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa'
+import { getPWALaunchMethod, isPWAInstalled, markAsInstalledPWA, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa'
 import { useWindowEventListener } from '../hooks/useEventListener'
 
 export function PWAInstallButton() {
@@ -29,6 +29,7 @@ export function PWAInstallButton() {
         setCanInstall(false)
         setIsInstalled(true)
         setLaunchMethod('installed')
+        markAsInstalledPWA() // <-- Call this when installation is successful
       }
     } catch (error) {
       console.error('Install failed:', error)
@@ -49,6 +50,7 @@ export function PWAInstallButton() {
       onClick={handleInstall}
       className="fixed bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 z-50 transition-colors"
       title={`${buttonText} - Mercury App`}
+      data-testid="button"
     >
       <Download size={20} />
       <span className="hidden sm:inline">{buttonText}</span>

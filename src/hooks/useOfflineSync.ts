@@ -13,10 +13,15 @@ export function useOfflineSync() {
   const [isOnline, setIsOnline] = useState(navigator.onLine)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'error'>('idle')
   const [pendingCount, setPendingCount] = useState(0)
+  const [error, setError] = useState<string | null>(null)
+
+  // Computed property for isSyncing
+  const isSyncing = syncStatus === 'syncing'
 
   // ✅ CORREGIDO: Usar hook seguro para event listeners
   const handleOnline = useCallback(() => {
     setIsOnline(true)
+    setError(null) // Clear error when coming back online
     console.log('🌐 Conexión restaurada. Sincronizando...')
     syncPendingChanges()
   }, [])
@@ -43,11 +48,39 @@ export function useOfflineSync() {
     return () => clearInterval(interval)
   }, [updatePendingCount])
 
+  // Add pending change to sync queue
+  const addPendingChange = useCallback(async (change: { type: 'create' | 'update' | 'delete'; data: any }) => {
+    try {
+      // Add to sync queue based on change type
+      if (change.type === 'create') {
+        await db.syncQueue.add({
+          entityType: 'order',
+          entityId: change.data.id || Date.now().toString(),
+          action: 'create',
+          timestamp: new Date().toISOString()
+        })
+      } else if (change.type === 'update') {
+        await db.syncQueue.add({
+          entityType: 'order',
+          entityId: change.data.id,
+          action: 'update',
+          timestamp: new Date().toISOString()
+        })
+      }
+      
+      await updatePendingCount()
+    } catch (err) {
+      console.error('Error adding pending change:', err)
+      setError(err instanceof Error ? err.message : 'Unknown error')
+    }
+  }, [updatePendingCount])
+
   // Sincronizar cambios pendientes
   const syncPendingChanges = useCallback(async () => {
     if (!isOnline || syncStatus === 'syncing' || !user) return
 
     setSyncStatus('syncing')
+    setError(null) // Clear previous errors
     
     try {
       // Obtener items pendientes de sincronizar
@@ -66,19 +99,20 @@ export function useOfflineSync() {
           
           // Eliminar de la cola si se sincronizó correctamente
           await db.markAsSynced(item.entityType, item.entityId)
-        } catch (error) {
-          console.error('❌ Error sincronizando item:', item, error)
+        } catch (err) {
+          console.error('❌ Error sincronizando item:', item, err)
           // Incrementar reintentos
-          await db.incrementRetries(item.id!, error instanceof Error ? error.message : 'Unknown error')
+          await db.incrementRetries(item.id!, err instanceof Error ? err.message : 'Unknown error')
         }
       }
 
       setSyncStatus('idle')
       await updatePendingCount()
       console.log('✅ Sincronización completada')
-    } catch (error) {
+    } catch (err) {
       setSyncStatus('error')
-      console.error('❌ Error al sincronizar:', error)
+      setError(err instanceof Error ? err.message : 'Unknown error')
+      console.error('❌ Error al sincronizar:', err)
     }
   }, [isOnline, syncStatus, user, updatePendingCount])
 
@@ -90,7 +124,7 @@ export function useOfflineSync() {
         if ('sync' in registration) {
           (registration as any).sync.register('background-sync')
             .then(() => console.log('🔄 Background sync triggered on reconnection'))
-            .catch((error: Error) => console.log('❌ Background sync failed:', error))
+            .catch((err: Error) => console.log('❌ Background sync failed:', err))
         }
       })
     }
@@ -110,7 +144,7 @@ export function useOfflineSync() {
           if (getResponse.ok) {
             serverOrder = await getResponse.json()
           }
-        } catch (error) {
+        } catch (err) {
           console.log('⚠️ No se pudo obtener versión del servidor, continuando...')
         }
       }
@@ -173,13 +207,13 @@ export function useOfflineSync() {
           lastModifiedAt: data.last_modified_at || new Date().toISOString()
         })
       }
-    } catch (error) {
-      if (error instanceof Error && error.message === 'CONFLICT') {
+    } catch (err) {
+      if (err instanceof Error && err.message === 'CONFLICT') {
         // Reintentar con resolución de conflicto
         console.log('🔄 Reintentando con resolución de conflicto...')
-        throw error
+        throw err
       }
-      throw error
+      throw err
     }
   }
 
@@ -197,7 +231,7 @@ export function useOfflineSync() {
           if (getResponse.ok) {
             serverProduct = await getResponse.json()
           }
-        } catch (error) {
+        } catch (err) {
           console.log('⚠️ No se pudo obtener versión del servidor, continuando...')
         }
       }
@@ -259,13 +293,13 @@ export function useOfflineSync() {
           lastModifiedAt: data.last_modified_at || new Date().toISOString()
       })
       }
-    } catch (error) {
-      if (error instanceof Error && error.message === 'CONFLICT') {
+    } catch (err) {
+      if (err instanceof Error && err.message === 'CONFLICT') {
         // Reintentar con resolución de conflicto
         console.log('🔄 Reintentando con resolución de conflicto...')
-        throw error
+        throw err
       }
-      throw error
+      throw err
     }
   }
 
@@ -290,6 +324,9 @@ export function useOfflineSync() {
     syncStatus,
     syncPendingChanges,
     pendingCount,
-    updatePendingCount
+    updatePendingCount,
+    isSyncing,
+    error,
+    addPendingChange
   }
 } 
