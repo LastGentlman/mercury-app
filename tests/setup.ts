@@ -54,77 +54,153 @@ const mockCaches = {
 
 // Setup global browser API mocks
 beforeEach(() => {
-  // Mock navigator
-  global.navigator = {
-    serviceWorker: mockServiceWorker,
-    permissions: mockPermissions,
-    onLine: true,
-    userAgent: 'Mozilla/5.0 (Test Browser)',
-    language: 'en-US',
-    languages: ['en-US', 'en'],
-    cookieEnabled: true,
-    doNotTrack: null,
-    maxTouchPoints: 0,
-    hardwareConcurrency: 4,
-    deviceMemory: 8,
-    connection: {
-      effectiveType: '4g',
-      downlink: 10,
-      rtt: 50,
-      saveData: false
+  // Mock navigator - preserve existing navigator and add what we need
+  if (global.navigator) {
+    // Use Object.defineProperty for read-only properties
+    Object.defineProperty(global.navigator, 'onLine', {
+      value: true,
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.navigator, 'serviceWorker', {
+      value: mockServiceWorker,
+      writable: true,
+      configurable: true
+    })
+    
+    Object.defineProperty(global.navigator, 'permissions', {
+      value: mockPermissions,
+      writable: true,
+      configurable: true
+    })
+    
+    // Add other properties that might not exist
+    if (!global.navigator.userAgent) {
+      Object.defineProperty(global.navigator, 'userAgent', {
+        value: 'Mozilla/5.0 (Test Browser)',
+        writable: true,
+        configurable: true
+      })
     }
-  } as any
+    
+    if (!global.navigator.language) {
+      Object.defineProperty(global.navigator, 'language', {
+        value: 'en-US',
+        writable: true,
+        configurable: true
+      })
+    }
+    
+    if (!global.navigator.languages) {
+      Object.defineProperty(global.navigator, 'languages', {
+        value: ['en-US', 'en'],
+        writable: true,
+        configurable: true
+      })
+    }
+    
+    if (!global.navigator.cookieEnabled) {
+      Object.defineProperty(global.navigator, 'cookieEnabled', {
+        value: true,
+        writable: true,
+        configurable: true
+      })
+    }
+    
+    if (!global.navigator.maxTouchPoints) {
+      Object.defineProperty(global.navigator, 'maxTouchPoints', {
+        value: 0,
+        writable: true,
+        configurable: true
+      })
+    }
+    
+    if (!global.navigator.hardwareConcurrency) {
+      Object.defineProperty(global.navigator, 'hardwareConcurrency', {
+        value: 4,
+        writable: true,
+        configurable: true
+      })
+    }
+    
+    if (!(global.navigator as any).deviceMemory) {
+      Object.defineProperty(global.navigator, 'deviceMemory', {
+        value: 8,
+        writable: true,
+        configurable: true
+      })
+    }
+    
+    if (!(global.navigator as any).connection) {
+      Object.defineProperty(global.navigator, 'connection', {
+        value: {
+          effectiveType: '4g',
+          downlink: 10,
+          rtt: 50,
+          saveData: false
+        },
+        writable: true,
+        configurable: true
+      })
+    }
+  }
 
-  // Mock window
-  global.window = {
-    ...global.window,
-    beforeinstallprompt: mockBeforeInstallPrompt,
-    matchMedia: vi.fn().mockReturnValue({
-      matches: false,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
+  // Mock window - preserve existing window and add what we need
+  if (global.window) {
+    Object.assign(global.window, {
+      beforeinstallprompt: mockBeforeInstallPrompt,
+      matchMedia: vi.fn().mockReturnValue({
+        matches: false,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn()
+      }),
       addEventListener: vi.fn(),
-      removeEventListener: vi.fn()
-    }),
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    dispatchEvent: vi.fn(),
-    location: {
-      href: 'http://localhost:3000',
-      origin: 'http://localhost:3000',
-      pathname: '/',
-      search: '',
-      hash: ''
-    },
-    localStorage: {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      key: vi.fn(),
-      length: 0
-    },
-    sessionStorage: {
-      getItem: vi.fn(),
-      setItem: vi.fn(),
-      removeItem: vi.fn(),
-      clear: vi.fn(),
-      key: vi.fn(),
-      length: 0
-    }
-  } as any
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+      location: {
+        href: 'http://localhost:3000',
+        origin: 'http://localhost:3000',
+        pathname: '/',
+        search: '',
+        hash: ''
+      },
+      localStorage: {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        key: vi.fn(),
+        length: 0
+      },
+      sessionStorage: {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+        clear: vi.fn(),
+        key: vi.fn(),
+        length: 0
+      }
+    })
+  }
 
-  // Mock document
-  global.document = {
-    ...global.document,
-    readyState: 'complete',
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-    createElement: vi.fn(),
-    getElementById: vi.fn(),
-    querySelector: vi.fn(),
-    querySelectorAll: vi.fn()
-  } as any
+  // Mock document - preserve existing document methods and only add what we need
+  if (global.document) {
+    // readyState is read-only, so use defineProperty
+    Object.defineProperty(global.document, 'readyState', {
+      value: 'complete',
+      configurable: true
+    })
+    Object.assign(global.document, {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      getElementById: vi.fn(),
+      querySelector: vi.fn(),
+      querySelectorAll: vi.fn()
+    })
+  }
 
   // Mock caches
   global.caches = mockCaches as any
