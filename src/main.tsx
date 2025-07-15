@@ -13,7 +13,7 @@ import { routeTree } from './routeTree.gen'
 
 import './styles.css'
 import reportWebVitals from './reportWebVitals.ts'
-import { listenForInstallPrompt, registerPWA } from './pwa.ts'
+import { listenForInstallPrompt, registerPWA } from './pwa-fixed.ts'
 
 // Importar testing de seguridad en desarrollo
 if (import.meta.env.DEV) {

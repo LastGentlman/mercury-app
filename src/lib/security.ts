@@ -5,8 +5,8 @@ const XSS_LOGGING_CONFIG = {
   enabled: true,
   maxPayloadLength: 200,
   logToConsole: true,
-  logToServer: true, // Habilitado para enviar logs al servidor
-  serverEndpoint: '/api/monitoring/security/log'
+  logToServer: false, // Deshabilitado temporalmente para evitar 403 errors
+  serverEndpoint: `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3030'}/api/monitoring/security/log`
 };
 
 /**

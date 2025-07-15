@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
-import { getPWALaunchMethod, isPWAInstalled, markAsInstalledPWA, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa'
+import { getPWALaunchMethod, isPWAInstalled, markAsInstalledPWA, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa-fixed'
 import { useWindowEventListener } from '../hooks/useEventListener'
 
 export function PWAInstallButton() {

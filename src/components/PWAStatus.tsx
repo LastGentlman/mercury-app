@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { HelpCircle, Monitor, Smartphone } from 'lucide-react'
-import { isPWAInstalled as _isPWAInstalled, getPWALaunchMethod, wasEverInstalledAsPWA } from '../pwa'
+import { isPWAInstalled as _isPWAInstalled, getPWALaunchMethod, wasEverInstalledAsPWA } from '../pwa-fixed'
 
 export function PWAStatus() {
   const [launchMethod, setLaunchMethod] = useState<'browser' | 'installed' | 'unknown'>('unknown')

@@ -18,7 +18,7 @@ import {
   isPWAInstalled, 
   showInstallPrompt,
   wasEverInstalledAsPWA
-} from '../pwa'
+} from '../pwa-fixed'
 
 export function PWADemo() {
   const [pwaState, setPwaState] = useState({

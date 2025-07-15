@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Test</title>
+    <link rel="manifest" href="/manifest.json">
+</head>
+<body>
+    <h1>PWA Test Page</h1>
+    <p>This is a test page to verify PWA functionality.</p>
+    
+    <div id="pwa-status">
+        <h2>PWA Status:</h2>
+        <p id="status-text">Checking...</p>
+    </div>
+    
+    <button id="install-btn" style="display: none;">Install PWA</button>
+    
+    <script>
+        // Simple PWA test
+        console.log('🧪 Testing PWA functionality...');
+        
+        // Check if service worker is supported
+        if ('serviceWorker' in navigator) {
+            console.log('✅ Service Worker supported');
+            
+            // Try to register service worker
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registered:', registration);
+                    document.getElementById('status-text').textContent = 'Service Worker registered successfully';
+                })
+                .catch(error => {
+                    console.error('❌ Service Worker registration failed:', error);
+                    document.getElementById('status-text').textContent = 'Service Worker registration failed: ' + error.message;
+                });
+        } else {
+            console.log('❌ Service Worker not supported');
+            document.getElementById('status-text').textContent = 'Service Worker not supported';
+        }
+        
+        // Check PWA installation status
+        function checkPWAStatus() {
+            const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+            const isIOSStandalone = window.navigator.standalone === true;
+            
+            console.log('PWA Status:', {
+                isStandalone,
+                isIOSStandalone,
+                userAgent: navigator.userAgent.substring(0, 100)
+            });
+            
+            if (isStandalone || isIOSStandalone) {
+                document.getElementById('status-text').textContent = 'Running as PWA';
+            } else {
+                document.getElementById('status-text').textContent = 'Running in browser';
+            }
+        }
+        
+        // Listen for install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('📱 Install prompt available');
+            e.preventDefault();
+            window.deferredPrompt = e;
+            
+            const installBtn = document.getElementById('install-btn');
+            installBtn.style.display = 'block';
+            installBtn.onclick = () => {
+                e.prompt();
+                e.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ User accepted install prompt');
+                    } else {
+                        console.log('❌ User dismissed install prompt');
+                    }
+                    window.deferredPrompt = null;
+                    installBtn.style.display = 'none';
+                });
+            };
+        });
+        
+        // Check status on load
+        checkPWAStatus();
+    </script>
+</body>
+</html> 
