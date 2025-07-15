@@ -56,7 +56,7 @@ export function useBackgroundSync() {
       }
 
       // Handle auth token requests
-      if (type === 'GET_AUTH_TOKEN' && event.ports[0]) {
+      if (type === 'GET_AUTH_TOKEN' && (event.ports as any)?.[0]) {
         try {
           const token = localStorage.getItem('authToken')
           event.ports[0].postMessage({ token })
@@ -124,6 +124,10 @@ export function useBackgroundSync() {
 
   // ✅ Service Worker message listener setup
   useEffect(() => {
+    if (!(navigator.serviceWorker as any)) {
+      return undefined
+    }
+
     // Remove previous handler if exists
     if (handlersRef.current.messageHandler) {
       navigator.serviceWorker.removeEventListener(
@@ -154,11 +158,7 @@ export function useBackgroundSync() {
     }
 
     try {
-      const isServiceWorkerSupported = Boolean(
-        'sync' in window.ServiceWorkerRegistration.prototype
-      )
-
-      if (!isServiceWorkerSupported) {
+      if (!('sync' in window.ServiceWorkerRegistration.prototype)) {
         console.log('⚠️ Background sync not supported')
         return false
       }
@@ -228,9 +228,7 @@ export function useBackgroundSync() {
   // ✅ Get sync statistics with proper error handling
   const getSyncStats = useCallback((): SyncStats => {
     try {
-      const isServiceWorkerSupported = Boolean(navigator.serviceWorker)
-      
-      if (!isServiceWorkerSupported) {
+      if (!(navigator.serviceWorker as any)) {
         return {
           isEnabled: false,
           hasUser: Boolean(user),
