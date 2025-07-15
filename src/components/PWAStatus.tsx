@@ -40,7 +40,10 @@ export function PWAStatus() {
   const statusInfo = getStatusInfo()
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${statusInfo.bgColor} ${statusInfo.color}`}>
+    <div 
+      data-testid="badge"
+      className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${statusInfo.bgColor} ${statusInfo.color}`}
+    >
       {statusInfo.icon}
       <span>{statusInfo.text}</span>
       {wasEverInstalled && launchMethod === 'browser' && (
