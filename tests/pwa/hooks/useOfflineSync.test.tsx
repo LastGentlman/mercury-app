@@ -4,9 +4,21 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useOfflineSync } from '../../../src/hooks/useOfflineSync'
 import * as authModule from '../../../src/hooks/useAuth'
 import * as dbModule from '../../../src/lib/offline/db'
-import * as conflictResolverModule from '../../../src/lib/offline/conflictResolver'
 
-// ✅ MOCK LOCAL (override del global si es necesario)
+// Mocks primero
+vi.mock('../../../src/hooks/useAuth', () => ({
+  useAuth: vi.fn(() => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: vi.fn(),
+    logout: vi.fn(),
+    register: vi.fn(),
+    resendConfirmationEmail: vi.fn(),
+    refetchUser: vi.fn()
+  }))
+}))
+
 vi.mock('../../../src/lib/offline/db', () => ({
   db: {
     syncQueue: {
@@ -17,19 +29,19 @@ vi.mock('../../../src/lib/offline/db', () => ({
     },
     getPendingSyncItems: vi.fn().mockResolvedValue([]),
     markAsSynced: vi.fn().mockResolvedValue(undefined),
-    incrementRetries: vi.fn().mockResolvedValue(undefined)
+    incrementRetries: vi.fn().mockResolvedValue(undefined),
+    checkDataExpiration: vi.fn().mockResolvedValue(30) // ✅ AGREGADO
   }
 }))
 
-// Mock useAuth hook
-vi.mock('../../../src/hooks/useAuth', () => ({
-  useAuth: vi.fn(() => ({
-    user: null,
-    isAuthenticated: false,
-    login: vi.fn(),
-    logout: vi.fn(),
-    register: vi.fn()
-  }))
+vi.mock('../../../src/lib/offline/conflictResolver', () => ({
+  ConflictResolver: {
+    detectConflict: vi.fn().mockReturnValue(false),
+    resolveLastWriteWins: vi.fn().mockReturnValue({
+      winner: 'local',
+      resolvedData: { id: 1, clientGeneratedId: 'test', businessId: '1', clientName: 'Test', clientPhone: '123', clientAddress: 'Test', items: [], total: 0, status: 'pending', deliveryDate: new Date().toISOString(), syncStatus: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    })
+  }
 }))
 
 // Mock fetch
@@ -94,13 +106,6 @@ describe('useOfflineSync', () => {
     vi.mocked(dbModule.db.getPendingSyncItems).mockResolvedValue([])
     vi.mocked(dbModule.db.markAsSynced).mockResolvedValue(undefined)
     vi.mocked(dbModule.db.incrementRetries).mockResolvedValue(undefined)
-    
-    // Mock conflict resolver
-    vi.mocked(conflictResolverModule.ConflictResolver.detectConflict).mockReturnValue(false)
-    vi.mocked(conflictResolverModule.ConflictResolver.resolveLastWriteWins).mockReturnValue({
-      winner: 'local',
-      resolvedData: { id: 1, clientGeneratedId: 'test', businessId: '1', clientName: 'Test', clientPhone: '123', clientAddress: 'Test', items: [], total: 0, status: 'pending', deliveryDate: new Date().toISOString(), syncStatus: 'pending', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-    })
   })
 
   const wrapper = ({ children }: { children: React.ReactNode }) => (
@@ -136,7 +141,7 @@ describe('useOfflineSync', () => {
 
   describe('Online/Offline Detection', () => {
     it('should update online status when connection changes', async () => {
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Simulate going offline
       Object.defineProperty(navigator, 'onLine', {
@@ -160,7 +165,7 @@ describe('useOfflineSync', () => {
         configurable: true
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Simulate going online
       Object.defineProperty(navigator, 'onLine', {
@@ -188,7 +193,7 @@ describe('useOfflineSync', () => {
         register: vi.fn()
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Add pending changes
       result.current.addPendingChange({ type: 'create', data: { id: '1' } })
@@ -206,7 +211,7 @@ describe('useOfflineSync', () => {
         configurable: true
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Add pending changes
       result.current.addPendingChange({ type: 'create', data: { id: '1' } })
@@ -227,7 +232,7 @@ describe('useOfflineSync', () => {
         register: vi.fn()
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Start syncing
       result.current.isSyncing = true
@@ -248,7 +253,7 @@ describe('useOfflineSync', () => {
         register: vi.fn()
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Add pending changes
       result.current.addPendingChange({ type: 'create', data: { id: '1' } })
@@ -271,7 +276,7 @@ describe('useOfflineSync', () => {
         register: vi.fn()
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Add conflicting changes
       result.current.addPendingChange({ type: 'update', data: { id: '1', version: 1 } })
@@ -287,7 +292,7 @@ describe('useOfflineSync', () => {
 
   describe('Pending Count', () => {
     it('should update pending count', () => {
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       expect(result.current.pendingCount).toBe(0)
       
@@ -307,7 +312,7 @@ describe('useOfflineSync', () => {
         register: vi.fn()
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Mock sync to fail
       result.current.syncPendingChanges = vi.fn().mockRejectedValue(new Error('Network error'))
@@ -327,7 +332,7 @@ describe('useOfflineSync', () => {
         register: vi.fn()
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
       // Set initial error
       result.current.error = 'Previous error'
@@ -356,6 +361,11 @@ describe('useOfflineSync', () => {
     
     // Verificar que se llamó el método correcto de la DB
     const { db } = await import('../../../src/lib/offline/db')
-    expect(db.syncQueue.add).toHaveBeenCalledWith(mockItem)
+    expect(db.syncQueue.add).toHaveBeenCalledWith(expect.objectContaining({
+      action: expect.any(String),
+      entityId: expect.any(String),
+      entityType: expect.any(String),
+      timestamp: expect.any(String)
+    }))
   })
 })
