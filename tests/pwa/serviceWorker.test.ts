@@ -53,8 +53,13 @@ describe('Service Worker Registration', () => {
     
     global.fetch = vi.fn()
     
-    // Mock environment
-    vi.stubEnv('PROD', true)
+    // Mock import.meta.env
+    vi.stubGlobal('import.meta', {
+      env: {
+        PROD: true,
+        DEV: false
+      }
+    })
     
     // Mock document readyState
     Object.defineProperty(document, 'readyState', {
@@ -66,22 +71,27 @@ describe('Service Worker Registration', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
   })
 
   describe('registerPWA', () => {
     it('should register service worker in production', async () => {
       const result = await registerPWA()
 
-      // ✅ CORRECCIÓN: Incluir todos los parámetros que realmente se pasan
       expect(global.navigator.serviceWorker.register).toHaveBeenCalledWith(
         '/sw.js',
-        { scope: '/', updateViaCache: 'all' }  // ⚠️ ESTO FALTABA
+        { scope: '/', updateViaCache: 'all' }
       )
       expect(result).toBeDefined()
     })
 
     it('should not register service worker in development', async () => {
-      vi.stubEnv('PROD', false)  // ✅ Usar PROD en lugar de NODE_ENV
+      vi.stubGlobal('import.meta', {
+        env: {
+          PROD: false,
+          DEV: true
+        }
+      })
 
       const result = await registerPWA()
 
@@ -181,7 +191,6 @@ describe('Service Worker Registration', () => {
         configurable: true
       })
 
-      // Should not throw error
       const result = await registerPWA()
       expect(result).toBeDefined()
     })
@@ -240,24 +249,20 @@ describe('Service Worker Events', () => {
   })
 
   it('should handle install event', () => {
-    // This would be tested in a service worker context
-    // For now, we test the event handler logic
     const installEvent = {
       waitUntil: vi.fn(),
       type: 'install'
     }
 
-    // Mock the install event handler
     const handleInstall = (event: any) => {
       event.waitUntil(
         Promise.resolve().then(() => {
-          return 'skipWaiting'
+          console.log('Service Worker installed')
         })
       )
     }
 
     handleInstall(installEvent)
-
     expect(installEvent.waitUntil).toHaveBeenCalled()
   })
 
@@ -267,38 +272,34 @@ describe('Service Worker Events', () => {
       type: 'activate'
     }
 
-    // Mock the activate event handler
     const handleActivate = (event: any) => {
       event.waitUntil(
         Promise.resolve().then(() => {
-          return 'clients.claim'
+          console.log('Service Worker activated')
         })
       )
     }
 
     handleActivate(activateEvent)
-
     expect(activateEvent.waitUntil).toHaveBeenCalled()
   })
 
   it('should handle sync event', () => {
     const syncEvent = {
-      tag: 'background-sync',
       waitUntil: vi.fn(),
-      type: 'sync'
+      type: 'sync',
+      tag: 'background-sync'
     }
 
-    // Mock the sync event handler
     const handleSync = (event: any) => {
       event.waitUntil(
         Promise.resolve().then(() => {
-          return 'sync-completed'
+          console.log('Background sync triggered')
         })
       )
     }
 
     handleSync(syncEvent)
-
     expect(syncEvent.waitUntil).toHaveBeenCalled()
   })
-}) 
+})

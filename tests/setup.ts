@@ -27,7 +27,8 @@ vi.mock('lucide-react', () => ({
   Bell: () => 'Bell Icon',
   BellOff: () => 'BellOff Icon',
   Sync: () => 'Sync Icon',
-  SyncOff: () => 'SyncOff Icon'
+  SyncOff: () => 'SyncOff Icon',
+  HelpCircle: () => 'HelpCircle Icon'      // ⚠️ FALTABA PARA PWAStatus
 }))
 
 // ✅ MOCK DEL MÓDULO PWA (BASE)
