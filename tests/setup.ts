@@ -1,9 +1,95 @@
-import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest'
+import { afterEach, beforeEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom'
 
-// Note: Module-level mocks have been moved to individual test files
-// to ensure proper hoisting and mock recognition
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+})
+
+// ✅ MOCK COMPLETO DE LUCIDE-REACT
+vi.mock('lucide-react', () => ({
+  Download: () => 'Download Icon',
+  Wifi: () => 'Wifi Icon',
+  WifiOff: () => 'WifiOff Icon',
+  CheckCircle: () => 'CheckCircle Icon',
+  XCircle: () => 'XCircle Icon',
+  Clock: () => 'Clock Icon',
+  Smartphone: () => 'Smartphone Icon',
+  Monitor: () => 'Monitor Icon',
+  Settings: () => 'Settings Icon',         // ⚠️ FALTABA
+  RefreshCw: () => 'RefreshCw Icon',       // ⚠️ FALTABA
+  AlertCircle: () => 'AlertCircle Icon',   // ⚠️ FALTABA
+  Bell: () => 'Bell Icon',
+  BellOff: () => 'BellOff Icon',
+  Sync: () => 'Sync Icon',
+  SyncOff: () => 'SyncOff Icon'
+}))
+
+// ✅ MOCK DEL MÓDULO PWA (BASE)
+vi.mock('../src/pwa', () => ({
+  isPWAInstalled: vi.fn(() => false),
+  getPWALaunchMethod: vi.fn(() => 'browser'),
+  markAsInstalledPWA: vi.fn(),
+  wasEverInstalledAsPWA: vi.fn(() => false),
+  registerPWA: vi.fn().mockResolvedValue(null),
+  showInstallPrompt: vi.fn().mockResolvedValue(true)
+}))
+
+// ✅ MOCK DE USEAUTH CON ESTRUCTURA COMPLETA
+const createMockMutation = () => ({
+  mutate: vi.fn(),
+  mutateAsync: vi.fn().mockResolvedValue(undefined),
+  reset: vi.fn(),
+  isPending: false,
+  isSuccess: false,
+  isError: false,
+  error: null,
+  data: undefined,
+  isIdle: true,
+  status: 'idle' as const,
+  failureCount: 0,
+  failureReason: null,
+  isPaused: false,
+  variables: undefined,
+  context: undefined,
+  submittedAt: 0
+})
+
+vi.mock('../src/hooks/useAuth', () => ({
+  useAuth: vi.fn(() => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: createMockMutation(),
+    logout: createMockMutation(),
+    register: createMockMutation(),
+    resendConfirmationEmail: createMockMutation(),
+    refetchUser: vi.fn().mockResolvedValue(undefined)
+  }))
+}))
+
+// ✅ MOCK DE BASE DE DATOS OFFLINE
+const mockDb = {
+  syncQueue: {
+    count: vi.fn().mockResolvedValue(0),
+    add: vi.fn().mockResolvedValue(1),
+    toArray: vi.fn().mockResolvedValue([]),
+    clear: vi.fn().mockResolvedValue(undefined),
+    delete: vi.fn().mockResolvedValue(undefined)
+  },
+  getPendingSyncItems: vi.fn().mockResolvedValue([]),
+  markAsSynced: vi.fn().mockResolvedValue(undefined),
+  incrementRetries: vi.fn().mockResolvedValue(undefined)
+}
+
+vi.mock('../src/lib/offline/db', () => ({
+  db: mockDb
+}))
 
 // Mock design system components
 vi.mock('./src/components/ui/button', () => ({
@@ -39,166 +125,116 @@ vi.mock('./src/components/ui/switch', () => ({
   }
 }))
 
-vi.mock('lucide-react', () => ({
-  Download: () => 'Download Icon',
-  Wifi: () => 'Wifi Icon',
-  WifiOff: () => 'WifiOff Icon',
-  CheckCircle: () => 'CheckCircle Icon',
-  XCircle: () => 'XCircle Icon',
-  Clock: () => 'Clock Icon',
-  Smartphone: () => 'Smartphone Icon',
-  Monitor: () => 'Monitor Icon'
-}))
-
-// Mock Service Worker globals first - BEFORE any imports
-const mockServiceWorker = {
-  register: vi.fn().mockResolvedValue({
-    scope: '/',
-    updateViaCache: 'all',
-    unregister: vi.fn(),
-    update: vi.fn(),
-    installing: null,
-    waiting: null,
-    active: null,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn()
-  }),
-  ready: Promise.resolve({
-    scope: '/',
-    active: {
-      postMessage: vi.fn()
-    },
-    sync: {
-      register: vi.fn().mockResolvedValue(undefined)
-    },
-    periodicSync: {
-      register: vi.fn().mockResolvedValue(undefined)
-    },
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn()
-  }),
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  getRegistration: vi.fn().mockResolvedValue(null),
-  getRegistrations: vi.fn().mockResolvedValue([])
-}
-
-const mockNavigator = {
-  serviceWorker: mockServiceWorker,
-  permissions: {
-    query: vi.fn().mockResolvedValue({ state: 'granted' })
-  },
-  onLine: true,
-  userAgent: 'Mozilla/5.0 (Test Browser)',
-  language: 'en-US',
-  languages: ['en-US', 'en'],
-  cookieEnabled: true,
-  maxTouchPoints: 0,
-  hardwareConcurrency: 4,
-  deviceMemory: 8,
-  connection: {
-    effectiveType: '4g',
-    downlink: 10,
-    rtt: 50,
-    saveData: false
-  }
-}
-
-const mockBeforeInstallPrompt = {
-  prompt: vi.fn().mockResolvedValue(undefined),
-  userChoice: Promise.resolve({ outcome: 'accepted' }),
-  preventDefault: vi.fn()
-}
-
-// Setup global environment
-beforeAll(() => {
-  // Mock console to reduce noise in tests
-  global.console = {
-    ...global.console,
-    log: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn(),
-    debug: vi.fn()
-  }
-
-  // Setup globals
-  global.navigator = mockNavigator as any
-  global.fetch = vi.fn().mockResolvedValue({
-    ok: true,
-    status: 200,
-    json: () => Promise.resolve({}),
-    text: () => Promise.resolve(''),
-    headers: new Map()
-  })
-
-  // Mock indexedDB
-  global.indexedDB = {
-    open: vi.fn(),
-    deleteDatabase: vi.fn(),
-    databases: vi.fn().mockResolvedValue([])
-  } as any
-
-  // Mock caches
-  global.caches = {
-    open: vi.fn().mockResolvedValue({
-      add: vi.fn(),
-      addAll: vi.fn(),
-      put: vi.fn(),
-      delete: vi.fn(),
-      keys: vi.fn().mockResolvedValue([]),
-      match: vi.fn(),
-      matchAll: vi.fn().mockResolvedValue([])
-    }),
-    has: vi.fn().mockResolvedValue(false),
-    delete: vi.fn().mockResolvedValue(true),
-    keys: vi.fn().mockResolvedValue([]),
-    match: vi.fn()
-  } as any
-})
-
-beforeEach(() => {
-    // Setup window properties for each test
-  Object.defineProperty(global.window, 'beforeinstallprompt', {
-      value: mockBeforeInstallPrompt,
-      writable: true,
-      configurable: true
-    })
-
-    Object.defineProperty(global.window, 'matchMedia', {
-      value: vi.fn().mockReturnValue({
-        matches: false,
-        addListener: vi.fn(),
-        removeListener: vi.fn(),
+// ✅ MOCK GLOBAL DEL SERVICE WORKER
+Object.defineProperty(global, 'navigator', {
+  value: {
+    serviceWorker: {
+      register: vi.fn().mockResolvedValue({
+        scope: '/',
+        updateViaCache: 'all',
+        sync: {
+          register: vi.fn().mockResolvedValue(undefined)
+        },
+        periodicSync: {
+          register: vi.fn().mockResolvedValue(undefined)
+        },
         addEventListener: vi.fn(),
         removeEventListener: vi.fn()
       }),
-      writable: true,
-      configurable: true
-    })
-
-    Object.defineProperty(global.window, 'localStorage', {
-      value: {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
-        removeItem: vi.fn(),
-        clear: vi.fn(),
-        key: vi.fn(),
-        length: 0
-      },
-      writable: true,
-      configurable: true
-    })
-
-  // Reset all mocks
-  vi.clearAllMocks()
+      ready: Promise.resolve({
+        sync: {
+          register: vi.fn().mockResolvedValue(undefined)
+        },
+        periodicSync: {
+          register: vi.fn().mockResolvedValue(undefined)
+        }
+      }),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn()
+    },
+    permissions: {
+      query: vi.fn().mockResolvedValue({ state: 'granted' })
+    }
+  },
+  writable: true,
+  configurable: true
 })
 
-afterEach(() => {
-  cleanup()
-  vi.clearAllMocks()
+// ✅ MOCK DE CACHES API
+Object.defineProperty(global, 'caches', {
+  value: {
+    open: vi.fn().mockResolvedValue({
+      addAll: vi.fn().mockResolvedValue(undefined),
+      match: vi.fn().mockResolvedValue(undefined),
+      put: vi.fn().mockResolvedValue(undefined),
+      delete: vi.fn().mockResolvedValue(true)
+    }),
+    match: vi.fn().mockResolvedValue(undefined),
+    addAll: vi.fn().mockResolvedValue(undefined)
+  },
+  writable: true,
+  configurable: true
 })
 
-afterAll(() => {
-  vi.restoreAllMocks()
-}) 
+// ✅ MOCK DE FETCH GLOBAL
+global.fetch = vi.fn().mockResolvedValue({
+  ok: true,
+  status: 200,
+  json: vi.fn().mockResolvedValue({}),
+  text: vi.fn().mockResolvedValue('')
+})
+
+// Mock indexedDB
+global.indexedDB = {
+  open: vi.fn(),
+  deleteDatabase: vi.fn(),
+  databases: vi.fn().mockResolvedValue([])
+} as any
+
+// Mock beforeinstallprompt
+Object.defineProperty(global.window, 'beforeinstallprompt', {
+  value: {
+    prompt: vi.fn().mockResolvedValue(undefined),
+    userChoice: Promise.resolve({ outcome: 'accepted' }),
+    preventDefault: vi.fn()
+  },
+  writable: true,
+  configurable: true
+})
+
+// Mock matchMedia
+Object.defineProperty(global.window, 'matchMedia', {
+  value: vi.fn().mockReturnValue({
+    matches: false,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn()
+  }),
+  writable: true,
+  configurable: true
+})
+
+// Mock localStorage
+Object.defineProperty(global.window, 'localStorage', {
+  value: {
+    getItem: vi.fn(),
+    setItem: vi.fn(),
+    removeItem: vi.fn(),
+    clear: vi.fn(),
+    key: vi.fn(),
+    length: 0
+  },
+  writable: true,
+  configurable: true
+})
+
+// Mock console to reduce noise in tests
+global.console = {
+  ...global.console,
+  log: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  info: vi.fn(),
+  debug: vi.fn()
+} 

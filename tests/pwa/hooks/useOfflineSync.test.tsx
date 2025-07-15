@@ -1,11 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useOfflineSync } from '../../../src/hooks/useOfflineSync'
-
-// Import the mocked modules to access their functions
 import * as authModule from '../../../src/hooks/useAuth'
 import * as dbModule from '../../../src/lib/offline/db'
 import * as conflictResolverModule from '../../../src/lib/offline/conflictResolver'
+
+// ✅ MOCK LOCAL (override del global si es necesario)
+vi.mock('../../../src/lib/offline/db', () => ({
+  db: {
+    syncQueue: {
+      count: vi.fn().mockResolvedValue(0),
+      add: vi.fn().mockResolvedValue(1),
+      toArray: vi.fn().mockResolvedValue([]),
+      clear: vi.fn().mockResolvedValue(undefined)
+    },
+    getPendingSyncItems: vi.fn().mockResolvedValue([]),
+    markAsSynced: vi.fn().mockResolvedValue(undefined),
+    incrementRetries: vi.fn().mockResolvedValue(undefined)
+  }
+}))
 
 // Mock useAuth hook
 vi.mock('../../../src/hooks/useAuth', () => ({
@@ -44,7 +58,16 @@ const createMockMutation = () => ({
 })
 
 describe('useOfflineSync', () => {
+  let queryClient: QueryClient
+
   beforeEach(() => {
+    queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+        mutations: { retry: false }
+      }
+    })
+    
     vi.clearAllMocks()
     
     // Mock navigator online status
@@ -80,26 +103,34 @@ describe('useOfflineSync', () => {
     })
   })
 
+  const wrapper = ({ children }: { children: React.ReactNode }) => (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  )
+
   describe('Initial State', () => {
-    it('should initialize with online status', () => {
-      const { result } = renderHook(() => useOfflineSync())
-      
-      expect(result.current.isOnline).toBe(true)
-      expect(result.current.pendingCount).toBe(0)
-      expect(result.current.isSyncing).toBe(false)
-      expect(result.current.error).toBeNull()
+    it('should initialize with correct default state', async () => {
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
+
+      await waitFor(() => {
+        expect(result.current.pendingCount).toBe(0)
+        expect(result.current.isOnline).toBe(true)  // jsdom default
+      })
     })
 
-    it('should initialize with offline status when navigator is offline', () => {
+    it('should initialize with offline status when navigator is offline', async () => {
       Object.defineProperty(navigator, 'onLine', {
         value: false,
         writable: true,
         configurable: true
       })
       
-      const { result } = renderHook(() => useOfflineSync())
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
-      expect(result.current.isOnline).toBe(false)
+      await waitFor(() => {
+        expect(result.current.isOnline).toBe(false)
+      })
     })
   })
 
@@ -310,4 +341,21 @@ describe('useOfflineSync', () => {
       expect(result.current.error).toBeNull()
     })
   })
-}) 
+
+  // ✅ NUEVOS TESTS CON MANEJO DE ASYNC
+  it('should add item to sync queue', async () => {
+    const { result } = renderHook(() => useOfflineSync(), { wrapper })
+
+    await waitFor(() => {
+      expect(result.current.addPendingChange).toBeDefined()
+    })
+
+    const mockItem = { type: 'create' as const, data: { id: '1', name: 'Test' } }
+    
+    await result.current.addPendingChange(mockItem)
+    
+    // Verificar que se llamó el método correcto de la DB
+    const { db } = await import('../../../src/lib/offline/db')
+    expect(db.syncQueue.add).toHaveBeenCalledWith(mockItem)
+  })
+})

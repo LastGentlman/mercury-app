@@ -72,12 +72,16 @@ describe('Service Worker Registration', () => {
     it('should register service worker in production', async () => {
       const result = await registerPWA()
 
-      expect(global.navigator.serviceWorker.register).toHaveBeenCalledWith('/sw.js')
+      // ✅ CORRECCIÓN: Incluir todos los parámetros que realmente se pasan
+      expect(global.navigator.serviceWorker.register).toHaveBeenCalledWith(
+        '/sw.js',
+        { scope: '/', updateViaCache: 'all' }  // ⚠️ ESTO FALTABA
+      )
       expect(result).toBeDefined()
     })
 
     it('should not register service worker in development', async () => {
-      vi.stubEnv('PROD', false)
+      vi.stubEnv('PROD', false)  // ✅ Usar PROD en lugar de NODE_ENV
 
       const result = await registerPWA()
 
@@ -127,14 +131,12 @@ describe('Service Worker Registration', () => {
     })
 
     it('should prevent multiple registrations', async () => {
-      // Call registerPWA multiple times
       const promise1 = registerPWA()
       const promise2 = registerPWA()
       const promise3 = registerPWA()
 
       const [result1, result2, result3] = await Promise.all([promise1, promise2, promise3])
 
-      // Should only register once
       expect(global.navigator.serviceWorker.register).toHaveBeenCalledTimes(1)
       expect(result1).toBe(result2)
       expect(result2).toBe(result3)

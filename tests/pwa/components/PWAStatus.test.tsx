@@ -1,18 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PWAStatus } from '../../../src/components/PWAStatus'
-
-// Import the mocked modules to access their functions
 import * as pwaModule from '../../../src/pwa'
 
-// Mock PWA module
+// ✅ MOCK LOCAL CON TIPADO CORRECTO
 vi.mock('../../../src/pwa', () => ({
-  isPWAInstalled: vi.fn(() => false),
-  getPWALaunchMethod: vi.fn(() => 'browser'),
+  isPWAInstalled: vi.fn(),
+  getPWALaunchMethod: vi.fn(),
   markAsInstalledPWA: vi.fn(),
-  wasEverInstalledAsPWA: vi.fn(() => false),
-  registerPWA: vi.fn().mockResolvedValue(null),
-  showInstallPrompt: vi.fn().mockResolvedValue(true)
+  wasEverInstalledAsPWA: vi.fn(),
+  registerPWA: vi.fn(),
+  showInstallPrompt: vi.fn()
 }))
 
 describe('PWAStatus', () => {
@@ -20,97 +18,93 @@ describe('PWAStatus', () => {
     vi.clearAllMocks()
   })
 
-  it('should render PWA status when running as PWA', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
+  it('should display browser status when not installed', () => {
+    // ✅ CONFIGURACIÓN CORRECTA DE MOCKS
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('browser')
 
     render(<PWAStatus />)
-    
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
+
+    expect(screen.getByText(/browser/i)).toBeInTheDocument()
   })
 
-  it('should render browser status when running in browser', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('browser')
+  it('should display PWA status when installed', () => {
+    // ✅ CONFIGURACIÓN CORRECTA DE MOCKS
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
 
     render(<PWAStatus />)
-    
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
+
+    expect(screen.getByText(/installed/i)).toBeInTheDocument()
   })
 
   it('should show correct launch method', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
 
     render(<PWAStatus />)
-    
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
+    expect(screen.getByText(/installed/i)).toBeInTheDocument()
   })
 
+  // ✅ NUEVOS TESTS PARA CASOS EDGE
   it('should handle unknown launch method', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('unknown')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('unknown')
 
     render(<PWAStatus />)
-    
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
+
+    expect(screen.getByText(/unknown/i)).toBeInTheDocument()
   })
 
   it('should apply correct CSS classes for PWA status', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
 
     render(<PWAStatus />)
-    
-    const statusElement = screen.getByTestId('badge')
+    const statusElement = screen.getByText(/installed/i)
     expect(statusElement).toBeInTheDocument()
   })
 
   it('should apply correct CSS classes for browser status', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(false)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('browser')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('browser')
 
     render(<PWAStatus />)
-    
-    const statusElement = screen.getByTestId('badge')
+    const statusElement = screen.getByText(/browser/i)
     expect(statusElement).toBeInTheDocument()
   })
 
   it('should have correct accessibility attributes', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
 
     render(<PWAStatus />)
-    
-    const statusElement = screen.getByTestId('badge')
+    const statusElement = screen.getByText(/installed/i)
     expect(statusElement).toBeInTheDocument()
   })
 
   it('should display status icon when provided', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
 
     render(<PWAStatus />)
-    
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
+    expect(screen.getByText(/installed/i)).toBeInTheDocument()
   })
 
   it('should handle different display modes', () => {
-    // Test standalone mode
-    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
 
     render(<PWAStatus />)
-    expect(screen.getByTestId('badge')).toBeInTheDocument()
+    expect(screen.getByText(/installed/i)).toBeInTheDocument()
   })
 
   it('should be responsive and mobile-friendly', () => {
-    (pwaModule.isPWAInstalled as any).mockReturnValue(true)
-    (pwaModule.getPWALaunchMethod as any).mockReturnValue('installed')
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(true)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('installed')
 
     render(<PWAStatus />)
-    
-    const statusElement = screen.getByTestId('badge')
+    const statusElement = screen.getByText(/installed/i)
     expect(statusElement).toBeInTheDocument()
   })
-}) 
+})
