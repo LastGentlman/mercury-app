@@ -20,7 +20,7 @@ describe('useBackgroundSync', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Mock navigator service worker
+    // Mock navigator service worker with proper structure
     Object.defineProperty(navigator, 'serviceWorker', {
       value: {
         ready: Promise.resolve({
@@ -29,7 +29,9 @@ describe('useBackgroundSync', () => {
           },
           periodicSync: {
             register: vi.fn().mockResolvedValue(undefined)
-          }
+          },
+          addEventListener: vi.fn(),
+          removeEventListener: vi.fn()
         }),
         addEventListener: vi.fn(),
         removeEventListener: vi.fn()
@@ -42,6 +44,19 @@ describe('useBackgroundSync', () => {
     Object.defineProperty(navigator, 'permissions', {
       value: {
         query: vi.fn().mockResolvedValue({ state: 'granted' })
+      },
+      writable: true,
+      configurable: true
+    })
+    
+    // Mock ServiceWorkerRegistration prototype
+    Object.defineProperty(window, 'ServiceWorkerRegistration', {
+      value: {
+        prototype: {
+          sync: {
+            register: vi.fn().mockResolvedValue(undefined)
+          }
+        }
       },
       writable: true,
       configurable: true

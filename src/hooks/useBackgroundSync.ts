@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAuth } from './useAuth'
-import { useServiceWorkerEventListener } from './useEventListener'
 
 export interface BackgroundSyncStatus {
   isSyncing: boolean
@@ -18,17 +17,20 @@ export function useBackgroundSync() {
     itemsSynced: 0
   })
 
-  // Use refs to track mounted state and prevent memory leaks
+  // ✅ BEST PRACTICE: Memory leak prevention
   const isMountedRef = useRef(true)
+  const handlersRef = useRef<{
+    messageHandler?: (event: MessageEvent) => void
+  }>({})
 
-  // Safe state update function
+  // ✅ BEST PRACTICE: Safe state updates with mount checking
   const safeSetSyncStatus = useCallback((updater: (prev: BackgroundSyncStatus) => BackgroundSyncStatus) => {
     if (isMountedRef.current) {
       setSyncStatus(updater)
     }
   }, [])
 
-  // ✅ CORREGIDO: Un solo message handler que maneja ambos casos
+  // ✅ Service Worker message handler
   const handleServiceWorkerMessage = useCallback((event: MessageEvent) => {
     try {
       if (!event.data || typeof event.data !== 'object') {
@@ -37,14 +39,19 @@ export function useBackgroundSync() {
 
       const { type, timestamp, itemsCount, error } = event.data
 
-      // ✅ Manejar petición de auth token
-      if (type === 'GET_AUTH_TOKEN' && event.ports[0]) {
-        const token = localStorage.getItem('authToken')
-        event.ports[0].postMessage({ token })
+      // Handle auth token requests
+      if (type === 'GET_AUTH_TOKEN' && event.ports && event.ports[0]) {
+        try {
+          const token = localStorage.getItem('authToken')
+          event.ports[0].postMessage({ token })
+        } catch (err) {
+          console.error('Failed to get auth token:', err)
+          event.ports[0].postMessage({ token: null, error: err instanceof Error ? err.message : 'Unknown error' })
+        }
         return
       }
 
-      // ✅ Manejar mensajes de sync
+      // Handle sync status updates
       switch (type) {
         case 'SYNC_STARTED':
           safeSetSyncStatus(prev => ({
@@ -52,74 +59,94 @@ export function useBackgroundSync() {
             isSyncing: true,
             lastSyncError: null
           }))
-          console.log('🔄 Background sync started')
           break
 
         case 'SYNC_COMPLETED':
           safeSetSyncStatus(prev => ({
             ...prev,
             isSyncing: false,
-            lastSyncTime: timestamp,
-            itemsSynced: itemsCount || 0
+            lastSyncTime: timestamp || new Date().toISOString(),
+            itemsSynced: itemsCount || prev.itemsSynced,
+            lastSyncError: null
           }))
-          console.log(`✅ Background sync completed: ${itemsCount || 0} items`)
           break
 
         case 'SYNC_ERROR':
           safeSetSyncStatus(prev => ({
             ...prev,
             isSyncing: false,
-            lastSyncError: error || 'Unknown sync error',
-            lastSyncTime: timestamp
+            lastSyncError: error || 'Unknown sync error'
           }))
-          console.error('❌ Background sync failed:', error)
           break
       }
-    } catch (handleError) {
-      console.error('❌ Message handler error:', handleError)
-      // ✅ Manejar errores de auth token
-      if (event.ports[0]) {
-        event.ports[0].postMessage({ token: null })
-      }
+    } catch (err) {
+      console.error('Error handling service worker message:', err)
     }
   }, [safeSetSyncStatus])
 
-  // ✅ CORREGIDO: Usar hook seguro para event listeners
-  useServiceWorkerEventListener('message', handleServiceWorkerMessage)
-
-  // Cleanup on unmount
+  // ✅ BEST PRACTICE: Proper cleanup on unmount
   useEffect(() => {
+    isMountedRef.current = true
+    
     return () => {
       isMountedRef.current = false
+      
+      // Cleanup message handler
+      if (handlersRef.current.messageHandler && navigator.serviceWorker) {
+        navigator.serviceWorker.removeEventListener('message', handlersRef.current.messageHandler)
+      }
     }
   }, [])
 
-  // Trigger manual background sync with proper error handling
-  const triggerBackgroundSync = useCallback(async () => {
+  // ✅ Service Worker message listener setup
+  useEffect(() => {
+    if (navigator.serviceWorker) {
+      // Remove previous handler if exists
+      if (handlersRef.current.messageHandler) {
+        navigator.serviceWorker.removeEventListener('message', handlersRef.current.messageHandler)
+      }
+
+      // Set new handler
+      handlersRef.current.messageHandler = handleServiceWorkerMessage
+      navigator.serviceWorker.addEventListener('message', handleServiceWorkerMessage)
+    }
+
+    return () => {
+      if (handlersRef.current.messageHandler && navigator.serviceWorker) {
+        navigator.serviceWorker.removeEventListener('message', handlersRef.current.messageHandler)
+      }
+    }
+  }, [handleServiceWorkerMessage])
+
+  // ✅ Trigger background sync with proper error handling
+  const triggerBackgroundSync = useCallback(async (): Promise<boolean> => {
     if (!user) {
       console.log('⚠️ No user authenticated, skipping sync')
       return false
     }
 
     try {
-      const registration = await navigator.serviceWorker.ready
-      
-      if ('sync' in registration) {
+      if (navigator.serviceWorker && window.ServiceWorkerRegistration && window.ServiceWorkerRegistration.prototype && 'sync' in window.ServiceWorkerRegistration.prototype) {
+        const registration = await navigator.serviceWorker.ready
         await (registration as any).sync.register('background-sync')
-        console.log('🔄 Manual background sync triggered')
+        console.log('✅ Background sync triggered')
         return true
       } else {
         console.log('⚠️ Background sync not supported')
         return false
       }
-    } catch (error) {
-      console.error('❌ Failed to trigger background sync:', error)
+    } catch (err) {
+      console.error('❌ Failed to trigger background sync:', err)
+      safeSetSyncStatus(prev => ({
+        ...prev,
+        lastSyncError: err instanceof Error ? err.message : 'Failed to trigger sync'
+      }))
       return false
     }
-  }, [user])
+  }, [user, safeSetSyncStatus])
 
-  // Request periodic background sync with proper error handling
-  const requestPeriodicSync = useCallback(async () => {
+  // ✅ Request periodic background sync
+  const requestPeriodicSync = useCallback(async (): Promise<boolean> => {
     if (!user) {
       console.log('⚠️ No user authenticated, skipping periodic sync setup')
       return false
@@ -129,7 +156,7 @@ export function useBackgroundSync() {
       const registration = await navigator.serviceWorker.ready
       
       if ('periodicSync' in registration) {
-        // Check permissions
+        // Check permissions first
         const status = await navigator.permissions.query({
           name: 'periodic-background-sync' as PermissionName
         })
@@ -148,40 +175,65 @@ export function useBackgroundSync() {
         console.log('⚠️ Periodic background sync not supported')
         return false
       }
-    } catch (error) {
-      console.error('❌ Failed to register periodic sync:', error)
+    } catch (err) {
+      console.error('❌ Failed to register periodic sync:', err)
+      safeSetSyncStatus(prev => ({
+        ...prev,
+        lastSyncError: err instanceof Error ? err.message : 'Failed to setup periodic sync'
+      }))
       return false
     }
-  }, [user])
+  }, [user, safeSetSyncStatus])
 
-  // Get sync statistics with error handling
+  // ✅ FIXED: Get sync statistics with proper error handling
   const getSyncStats = useCallback(() => {
     try {
+      const isServiceWorkerSupported = !!navigator.serviceWorker
+      
+      // ✅ CRITICAL FIX: Return isEnabled: false when service worker is not supported
+      if (!isServiceWorkerSupported) {
+        return {
+          isEnabled: false,
+          hasUser: !!user,
+          lastSync: null,
+          errorCount: 1,
+          totalItems: 0,
+          error: 'Service Worker not supported'
+        }
+      }
+
       const stats = {
-        isEnabled: 'serviceWorker' in navigator,
+        isEnabled: true,
         hasUser: !!user,
         lastSync: syncStatus.lastSyncTime ? new Date(syncStatus.lastSyncTime) : null,
-        errorCount: syncStatus.lastSyncError ? 1 : 0, // Simplified for this example
+        errorCount: syncStatus.lastSyncError ? 1 : 0,
         totalItems: syncStatus.itemsSynced
       }
+      
       return stats
-    } catch (error) {
-      console.error('❌ Failed to get sync stats:', error)
+    } catch (err) {
+      console.error('❌ Failed to get sync stats:', err)
+      
+      // ✅ CRITICAL FIX: Return isEnabled: false when error occurs
       return {
         isEnabled: false,
-        hasUser: false,
+        hasUser: !!user,
         lastSync: null,
         errorCount: 1,
-        totalItems: 0
+        totalItems: 0,
+        error: err instanceof Error ? err.message : 'Unknown error'
       }
     }
   }, [user, syncStatus])
+
+  // ✅ BEST PRACTICE: Feature detection
+  const isSupported = !!(navigator.serviceWorker && window.ServiceWorkerRegistration && window.ServiceWorkerRegistration.prototype && 'sync' in window.ServiceWorkerRegistration.prototype)
 
   return {
     syncStatus,
     triggerBackgroundSync,
     requestPeriodicSync,
     getSyncStats,
-    isSupported: 'serviceWorker' in navigator && 'sync' in (window as any)
+    isSupported
   }
 }
