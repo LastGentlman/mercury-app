@@ -1,14 +1,7 @@
 import { vi } from 'vitest'
 
-// Global PWA mocks - defined at module level to ensure proper hoisting
-vi.mock('../../../src/pwa', () => ({
-  isPWAInstalled: vi.fn(() => false),
-  getPWALaunchMethod: vi.fn(() => 'browser'),
-  markAsInstalledPWA: vi.fn(),
-  wasEverInstalledAsPWA: vi.fn(() => false),
-  registerPWA: vi.fn().mockResolvedValue(null),
-  showInstallPrompt: vi.fn().mockResolvedValue(true)
-}))
+// ❌ REMOVER el mock circular del módulo PWA
+// vi.mock('../../../src/pwa', () => ({...}))
 
 vi.mock('../../../src/hooks/useAuth', () => ({
   useAuth: vi.fn(() => ({
