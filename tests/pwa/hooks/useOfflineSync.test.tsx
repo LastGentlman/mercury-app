@@ -256,36 +256,109 @@ describe('useOfflineSync', () => {
     })
 
     it('should not sync when already syncing', async () => {
+      (authModule.useAuth as any).mockReturnValue({
+        user: { id: '1', email: 'test@example.com', role: 'owner' },
+        isAuthenticated: true,
+        login: vi.fn(),
+        logout: vi.fn(),
+        register: vi.fn()
+      })
+      
       const { result } = renderHook(() => useOfflineSync(), { wrapper })
       
-      // Wait for hook to initialize
-      await waitFor(() => {
-        expect(result.current).toBeDefined()
-      })
+      // ✅ BEST PRACTICE: Add pending changes first
+      result.current.addPendingChange({ type: 'create', data: { id: '1' } })
       
-      // Add a pending change first
-      await act( () => {
-        result.current.addPendingChange({ 
-          type: 'create', 
-          data: { id: '1', name: 'Test Order' } 
-        })
-      })
-      
-      // Start syncing
-      await act( () => {
-        result.current.syncPendingChanges()
-      })
-      
-      // Try to sync again while already syncing
-      await act( () => {
-        result.current.syncPendingChanges()
-      })
-      
-      // The hook should handle multiple sync calls gracefully
-      // We can't easily test the internal syncing state, so we test the behavior
+      // Wait for the pending change to be added
       await waitFor(() => {
         expect(result.current.pendingCount).toBe(1)
       })
+      
+      // ✅ CRITICAL FIX: Mock fetch to simulate a slow/hanging request
+      // This keeps isSyncing = true during the test
+      const mockFetch = vi.fn(() => new Promise<Response>(resolve => {
+        // Never resolve - simulates ongoing sync
+        // The test will check state while this is "pending"
+      }))
+      
+      global.fetch = mockFetch as any
+      
+      // ✅ Start the first sync (will hang due to our mock)
+      const firstSyncPromise = result.current.syncPendingChanges()
+      
+      // ✅ Wait for isSyncing to become true
+      await waitFor(() => {
+        expect(result.current.isSyncing).toBe(true)
+      })
+      
+      // ✅ Capture the state before the second sync attempt
+      const pendingCountBeforeSecondSync = result.current.pendingCount
+      const isSyncingBeforeSecondSync = result.current.isSyncing
+      
+      // ✅ Try to sync again while already syncing
+      await result.current.syncPendingChanges()
+      
+      // ✅ CORRECT ASSERTIONS: 
+      // - Should still be syncing (first sync is still ongoing)
+      // - Pending count should remain the same (no double processing)
+      expect(result.current.isSyncing).toBe(true)
+      expect(result.current.pendingCount).toBe(pendingCountBeforeSecondSync)
+      
+      // ✅ MEMORY LEAK PREVENTION: Cleanup
+      // Cancel the hanging promise to avoid memory leaks
+      mockFetch.mockClear()
+    })
+
+    // ✅ ENHANCED VERSION: Test with proper guard clause implementation
+    // This version tests the guard clause that should be in the syncPendingChanges function
+    it('should respect isSyncing guard clause', async () => {
+      (authModule.useAuth as any).mockReturnValue({
+        user: { id: '1', email: 'test@example.com', role: 'owner' },
+        isAuthenticated: true,
+        login: vi.fn(),
+        logout: vi.fn(),
+        register: vi.fn()
+      })
+      
+      const { result } = renderHook(() => useOfflineSync(), { wrapper })
+      
+      // ✅ Mock console.log to verify guard clause message
+      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
+      
+      // ✅ Add pending change
+      result.current.addPendingChange({ type: 'create', data: { id: '1' } })
+      
+      await waitFor(() => {
+        expect(result.current.pendingCount).toBe(1)
+      })
+      
+      // ✅ Start sync with delayed response
+      let resolveSync: (value: any) => void
+      const mockFetch = vi.fn(() => new Promise<Response>(resolve => {
+        resolveSync = resolve
+      }))
+      global.fetch = mockFetch as any
+      
+      // ✅ Start first sync
+      const syncPromise = result.current.syncPendingChanges()
+      
+      // ✅ Wait for sync to start
+      await waitFor(() => {
+        expect(result.current.isSyncing).toBe(true)
+      })
+      
+      // ✅ Call sync again while first is running
+      await result.current.syncPendingChanges()
+      
+      // ✅ VERIFY: Only one fetch call was made
+      expect(mockFetch).toHaveBeenCalledTimes(1)
+      
+      // ✅ Complete the sync
+      resolveSync!({ ok: true, json: () => Promise.resolve({ success: true }) })
+      await syncPromise
+      
+      // ✅ Cleanup
+      consoleSpy.mockRestore()
     })
 
     it('should handle sync errors gracefully', async () => {

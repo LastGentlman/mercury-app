@@ -17,8 +17,10 @@ export function useOfflineSync() {
   
   // ✅ BEST PRACTICE: Memory leak prevention
   const isMountedRef = useRef(true)
+  // ✅ BEST PRACTICE: Prevent duplicate sync calls
+  const syncInProgressRef = useRef(false)
 
-  // ✅ FIXED: Proper pending count management
+  // ✅ BEST PRACTICE: Proper pending count management
   const addPendingChange = useCallback((change: Omit<OfflineSyncItem, 'id' | 'timestamp' | 'retries'>) => {
     const newItem: OfflineSyncItem = {
       id: crypto.randomUUID(),
@@ -34,29 +36,38 @@ export function useOfflineSync() {
     })
   }, [])
 
-  // ✅ FIXED: Proper error handling and clearing
+  // ✅ CRITICAL FIX: Enhanced syncPendingChanges with proper guard clauses
   const syncPendingChanges = useCallback(async () => {
-    // ✅ CRITICAL FIX: Don't sync when offline
+    // ✅ GUARD CLAUSE 1: Don't sync when offline
     if (!isOnline) {
       console.log('⚠️ Cannot sync while offline')
       return
     }
 
+    // ✅ GUARD CLAUSE 2: Don't sync when no pending changes
     if (pendingChanges.length === 0) {
       console.log('📝 No pending changes to sync')
       return
     }
 
+    // ✅ GUARD CLAUSE 3: Don't sync when already syncing (CRITICAL FIX)
+    if (isSyncing || syncInProgressRef.current) {
+      console.log('🔄 Sync already in progress, skipping duplicate sync call')
+      return
+    }
+
+    // ✅ BEST PRACTICE: Set both state and ref for immediate protection
     setIsSyncing(true)
-    setError(null) // ✅ CRITICAL FIX: Clear error at start
+    syncInProgressRef.current = true
+    setError(null)
 
     try {
       console.log(`🔄 Syncing ${pendingChanges.length} pending changes...`)
 
-      // Process each pending change
+      // ✅ BEST PRACTICE: Process each pending change with proper error handling
       const syncPromises = pendingChanges.map(async (item) => {
         try {
-          // Simulate API call based on operation type
+          // ✅ BEST PRACTICE: Simulate API call with proper authentication
           const response = await fetch(`/api/sync/${item.type}`, {
             method: 'POST',
             headers: {
@@ -87,6 +98,7 @@ export function useOfflineSync() {
         }
       })
 
+      // ✅ BEST PRACTICE: Handle results with proper error aggregation
       const results = await Promise.allSettled(syncPromises)
       const successful = results
         .filter((result): result is PromiseFulfilledResult<{ success: true; item: OfflineSyncItem; result: any }> => 
@@ -97,6 +109,9 @@ export function useOfflineSync() {
         .filter((result): result is PromiseFulfilledResult<{ success: false; item: OfflineSyncItem; error: string }> => 
           result.status === 'fulfilled' && !result.value.success)
         .map(result => result.value)
+
+      // ✅ BEST PRACTICE: Update state only if component is still mounted
+      if (!isMountedRef.current) return
 
       // Remove successful items from pending list
       if (successful.length > 0) {
@@ -116,7 +131,7 @@ export function useOfflineSync() {
         setError(errorMessage)
         console.error(`❌ ${errorMessage}:`, failed.map(f => f.error))
         
-        // Increment retry count for failed items
+        // ✅ BEST PRACTICE: Increment retry count for failed items
         setPendingChanges(prev => 
           prev.map(item => {
             const failedItem = failed.find(f => f.item.id === item.id)
@@ -136,20 +151,24 @@ export function useOfflineSync() {
       setError(errorMessage)
       console.error('❌ Sync operation failed:', err)
     } finally {
-      setIsSyncing(false)
+      // ✅ CRITICAL FIX: Always clear both state and ref
+      if (isMountedRef.current) {
+        setIsSyncing(false)
+      }
+      syncInProgressRef.current = false
     }
-  }, [isOnline, pendingChanges])
+  }, [isOnline, pendingChanges, isSyncing]) // ✅ BEST PRACTICE: Include isSyncing in dependencies
 
-  // ✅ Network status monitoring
+  // ✅ BEST PRACTICE: Network status monitoring with proper cleanup
   useEffect(() => {
     const handleOnline = () => {
       console.log('🌐 Back online - attempting to sync pending changes')
       setIsOnline(true)
-      setError(null) // Clear offline errors
+      setError(null)
       
-      // Attempt sync after a short delay to ensure connection is stable
+      // ✅ BEST PRACTICE: Debounced sync to ensure connection stability
       setTimeout(() => {
-        if (isMountedRef.current && pendingChanges.length > 0) {
+        if (isMountedRef.current && pendingChanges.length > 0 && !syncInProgressRef.current) {
           syncPendingChanges()
         }
       }, 1000)
@@ -169,29 +188,30 @@ export function useOfflineSync() {
     }
   }, [pendingChanges, syncPendingChanges])
 
-  // ✅ Component cleanup
+  // ✅ BEST PRACTICE: Component cleanup
   useEffect(() => {
     isMountedRef.current = true
     
     return () => {
       isMountedRef.current = false
+      syncInProgressRef.current = false
     }
   }, [])
 
-  // ✅ Initial sync attempt if there are pending changes and we're online
+  // ✅ BEST PRACTICE: Auto-sync when conditions are met
   useEffect(() => {
-    if (isOnline && pendingChanges.length > 0 && !isSyncing) {
+    if (isOnline && pendingChanges.length > 0 && !isSyncing && !syncInProgressRef.current) {
       const timer = setTimeout(() => {
         if (isMountedRef.current) {
           syncPendingChanges()
         }
-      }, 2000) // Wait 2 seconds after going online before syncing
+      }, 2000) // ✅ BEST PRACTICE: Wait for connection to stabilize
 
       return () => clearTimeout(timer)
     }
   }, [isOnline, pendingChanges.length, isSyncing, syncPendingChanges])
 
-  // ✅ Clear old items (optional cleanup for items that failed too many times)
+  // ✅ BEST PRACTICE: Cleanup utility for failed items
   const clearFailedItems = useCallback(() => {
     setPendingChanges(prev => {
       const cleaned = prev.filter(item => item.retries < 5) // Remove items that failed 5+ times
@@ -199,6 +219,14 @@ export function useOfflineSync() {
       return cleaned
     })
   }, [])
+
+  // ✅ BEST PRACTICE: Force sync utility (for manual triggers)
+  const forceSyncPendingChanges = useCallback(async () => {
+    // Reset the sync lock and force a sync
+    syncInProgressRef.current = false
+    setIsSyncing(false)
+    await syncPendingChanges()
+  }, [syncPendingChanges])
 
   return {
     // State
@@ -211,10 +239,11 @@ export function useOfflineSync() {
     // Actions
     addPendingChange,
     syncPendingChanges,
+    forceSyncPendingChanges, // ✅ NEW: Force sync utility
     clearFailedItems,
     
     // Utilities
     hasPendingChanges: pendingCount > 0,
-    canSync: isOnline && !isSyncing
+    canSync: isOnline && !isSyncing && !syncInProgressRef.current
   }
 } 
