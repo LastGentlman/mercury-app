@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BACKEND_URL } from '../config';
+import { generateUUID } from '@/lib/utils';
 
 interface CSRFConfig {
   sessionId: string;
@@ -14,7 +15,7 @@ export function useCSRF(): CSRFConfig {
   const [sessionId] = useState(() => {
     // Generar ID de sesión único
     return localStorage.getItem('sessionId') || 
-           crypto.randomUUID();
+           generateUUID();
   });
   
   const [token, setToken] = useState<string | null>(null);

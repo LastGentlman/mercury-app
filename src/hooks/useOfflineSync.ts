@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { generateUUID } from '@/lib/utils'
 
 interface OfflineSyncItem {
   id: string
@@ -23,7 +24,7 @@ export function useOfflineSync() {
   // ✅ BEST PRACTICE: Proper pending count management
   const addPendingChange = useCallback((change: Omit<OfflineSyncItem, 'id' | 'timestamp' | 'retries'>) => {
     const newItem: OfflineSyncItem = {
-      id: crypto.randomUUID(),
+      id: generateUUID(),
       timestamp: Date.now(),
       retries: 0,
       ...change

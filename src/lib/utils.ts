@@ -6,6 +6,20 @@ export function cn(...inputs: Array<ClassValue>) {
   return twMerge(clsx(inputs))
 }
 
+// Safe UUID generation for mobile browsers
+export function generateUUID(): string {
+  try {
+    return crypto.randomUUID();
+  } catch {
+    // Fallback for browsers without crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+}
+
 // Formatting utilities
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('es-MX', {
