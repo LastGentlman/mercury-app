@@ -22,8 +22,9 @@ export function Dashboard({ businessId }: DashboardProps) {
     return {
       total: today.length,
       pending: today.filter(o => o.status === 'pending').length,
-      in_progress: today.filter(o => o.status === 'in_progress').length,
-      completed: today.filter(o => o.status === 'completed').length,
+      preparing: today.filter(o => o.status === 'preparing').length,
+      ready: today.filter(o => o.status === 'ready').length,
+      delivered: today.filter(o => o.status === 'delivered').length,
       cancelled: today.filter(o => o.status === 'cancelled').length,
       totalAmount: today.reduce((sum, order) => sum + order.total, 0),
     };
@@ -32,7 +33,7 @@ export function Dashboard({ businessId }: DashboardProps) {
   const sortedOrders = React.useMemo(() => {
     return [...orders].sort((a, b) => {
       // Ordenar por estado (pending primero) y luego por hora
-      const statusOrder = { pending: 0, in_progress: 1, completed: 2, cancelled: 3 };
+      const statusOrder = { pending: 0, preparing: 1, ready: 2, delivered: 3, cancelled: 4 };
       const statusDiff = statusOrder[a.status] - statusOrder[b.status];
       
       if (statusDiff !== 0) return statusDiff;
@@ -74,7 +75,7 @@ export function Dashboard({ businessId }: DashboardProps) {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
@@ -104,8 +105,8 @@ export function Dashboard({ businessId }: DashboardProps) {
             <div className="flex items-center space-x-2">
               <Clock className="w-5 h-5 text-blue-500" />
               <div>
-                <p className="text-sm text-gray-600">En Proceso</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.in_progress}</p>
+                <p className="text-sm text-gray-600">En Preparación</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.preparing}</p>
               </div>
             </div>
           </CardContent>
@@ -116,8 +117,8 @@ export function Dashboard({ businessId }: DashboardProps) {
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-5 h-5 text-green-500" />
               <div>
-                <p className="text-sm text-gray-600">Completados</p>
-                <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
+                <p className="text-sm text-gray-600">Listos</p>
+                <p className="text-2xl font-bold text-green-600">{stats.ready}</p>
               </div>
             </div>
           </CardContent>
@@ -126,10 +127,10 @@ export function Dashboard({ businessId }: DashboardProps) {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
+              <Package className="w-5 h-5 text-gray-500" />
               <div>
-                <p className="text-sm text-gray-600">Cancelados</p>
-                <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+                <p className="text-sm text-gray-600">Entregados</p>
+                <p className="text-2xl font-bold text-gray-600">{stats.delivered}</p>
               </div>
             </div>
           </CardContent>
@@ -142,6 +143,18 @@ export function Dashboard({ businessId }: DashboardProps) {
               <p className="text-2xl font-bold text-green-600">
                 ${stats.totalAmount.toFixed(2)}
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-red-500" />
+              <div>
+                <p className="text-sm text-gray-600">Cancelados</p>
+                <p className="text-2xl font-bold text-red-600">{stats.cancelled}</p>
+              </div>
             </div>
           </CardContent>
         </Card>

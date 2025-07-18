@@ -3,14 +3,16 @@
 export interface Order {
   id?: number
   clientGeneratedId: string
+  folio?: string // Order number/folio
   businessId: string
   clientName: string
   clientPhone: string
   clientAddress: string
   items: Array<OrderItem>
   total: number
-  status: 'pending' | 'in_progress' | 'completed' | 'cancelled'
+  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
   deliveryDate: string
+  deliveryTime?: string // Time in HH:mm format
   notes?: string
   syncStatus: 'pending' | 'synced' | 'error'
   createdAt: string

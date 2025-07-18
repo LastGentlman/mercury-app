@@ -20,9 +20,10 @@ interface OrderCardProps {
 
 export function OrderCard({ order, onStatusChange }: OrderCardProps) {
   const statusConfig = {
-    pending: { label: 'Pendiente', color: 'bg-orange-100 text-orange-800', nextStatus: 'in_progress' },
-    in_progress: { label: 'En Proceso', color: 'bg-blue-100 text-blue-800', nextStatus: 'completed' },
-    completed: { label: 'Completado', color: 'bg-green-100 text-green-800', nextStatus: null },
+    pending: { label: 'Pendiente', color: 'bg-orange-100 text-orange-800', nextStatus: 'preparing' },
+    preparing: { label: 'En Preparación', color: 'bg-blue-100 text-blue-800', nextStatus: 'ready' },
+    ready: { label: 'Listo', color: 'bg-green-100 text-green-800', nextStatus: 'delivered' },
+    delivered: { label: 'Entregado', color: 'bg-gray-100 text-gray-800', nextStatus: null },
     cancelled: { label: 'Cancelado', color: 'bg-red-100 text-red-800', nextStatus: null },
   };
 
@@ -122,8 +123,9 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
               onClick={handleAdvanceStatus}
               className="flex-1 min-w-[140px]"
             >
-              {currentStatus.nextStatus === 'in_progress' && 'Comenzar'}
-              {currentStatus.nextStatus === 'completed' && 'Marcar Completado'}
+              {currentStatus.nextStatus === 'preparing' && 'Comenzar Preparación'}
+              {currentStatus.nextStatus === 'ready' && 'Marcar Listo'}
+              {currentStatus.nextStatus === 'delivered' && 'Marcar Entregado'}
               <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           )}
