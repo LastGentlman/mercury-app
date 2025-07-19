@@ -260,9 +260,8 @@ vi.mock('../src/components/ui/textarea', () => ({
     React.createElement('textarea', { ...props, 'data-testid': 'textarea' })
 }))
 
-// ✅ CRITICAL FIX: Mock de fetch mejorado
-global.fetch = vi.fn().mockImplementation((_input: RequestInfo | URL, _init?: RequestInit) => {
-  // Mock por defecto para requests no específicos
+// ✅ CRITICAL FIX: Mock de fetch simplificado
+const mockFetch = vi.fn().mockImplementation((_input: RequestInfo | URL, _init?: RequestInit) => {
   return Promise.resolve({
     ok: true,
     status: 200,
@@ -273,23 +272,7 @@ global.fetch = vi.fn().mockImplementation((_input: RequestInfo | URL, _init?: Re
   } as Response)
 })
 
-// ✅ CRITICAL FIX: Reset fetch mock en cada test
-beforeEach(() => {
-  vi.clearAllMocks()
-  // Reset fetch mock to default implementation
-  if (global.fetch && typeof global.fetch === 'function') {
-    (global.fetch as any).mockImplementation((_input: RequestInfo | URL, _init?: RequestInit) => {
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({}),
-        text: () => Promise.resolve(''),
-        headers: new Headers(),
-        statusText: 'OK'
-      } as Response)
-    })
-  }
-})
+global.fetch = mockFetch
 
 // Service Worker Mock
 Object.defineProperty(global.navigator, 'serviceWorker', {

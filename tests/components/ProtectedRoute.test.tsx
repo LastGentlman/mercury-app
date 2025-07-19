@@ -113,13 +113,6 @@ describe('ProtectedRoute', () => {
   })
 
   it('should handle authentication state changes', async () => {
-    const { rerender } = render(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>,
-      { wrapper: createWrapper() }
-    )
-
     // Initially loading
     mockUseAuth.mockReturnValue({
       isAuthenticated: false,
@@ -131,6 +124,13 @@ describe('ProtectedRoute', () => {
       resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
       refetchUser: vi.fn() as any,
     })
+
+    const { rerender } = render(
+      <ProtectedRoute>
+        <div>Protected Content</div>
+      </ProtectedRoute>,
+      { wrapper: createWrapper() }
+    )
 
     rerender(
       <ProtectedRoute>
