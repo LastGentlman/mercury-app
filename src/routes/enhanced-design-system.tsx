@@ -21,24 +21,45 @@ export default function EnhancedDesignSystemPage() {
 
   // Mock order data
   const mockOrder: Order = {
-    id: 1,
-    clientGeneratedId: 'ORD-001',
-    businessId: 'business-1',
-    clientName: 'María González',
-    clientPhone: '+34612345678',
-    clientAddress: 'Calle Mayor 123, Madrid',
-    deliveryDate: '2024-01-15',
+    id: '1',
+    business_id: 'business-1',
+    branch_id: 'branch-1',
+    employee_id: 'employee-1',
+    client_name: 'María González', // ✅ CAMBIO: client_name en lugar de clientName
+    client_phone: '+34612345678', // ✅ CAMBIO: client_phone en lugar de clientPhone
+    delivery_date: '2024-01-15',
     status: 'pending',
     total: 45.50,
     items: [
-      { productId: 'prod-1', productName: 'Pizza Margherita', quantity: 2, unitPrice: 12.00, total: 24.00 },
-      { productId: 'prod-2', productName: 'Coca Cola', quantity: 1, unitPrice: 2.50, total: 2.50 },
-      { productId: 'prod-3', productName: 'Ensalada César', quantity: 1, unitPrice: 19.00, total: 19.00 },
+      { 
+        id: 1,
+        order_id: '1',
+        product_name: 'Pizza Margherita', // ✅ CAMBIO: product_name
+        quantity: 2, 
+        unit_price: 12.00, 
+        subtotal: 24.00  // ✅ CAMBIO: subtotal en lugar de total
+      },
+      { 
+        id: 2,
+        order_id: '1',
+        product_name: 'Coca Cola', 
+        quantity: 1, 
+        unit_price: 2.50, 
+        subtotal: 2.50 
+      },
+      { 
+        id: 3,
+        order_id: '1',
+        product_name: 'Ensalada César', 
+        quantity: 1, 
+        unit_price: 19.00, 
+        subtotal: 19.00 
+      },
     ],
     notes: 'Por favor, llamar antes de llegar',
     syncStatus: 'synced',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    last_modified_at: new Date().toISOString(),
   }
 
   const handleStatusChange = (orderId: string, status: Order['status']) => {

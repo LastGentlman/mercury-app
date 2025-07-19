@@ -284,7 +284,7 @@ describe('useOfflineSync', () => {
       global.fetch = mockFetch as any
       
       // ✅ Start the first sync (will hang due to our mock)
-      const firstSyncPromise = result.current.syncPendingChanges()
+      result.current.syncPendingChanges()
       
       // ✅ Wait for isSyncing to become true
       await waitFor(() => {
@@ -293,7 +293,6 @@ describe('useOfflineSync', () => {
       
       // ✅ Capture the state before the second sync attempt
       const pendingCountBeforeSecondSync = result.current.pendingCount
-      const isSyncingBeforeSecondSync = result.current.isSyncing
       
       // ✅ Try to sync again while already syncing
       await result.current.syncPendingChanges()

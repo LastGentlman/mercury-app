@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useBackgroundSync } from '../hooks/useBackgroundSync'
 import { Card, CardContent, CardHeader } from './ui/card'
 import { Button } from './ui/button'

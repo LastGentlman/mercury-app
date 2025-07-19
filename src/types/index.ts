@@ -1,34 +1,36 @@
 // Types for offline database entities
 
 export interface Order {
-  id?: number
-  clientGeneratedId: string
-  folio?: string // Order number/folio
-  businessId: string
-  clientName: string
-  clientPhone: string
-  clientAddress: string
-  items: Array<OrderItem>
-  total: number
-  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled'
-  deliveryDate: string
-  deliveryTime?: string // Time in HH:mm format
-  notes?: string
-  syncStatus: 'pending' | 'synced' | 'error'
-  createdAt: string
-  updatedAt: string
-  modifiedBy?: string
-  version?: number // Para control de versiones
-  lastModifiedAt?: string // Timestamp de última modificación para conflictos
+  id: string;
+  business_id: string;
+  branch_id: string;
+  employee_id: string;
+  client_name: string;
+  client_phone?: string;
+  total: number;
+  delivery_date: string;
+  delivery_time?: string;
+  notes?: string;
+  // ✅ CAMBIO PRINCIPAL: Unificar status types
+  status: 'pending' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
+  client_generated_id?: string;
+  last_modified_at: string;
+  modified_by?: string;
+  created_at: string;
+  items?: Array<OrderItem>;
+  
+  // ✅ AÑADIR: Para compatibilidad con offline
+  clientGeneratedId?: string;
+  syncStatus?: 'pending' | 'synced' | 'error';
 }
 
 export interface OrderItem {
   id?: number
-  productId: string
-  productName: string
-  quantity: number
-  unitPrice: number
-  total: number
+  order_id: string;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
 }
 
 export interface Product {

@@ -3,7 +3,6 @@ import {
   Clock, 
   Copy,
   Edit,
-  MapPin, 
   MessageSquare,
   Phone, 
   Share2,
@@ -31,10 +30,16 @@ export function EnhancedOrderCard({
   onDelete,
   className 
 }: EnhancedOrderCardProps) {
-  const statusFlow = {
-    pending: { next: 'in_progress', action: 'Comenzar Preparación', icon: '👨‍🍳' },
-    in_progress: { next: 'completed', action: 'Marcar Listo', icon: '✅' },
-    completed: { next: null, action: null, icon: null },
+  // ✅ CAMBIO: Mapear status correctamente
+  const statusFlow: Record<Order['status'], {
+    next: Order['status'] | null;
+    action: string | null;
+    icon: string | null;
+  }> = {
+    pending: { next: 'preparing', action: 'Comenzar Preparación', icon: '👨‍🍳' },
+    preparing: { next: 'ready', action: 'Marcar Listo', icon: '✅' },
+    ready: { next: 'delivered', action: 'Marcar Entregado', icon: '🚚' },
+    delivered: { next: null, action: null, icon: null },
     cancelled: { next: null, action: null, icon: null },
   }
 
@@ -42,15 +47,15 @@ export function EnhancedOrderCard({
   const canAdvance = currentFlow.next !== null
 
   const handleStatusChange = () => {
-    if (canAdvance) {
-      const orderId = order.id?.toString() || order.clientGeneratedId
-      onStatusChange(orderId, currentFlow.next as Order['status'])
+    if (canAdvance && currentFlow.next) {
+      const orderId = order.id || order.clientGeneratedId || order.client_generated_id || ''
+      onStatusChange(orderId, currentFlow.next)
     }
   }
 
   const handleShareWhatsApp = () => {
     const message = generateWhatsAppMessage(order)
-    const whatsappUrl = `https://wa.me/${order.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
+    const whatsappUrl = `https://wa.me/${order.client_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
     window.open(whatsappUrl, '_blank')
   }
 
@@ -62,14 +67,14 @@ export function EnhancedOrderCard({
 
   const handleEdit = () => {
     if (onEdit) {
-      const orderId = order.id?.toString() || order.clientGeneratedId
+      const orderId = order.id || order.clientGeneratedId || order.client_generated_id || ''
       onEdit(orderId)
     }
   }
 
   const handleDelete = () => {
     if (onDelete) {
-      const orderId = order.id?.toString() || order.clientGeneratedId
+      const orderId = order.id || order.clientGeneratedId || order.client_generated_id || ''
       onDelete(orderId)
     }
   }
@@ -83,26 +88,20 @@ export function EnhancedOrderCard({
         <div className="flex justify-between items-start">
           <div className="flex-1">
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              {order.clientName}
+              {order.client_name}
             </h3>
             <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-              {order.clientPhone && (
+              {order.client_phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-gray-400" />
-                  <span>{order.clientPhone}</span>
-                </div>
-              )}
-              {order.clientAddress && (
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <span className="max-w-xs truncate">{order.clientAddress}</span>
+                  <span>{order.client_phone}</span>
                 </div>
               )}
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-gray-400" />
                 <span>
-                  {order.deliveryDate ? 
-                    new Date(order.deliveryDate).toLocaleDateString('es-ES') : 
+                  {order.delivery_date ?
+                    new Date(order.delivery_date).toLocaleDateString('es-ES') : 
                     'Sin fecha específica'
                   }
                 </span>
@@ -111,9 +110,7 @@ export function EnhancedOrderCard({
           </div>
           <div className="text-right">
             <StatusBadge 
-              status={order.status === 'in_progress' ? 'preparing' : 
-                     order.status === 'completed' ? 'ready' : 
-                     order.status === 'cancelled' ? 'cancelled' : 'pending'} 
+              status={order.status} 
               className="mb-3"
             />
             <p className="text-2xl font-bold text-gray-900">
@@ -126,16 +123,16 @@ export function EnhancedOrderCard({
       <CardContent className="pt-0">
         {/* Items */}
         <div className="space-y-3 mb-6">
-          {order.items.map((item, index) => (
+          {order.items?.map((item, index) => (
             <div key={index} className="flex justify-between items-center py-2 border-b border-gray-50 last:border-b-0">
               <div className="flex items-center gap-3">
                 <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded-md text-sm font-medium">
                   {item.quantity}x
                 </span>
-                <span className="text-gray-700">{item.productName}</span>
+                <span className="text-gray-700">{item.product_name}</span>
               </div>
               <span className="font-semibold text-gray-900">
-                ${item.total.toFixed(2)}
+                ${item.subtotal.toFixed(2)}
               </span>
             </div>
           ))}
@@ -153,7 +150,7 @@ export function EnhancedOrderCard({
 
         {/* Actions */}
         <div className="flex flex-wrap gap-2">
-          {canAdvance && (
+          {canAdvance && currentFlow.action && (
             <EnhancedButton 
               onClick={handleStatusChange}
               variant="primary"
@@ -173,7 +170,7 @@ export function EnhancedOrderCard({
             Copiar
           </EnhancedButton>
           
-          {order.clientPhone && (
+          {order.client_phone && (
             <EnhancedButton 
               variant="outline" 
               size="sm"
@@ -197,7 +194,7 @@ export function EnhancedOrderCard({
 
           {onDelete && (
             <EnhancedButton 
-              variant="danger" 
+              variant="ghost" 
               size="sm"
               onClick={handleDelete}
               icon={<Trash2 className="w-4 h-4" />}
@@ -211,21 +208,24 @@ export function EnhancedOrderCard({
   )
 }
 
-// Función para generar mensaje de WhatsApp
+// ✅ AÑADIR: Función helper para generar mensaje WhatsApp
 function generateWhatsAppMessage(order: Order): string {
-  const items = order.items.map(item => 
-    `${item.quantity}x ${item.productName} - $${item.total.toFixed(2)}`
-  ).join('\n')
+  const items = order.items?.map(item => 
+    `• ${item.quantity}x ${item.product_name} - $${item.subtotal.toFixed(2)}`
+  ).join('\n') || ''
 
-  return `🧾 *Pedido Confirmado*
-📅 Fecha: ${new Date(order.deliveryDate).toLocaleDateString('es-ES')}
+  return `
+🧾 *Resumen de Pedido*
 
-📋 *Detalle:*
+👤 *Cliente:* ${order.client_name}
+📅 *Fecha:* ${new Date(order.delivery_date).toLocaleDateString('es-ES')}
+🎯 *Estado:* ${order.status.toUpperCase()}
+
+📋 *Productos:*
 ${items}
 
 💰 *Total: $${order.total.toFixed(2)}*
 
 ${order.notes ? `📝 *Notas:* ${order.notes}` : ''}
-
-¡Gracias por tu pedido! 🙏`
+  `.trim()
 } 

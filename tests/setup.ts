@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom'
+import { setupServer } from 'msw/node'
+import { handlers } from './mocks/handlers'
+
+// ✅ SETUP MSW SERVER
+export const server = setupServer(...handlers)
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -10,6 +15,11 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
 })
+
+// ✅ MSW SERVER LIFECYCLE
+beforeAll(() => server.listen())
+afterEach(() => server.resetHandlers())
+afterAll(() => server.close())
 
 // ✅ MOCK COMPLETO DE LUCIDE-REACT
 vi.mock('lucide-react', () => ({
