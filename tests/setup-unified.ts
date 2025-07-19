@@ -176,6 +176,20 @@ vi.mock('../src/lib/offline/db', () => ({
   db: mockDb
 }))
 
+// ✅ CRITICAL FIX: Mock completo de useOfflineSync
+vi.mock('../src/hooks/useOfflineSync', () => ({
+  useOfflineSync: vi.fn(() => ({
+    isOnline: true,
+    syncStatus: 'idle' as const,
+    syncPendingChanges: vi.fn().mockResolvedValue(undefined),
+    pendingCount: 0,
+    updatePendingCount: vi.fn(),
+    isSyncing: false,
+    error: null,
+    addPendingChange: vi.fn()
+  }))
+}))
+
 // ✅ MOCK DE UI COMPONENTS - VERSIÓN CORREGIDA
 vi.mock('../src/components/ui/button', () => ({
   Button: ({ children, ...props }: any) => 
@@ -246,17 +260,36 @@ vi.mock('../src/components/ui/textarea', () => ({
     React.createElement('textarea', { ...props, 'data-testid': 'textarea' })
 }))
 
-// ✅ GLOBAL MOCKS
-global.fetch = vi.fn().mockImplementation(() => 
-  Promise.resolve({
+// ✅ CRITICAL FIX: Mock de fetch mejorado
+global.fetch = vi.fn().mockImplementation((_input: RequestInfo | URL, _init?: RequestInit) => {
+  // Mock por defecto para requests no específicos
+  return Promise.resolve({
     ok: true,
     status: 200,
     json: () => Promise.resolve({}),
     text: () => Promise.resolve(''),
     headers: new Headers(),
     statusText: 'OK'
-  })
-)
+  } as Response)
+})
+
+// ✅ CRITICAL FIX: Reset fetch mock en cada test
+beforeEach(() => {
+  vi.clearAllMocks()
+  // Reset fetch mock to default implementation
+  if (global.fetch && typeof global.fetch === 'function') {
+    (global.fetch as any).mockImplementation((_input: RequestInfo | URL, _init?: RequestInit) => {
+      return Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.resolve({}),
+        text: () => Promise.resolve(''),
+        headers: new Headers(),
+        statusText: 'OK'
+      } as Response)
+    })
+  }
+})
 
 // Service Worker Mock
 Object.defineProperty(global.navigator, 'serviceWorker', {

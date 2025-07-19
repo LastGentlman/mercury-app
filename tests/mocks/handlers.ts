@@ -86,5 +86,13 @@ export const handlers = [
   // Mock logout endpoint
   http.post('*/api/auth/logout', () => {
     return HttpResponse.json({ message: 'Logged out successfully' })
+  }),
+
+  // ✅ CRITICAL FIX: Mock CSRF token endpoint
+  http.get('*/api/auth/csrf/token', () => {
+    return HttpResponse.json({
+      csrfToken: 'mock-csrf-token-12345',
+      sessionId: 'mock-session-id-67890'
+    })
   })
 ] 

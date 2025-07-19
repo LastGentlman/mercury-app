@@ -2,19 +2,10 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from '../../src/hooks/useAuth'
-import { server } from '../setup-unified'
+import { server } from './setup-auth' // ✅ Usar setup específico
 import { http, HttpResponse } from 'msw'
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn(),
-}
-Object.defineProperty(window, 'localStorage', {
-  value: localStorageMock
-})
+// ✅ NO MOCKEAR useAuth aquí - usar el hook real con MSW
 
 // Create a wrapper component for testing
 const createWrapper = () => {
@@ -32,7 +23,9 @@ const createWrapper = () => {
   )
 }
 
-describe('useAuth', () => {
+describe('useAuth Integration Tests', () => {
+  const localStorageMock = (window.localStorage as any)
+  
   beforeEach(() => {
     vi.clearAllMocks()
     localStorageMock.getItem.mockReturnValue(null)

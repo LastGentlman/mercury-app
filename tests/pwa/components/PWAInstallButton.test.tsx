@@ -5,24 +5,30 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { PWAInstallButton } from '../../../src/components/PWAInstallButton'
 
-// Import the mocked modules to access their functions
+// ✅ CRITICAL FIX: Import y mock del módulo PWA
 import * as pwaModule from '../../../src/pwa'
 
-// Mock PWA module
 vi.mock('../../../src/pwa', () => ({
-  isPWAInstalled: vi.fn(() => false),
-  getPWALaunchMethod: vi.fn(() => 'browser'),
+  isPWAInstalled: vi.fn(),
+  getPWALaunchMethod: vi.fn(),
   markAsInstalledPWA: vi.fn(),
-  wasEverInstalledAsPWA: vi.fn(() => false),
-  registerPWA: vi.fn().mockResolvedValue(null),
-  showInstallPrompt: vi.fn().mockResolvedValue(true)
+  wasEverInstalledAsPWA: vi.fn(),
+  registerPWA: vi.fn(),
+  showInstallPrompt: vi.fn(),
+  listenForInstallPrompt: vi.fn(),
+  cleanupPWAListeners: vi.fn()
 }))
 
 describe('PWAInstallButton', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     
-    // Mock the beforeinstallprompt event
+    // ✅ CRITICAL FIX: Configurar mocks con valores específicos
+    vi.mocked(pwaModule.isPWAInstalled).mockReturnValue(false)
+    vi.mocked(pwaModule.getPWALaunchMethod).mockReturnValue('browser')
+    vi.mocked(pwaModule.showInstallPrompt).mockResolvedValue(true)
+    
+    // ✅ CRITICAL FIX: Mock del evento beforeinstallprompt
     const mockBeforeInstallPrompt = {
       prompt: vi.fn().mockResolvedValue(undefined),
       userChoice: Promise.resolve({ outcome: 'accepted' }),

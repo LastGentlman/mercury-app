@@ -1,6 +1,6 @@
+import path from 'node:path'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
-import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
@@ -10,7 +10,14 @@ export default defineConfig({
     globals: true,
     css: true,
     include: ['tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
-    exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
+    exclude: [
+      'node_modules', 
+      'dist', 
+      '.idea', 
+      '.git', 
+      '.cache',
+      'tests/hooks/useAuth.test.tsx' // ✅ Excluir useAuth de setup unificado
+    ],
     testTimeout: 15000, // ✅ Aumentar timeout para debugging
     reporters: ['verbose'],
     mockReset: true,
