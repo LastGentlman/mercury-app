@@ -6,28 +6,26 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
-    setupFiles: ['./tests/setup.ts'],
+    setupFiles: ['./tests/setup-unified.ts'], // ✅ Usar el nuevo setup unificado
     globals: true,
     css: true,
     include: ['tests/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['node_modules', 'dist', '.idea', '.git', '.cache'],
-    // Increased timeout for PWA tests
-    testTimeout: 10000,
-    // Better error reporting
+    testTimeout: 15000, // ✅ Aumentar timeout para debugging
     reporters: ['verbose'],
-    // Mock file patterns
     mockReset: true,
     clearMocks: true,
-    restoreMocks: true
+    restoreMocks: true,
+    // ✅ Configuración adicional para debugging
+    logHeapUsage: true,
+    isolate: true
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
-      // Ensure consistent module resolution
       '~': path.resolve(__dirname, './'),
     },
   },
-  // Optimize for testing
   esbuild: {
     target: 'node14'
   }

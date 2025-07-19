@@ -2,7 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useAuth } from '../../src/hooks/useAuth'
-import { server } from '../setup'
+import { server } from '../setup-unified'
 import { http, HttpResponse } from 'msw'
 
 // Mock localStorage
