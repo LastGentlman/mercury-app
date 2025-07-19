@@ -5,6 +5,7 @@ This document explains the authentication system implemented in the PedidoList a
 ## Overview
 
 The authentication system uses:
+
 - **Backend**: Deno + Hono + Supabase
 - **Frontend**: React + TanStack Router + TanStack Query
 - **UI**: Tailwind CSS + shadcn/ui components
@@ -40,6 +41,7 @@ const {
 ### 2. Authentication Page (`/auth`)
 
 Located in `src/routes/auth.tsx`, this page provides:
+
 - Login form
 - Registration form
 - Toggle between login and register modes
@@ -51,6 +53,7 @@ Located in `src/routes/auth.tsx`, this page provides:
 ### 3. Success Message Component
 
 Located in `src/components/SuccessMessage.tsx`, this component provides:
+
 - Reusable success/info/warning messages
 - Different styles for different message types
 - Support for email display
@@ -75,6 +78,7 @@ function MyProtectedPage() {
 ### 5. Header Component
 
 The header automatically shows:
+
 - User information when authenticated
 - Login/Signup buttons when not authenticated
 - Logout functionality
@@ -83,24 +87,30 @@ The header automatically shows:
 ## Registration Flow
 
 ### 1. User Registration
+
 1. User fills out registration form (name, email, password)
 2. Form validation ensures all fields are completed
 3. Registration request is sent to backend
 
 ### 2. Success Message
+
 After successful registration:
+
 - User sees a success message: "¡Registro Exitoso!"
 - Email confirmation screen is displayed
 - User is informed that a confirmation email has been sent
 - Email address is displayed for verification
 
 ### 3. Email Confirmation
+
 - Supabase automatically sends confirmation email
 - User must click the link in the email to verify their account
 - After verification, user can login normally
 
 ### 4. User Actions
+
 From the confirmation screen, users can:
+
 - Go to login page to sign in (after email verification)
 - Create another account
 - See helpful tips about checking spam folder
@@ -147,7 +157,7 @@ The frontend will start on `http://localhost:3000`
 
 ## File Structure
 
-```
+```bash
 mercury-app/src/
 ├── hooks/
 │   └── useAuth.ts              # Authentication hook
@@ -191,4 +201,4 @@ mercury-app/src/
 - All API calls include proper error handling
 - The UI is responsive and follows modern design patterns
 - Success messages are localized in Spanish for better user experience
-- The system gracefully handles email confirmation delays 
+- The system gracefully handles email confirmation delays
