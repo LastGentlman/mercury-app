@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
-import { Button } from './ui/button'
+import { Loader2, LogOut, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-import { LogOut, User, Loader2 } from 'lucide-react'
+import { Button } from './ui/button'
 
 export default function Header() {
   const { user, isAuthenticated, isLoading, logout } = useAuth()
@@ -20,6 +20,12 @@ export default function Header() {
             <div className="px-2 font-medium">
               <Link to="/dashboard" className="hover:text-blue-600 transition-colors">
                 Dashboard
+              </Link>
+            </div>
+
+            <div className="px-2 font-medium">
+              <Link to="/clients" className="hover:text-blue-600 transition-colors">
+                Clientes
               </Link>
             </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Edit, Package, Plus, Search, Trash2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useProducts } from '../hooks/useProducts';
@@ -6,6 +6,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Card } from './ui/card';
 import { Badge } from './ui/badge';
+import { CreateProductModal } from './CreateProductModal';
+import { EditProductModal } from './EditProductModal';
 import type { Product } from '@/types';
 
 interface ProductCardProps {
@@ -86,339 +88,9 @@ function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
   );
 }
 
-interface CreateProductModalProps {
-  onClose: () => void;
-  onSave: (product: any) => Promise<void>;
-  isLoading: boolean;
-}
 
-function CreateProductModal({ onClose, onSave, isLoading }: CreateProductModalProps) {
-  const { user } = useAuth();
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    price: '',
-    cost: '',
-    category: '',
-    stock: '',
-    image_url: '',
-    is_active: true
-  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const productData = {
-      name: formData.name,
-      description: formData.description || undefined,
-      price: parseFloat(formData.price),
-      cost: formData.cost ? parseFloat(formData.cost) : undefined,
-      category: formData.category,
-      stock: parseInt(formData.stock),
-      image_url: formData.image_url || undefined,
-      isActive: formData.is_active,
-      businessId: user?.businessId || '',
-      syncStatus: 'pending' as const,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
 
-    await onSave(productData);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-semibold mb-4">Crear Producto</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre *
-            </label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descripción
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Precio *
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Costo
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.cost}
-                onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Categoría *
-              </label>
-              <Input
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stock *
-              </label>
-              <Input
-                type="number"
-                value={formData.stock}
-                onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              URL de imagen
-            </label>
-            <Input
-              type="url"
-              value={formData.image_url}
-              onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-            />
-          </div>
-          
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="is_active"
-              checked={formData.is_active}
-              onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-              className="mr-2"
-            />
-            <label htmlFor="is_active" className="text-sm text-gray-700">
-              Producto activo
-            </label>
-          </div>
-          
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Creando...' : 'Crear Producto'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-interface EditProductModalProps {
-  product: Product;
-  onClose: () => void;
-  onSave: (product: any) => Promise<void>;
-}
-
-function EditProductModal({ product, onClose, onSave }: EditProductModalProps) {
-  const [formData, setFormData] = useState({
-    name: product.name,
-    description: product.description || '',
-    price: product.price.toString(),
-    cost: product.cost?.toString() || '',
-    category: product.category || '',
-    stock: product.stock.toString(),
-    image_url: product.image_url || '',
-    is_active: product.isActive
-  });
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    const productData = {
-      id: product.id?.toString() || '',
-      name: formData.name,
-      description: formData.description || undefined,
-      price: parseFloat(formData.price),
-      cost: formData.cost ? parseFloat(formData.cost) : undefined,
-      category: formData.category,
-      stock: parseInt(formData.stock),
-      image_url: formData.image_url || undefined,
-      isActive: formData.is_active
-    };
-
-    await onSave(productData);
-    onClose();
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-        <h2 className="text-xl font-semibold mb-4">Editar Producto</h2>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Nombre *
-            </label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Descripción
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows={3}
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Precio *
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => setFormData(prev => ({ ...prev, price: e.target.value }))}
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Costo
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.cost}
-                onChange={(e) => setFormData(prev => ({ ...prev, cost: e.target.value }))}
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Categoría *
-              </label>
-              <Input
-                value={formData.category}
-                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Stock *
-              </label>
-              <Input
-                type="number"
-                value={formData.stock}
-                onChange={(e) => setFormData(prev => ({ ...prev, stock: e.target.value }))}
-                required
-              />
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              URL de imagen
-            </label>
-            <Input
-              type="url"
-              value={formData.image_url}
-              onChange={(e) => setFormData(prev => ({ ...prev, image_url: e.target.value }))}
-            />
-          </div>
-          
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="is_active_edit"
-              checked={formData.is_active}
-              onChange={(e) => setFormData(prev => ({ ...prev, is_active: e.target.checked }))}
-              className="mr-2"
-            />
-            <label htmlFor="is_active_edit" className="text-sm text-gray-700">
-              Producto activo
-            </label>
-          </div>
-          
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-            >
-              Guardar Cambios
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
 
 export function ProductsList() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -518,7 +190,17 @@ export function ProductsList() {
       {showCreateModal && (
         <CreateProductModal
           onClose={() => setShowCreateModal(false)}
-          onSave={createProduct}
+          onSave={async (productData) => {
+            const { user } = useAuth();
+            const fullProductData = {
+              ...productData,
+              businessId: user?.businessId || '',
+              syncStatus: 'pending' as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            await createProduct(fullProductData);
+          }}
           isLoading={isCreating}
         />
       )}
@@ -528,6 +210,7 @@ export function ProductsList() {
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
           onSave={updateProduct}
+          isLoading={false}
         />
       )}
     </div>
