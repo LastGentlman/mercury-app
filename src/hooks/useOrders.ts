@@ -164,11 +164,54 @@ export function useOrders(businessId: string) {
     },
   });
 
+  // Eliminar pedido
+  const deleteOrder = useMutation({
+    mutationFn: async (orderId: string) => {
+      // Marcar como eliminado en IndexedDB
+      await db.orders.update(parseInt(orderId), { 
+        status: 'cancelled',
+        syncStatus: 'pending',
+        updatedAt: new Date().toISOString()
+      });
+
+      // Agregar a la cola de sincronización
+      await db.addToSyncQueue({
+        entityType: 'order',
+        entityId: orderId,
+        action: 'delete'
+      });
+
+      if (isOnline) {
+        try {
+          await csrfRequest(`/api/orders/${orderId}`, {
+            method: 'DELETE',
+          });
+          
+          // Eliminar completamente de IndexedDB si se sincronizó correctamente
+          await db.orders.delete(parseInt(orderId));
+          await db.markAsSynced('order', orderId);
+        } catch (error) {
+          console.error('Error sincronizando eliminación:', error);
+        }
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders', 'today', businessId] });
+      toast.success('Pedido eliminado');
+    },
+    onError: (error) => {
+      toast.error('Error al eliminar el pedido');
+      console.error('Error deleting order:', error);
+    },
+  });
+
   return {
     orders: todayOrders.data || [],
     isLoading: todayOrders.isLoading,
+    error: todayOrders.error,
     createOrder,
     updateOrderStatus,
+    deleteOrder,
     refetch: todayOrders.refetch,
   };
 }

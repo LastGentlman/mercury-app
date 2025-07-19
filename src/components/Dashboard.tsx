@@ -1,10 +1,12 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Clock, Package, Plus } from 'lucide-react';
+import type { Order } from '@/types';
 import { useOrders } from '@/hooks/useOrders';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CreateOrderDialog } from '@/components/CreateOrderDialog';
-import { OrderCard } from '@/components/OrderCard';
+import { OrderCard } from '@/components/orders/OrderCard';
+import { OrderDetails } from '@/components/orders/OrderDetails';
 
 interface DashboardProps {
   businessId: string;
@@ -13,6 +15,8 @@ interface DashboardProps {
 export function Dashboard({ businessId }: DashboardProps) {
   const { orders, isLoading, updateOrderStatus } = useOrders(businessId);
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
+  const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
+  const [showOrderDetails, setShowOrderDetails] = React.useState(false);
 
   const stats = React.useMemo(() => {
     const today = orders.filter(order => 
@@ -189,6 +193,10 @@ export function Dashboard({ businessId }: DashboardProps) {
               onStatusChange={(orderId, status) => 
                 updateOrderStatus.mutate({ orderId, status })
               }
+              onViewDetails={(orderToView) => {
+                setSelectedOrder(orderToView);
+                setShowOrderDetails(true);
+              }}
             />
           ))
         )}
@@ -199,6 +207,16 @@ export function Dashboard({ businessId }: DashboardProps) {
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
         businessId={businessId}
+      />
+
+      {/* Order Details Dialog */}
+      <OrderDetails
+        order={selectedOrder}
+        open={showOrderDetails}
+        onOpenChange={setShowOrderDetails}
+        onStatusChange={(orderId, status) => 
+          updateOrderStatus.mutate({ orderId, status })
+        }
       />
     </div>
   );
