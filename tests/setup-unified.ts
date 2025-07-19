@@ -13,6 +13,14 @@ afterEach(() => {
   cleanup()
   server.resetHandlers()
   vi.clearAllMocks()
+  // ✅ CRITICAL FIX: Reset fetch mock específicamente
+  mockFetch.mockClear()
+  // ✅ CRITICAL FIX: Reset PWA mocks específicamente
+  Object.values(mockPWA).forEach(mock => {
+    if (vi.isMockFunction(mock)) {
+      mock.mockClear()
+    }
+  })
 })
 afterAll(() => server.close())
 
@@ -135,8 +143,8 @@ vi.mock('../src/hooks/useAuth', () => ({
   }))
 }))
 
-// ✅ MOCK UNIFICADO DE PWA
-vi.mock('../src/pwa', () => ({
+// ✅ MOCK UNIFICADO DE PWA - VERSIÓN COMPLETA
+const mockPWA = {
   isPWAInstalled: vi.fn(() => false),
   getPWALaunchMethod: vi.fn(() => 'browser'),
   markAsInstalledPWA: vi.fn(),
@@ -144,8 +152,23 @@ vi.mock('../src/pwa', () => ({
   registerPWA: vi.fn().mockResolvedValue(null),
   showInstallPrompt: vi.fn().mockResolvedValue(true),
   listenForInstallPrompt: vi.fn(),
-  cleanupPWAListeners: vi.fn()
-}))
+  cleanupPWAListeners: vi.fn(),
+  // ✅ FUNCIONES FALTANTES CRÍTICAS
+  canInstallPWA: vi.fn(() => true),
+  getInstallPrompt: vi.fn(() => ({
+    prompt: vi.fn().mockResolvedValue(undefined),
+    userChoice: Promise.resolve({ outcome: 'accepted' }),
+    preventDefault: vi.fn()
+  })),
+  isStandalone: vi.fn(() => false),
+  isInStandaloneMode: vi.fn(() => false),
+  getDisplayMode: vi.fn(() => 'browser'),
+  isInstallable: vi.fn(() => true),
+  hasInstallPrompt: vi.fn(() => true)
+}
+
+vi.mock('../src/pwa', () => mockPWA)
+vi.mock('../src/pwa-fixed', () => mockPWA)
 
 // ✅ MOCK DE REACT ROUTER
 vi.mock('@tanstack/react-router', () => ({

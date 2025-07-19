@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { PWAStatus } from '../../../src/components/PWAStatus'
-import * as pwaModule from '../../../src/pwa'
+import * as pwaModule from '../../../src/pwa-fixed'
 
 // ✅ MOCK LOCAL CON TIPADO CORRECTO
-vi.mock('../../../src/pwa', () => ({
+vi.mock('../../../src/pwa-fixed', () => ({
   isPWAInstalled: vi.fn(),
   getPWALaunchMethod: vi.fn(),
   markAsInstalledPWA: vi.fn(),

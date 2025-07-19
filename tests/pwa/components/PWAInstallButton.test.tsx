@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { PWAInstallButton } from '../../../src/components/PWAInstallButton'
 
-// ✅ CRITICAL FIX: Import y mock del módulo PWA
-import * as pwaModule from '../../../src/pwa'
+// ✅ CRITICAL FIX: Import y mock del módulo PWA correcto
+import * as pwaModule from '../../../src/pwa-fixed'
 
-vi.mock('../../../src/pwa', () => ({
+vi.mock('../../../src/pwa-fixed', () => ({
   isPWAInstalled: vi.fn(),
   getPWALaunchMethod: vi.fn(),
   markAsInstalledPWA: vi.fn(),

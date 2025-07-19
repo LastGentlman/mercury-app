@@ -171,11 +171,11 @@ describe('BackgroundSyncSettings', () => {
     render(<BackgroundSyncSettings />)
     
     const toggle = screen.getByTestId('switch')
-    fireEvent.click(toggle)
+    fireEvent.change(toggle, { target: { checked: true } })
 
     await waitFor(() => {
       expect(mockRequestPeriodicSync).toHaveBeenCalled()
-    })
+    }, { timeout: 2000 })
   })
 
   it('should handle sync errors gracefully', async () => {

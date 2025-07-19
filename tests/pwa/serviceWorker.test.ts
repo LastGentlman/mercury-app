@@ -76,7 +76,7 @@ describe('Service Worker Registration', () => {
       
       const result = await registerPWA()
 
-      // ✅ Verificar que la función retorna algo (puede ser null por debouncing)
+      // ✅ La función puede retornar undefined en algunos casos
       expect(result).toBeDefined()
     })
 

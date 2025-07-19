@@ -36,13 +36,19 @@ export interface OrderItem {
 export interface Product {
   id?: number
   businessId: string
+  business_id?: string // For API compatibility
   name: string
   description?: string
   price: number
+  cost?: number
   category?: string
+  stock: number
+  image_url?: string
   isActive: boolean
+  is_active?: boolean // For API compatibility
   syncStatus: 'pending' | 'synced' | 'error'
   createdAt: string
+  created_at?: string // For API compatibility
   updatedAt: string
   version?: number // Para control de versiones
   lastModifiedAt?: string // Timestamp de última modificación para conflictos
