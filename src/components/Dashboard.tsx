@@ -15,7 +15,7 @@ interface DashboardProps {
 
 export function Dashboard({ businessId }: DashboardProps) {
   const { orders, isLoading, updateOrderStatus } = useOrders(businessId);
-  const { stats: dashboardStats, isLoading: statsLoading } = useDashboardStats();
+  const { stats: dashboardStats, isLoading: _statsLoading } = useDashboardStats();
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = React.useState(false);
