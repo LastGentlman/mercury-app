@@ -1,141 +1,165 @@
 import { OrderCard } from './OrderCard';
 import type { Order } from '@/types';
 
-// Sample order data for demonstration
-const sampleOrder: Order = {
-  id: 1,
-  clientGeneratedId: 'ORD-001',
-  folio: '2024-001',
-  businessId: 'business-1',
-  clientName: 'Juan Pérez',
-  clientPhone: '+52 55 1234 5678',
-  clientAddress: 'Av. Reforma 123, CDMX',
-  items: [
-    {
-      id: 1,
-      productId: 'prod-1',
-      productName: 'Pizza Margherita',
-      quantity: 2,
-      unitPrice: 180.00,
-      total: 360.00
-    },
-    {
-      id: 2,
-      productId: 'prod-2',
-      productName: 'Coca Cola 600ml',
-      quantity: 3,
-      unitPrice: 25.00,
-      total: 75.00
-    },
-    {
-      id: 3,
-      productId: 'prod-3',
-      productName: 'Ensalada César',
-      quantity: 1,
-      unitPrice: 120.00,
-      total: 120.00
-    }
-  ],
-  total: 555.00,
-  status: 'pending',
-  deliveryDate: '2024-01-15',
-  deliveryTime: '19:30',
-  notes: 'Por favor entregar en la puerta principal. No tocar el timbre después de las 8 PM.',
-  syncStatus: 'synced',
-  createdAt: '2024-01-15T10:00:00Z',
-  updatedAt: '2024-01-15T10:00:00Z'
-};
-
-const sampleOrderPreparing: Order = {
-  ...sampleOrder,
-  id: 2,
-  clientGeneratedId: 'ORD-002',
-  folio: '2024-002',
-  clientName: 'María García',
-  status: 'preparing',
-  deliveryTime: '20:00',
-  notes: 'Sin cebolla en la pizza'
-};
-
-const sampleOrderReady: Order = {
-  ...sampleOrder,
-  id: 3,
-  clientGeneratedId: 'ORD-003',
-  folio: '2024-003',
-  clientName: 'Carlos López',
-  status: 'ready',
-  deliveryTime: '18:45'
-};
-
-const sampleOrderDelivered: Order = {
-  ...sampleOrder,
-  id: 4,
-  clientGeneratedId: 'ORD-004',
-  folio: '2024-004',
-  clientName: 'Ana Martínez',
-  status: 'delivered',
-  deliveryTime: '17:30'
-};
+const mockOrders: Order[] = [
+  {
+    id: '1',
+    business_id: 'business-1',
+    branch_id: 'branch-1',
+    employee_id: 'employee-1',
+    client_name: 'María González',
+    client_phone: '+34612345678',
+    total: 45.50,
+    delivery_date: '2024-01-15',
+    delivery_time: '14:30',
+    notes: 'Por favor, llamar antes de llegar',
+    status: 'pending',
+    last_modified_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    client_generated_id: 'ORD-001',
+    items: [
+      {
+        id: 1,
+        order_id: '1',
+        product_name: 'Pizza Margherita',
+        quantity: 2,
+        unit_price: 12.00,
+        subtotal: 24.00
+      },
+      {
+        id: 2,
+        order_id: '1',
+        product_name: 'Coca Cola',
+        quantity: 1,
+        unit_price: 2.50,
+        subtotal: 2.50
+      },
+      {
+        id: 3,
+        order_id: '1',
+        product_name: 'Ensalada César',
+        quantity: 1,
+        unit_price: 19.00,
+        subtotal: 19.00
+      },
+    ]
+  },
+  {
+    id: '2',
+    business_id: 'business-1',
+    branch_id: 'branch-1',
+    employee_id: 'employee-1',
+    client_name: 'Carlos Rodríguez',
+    client_phone: '+34687654321',
+    total: 32.00,
+    delivery_date: '2024-01-15',
+    delivery_time: '15:00',
+    notes: 'Sin cebolla',
+    status: 'preparing',
+    last_modified_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    client_generated_id: 'ORD-002',
+    items: [
+      {
+        id: 4,
+        order_id: '2',
+        product_name: 'Hamburguesa Clásica',
+        quantity: 2,
+        unit_price: 16.00,
+        subtotal: 32.00
+      }
+    ]
+  },
+  {
+    id: '3',
+    business_id: 'business-1',
+    branch_id: 'branch-1',
+    employee_id: 'employee-1',
+    client_name: 'Ana López',
+    client_phone: '+34611223344',
+    total: 28.50,
+    delivery_date: '2024-01-15',
+    delivery_time: '16:30',
+    notes: '',
+    status: 'ready',
+    last_modified_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    client_generated_id: 'ORD-003',
+    items: [
+      {
+        id: 5,
+        order_id: '3',
+        product_name: 'Pasta Carbonara',
+        quantity: 1,
+        unit_price: 18.50,
+        subtotal: 18.50
+      },
+      {
+        id: 6,
+        order_id: '3',
+        product_name: 'Agua Mineral',
+        quantity: 1,
+        unit_price: 2.00,
+        subtotal: 2.00
+      },
+      {
+        id: 7,
+        order_id: '3',
+        product_name: 'Tiramisú',
+        quantity: 1,
+        unit_price: 8.00,
+        subtotal: 8.00
+      }
+    ]
+  },
+  {
+    id: '4',
+    business_id: 'business-1',
+    branch_id: 'branch-1',
+    employee_id: 'employee-1',
+    client_name: 'Luis Martínez',
+    client_phone: '+34655443322',
+    total: 15.00,
+    delivery_date: '2024-01-15',
+    delivery_time: '17:00',
+    notes: 'Entregar en recepción',
+    status: 'delivered',
+    last_modified_at: new Date().toISOString(),
+    created_at: new Date().toISOString(),
+    client_generated_id: 'ORD-004',
+    items: [
+      {
+        id: 8,
+        order_id: '4',
+        product_name: 'Ensalada Mixta',
+        quantity: 1,
+        unit_price: 15.00,
+        subtotal: 15.00
+      }
+    ]
+  }
+];
 
 export function OrderCardDemo() {
   const handleStatusChange = (orderId: string, newStatus: Order['status']) => {
-    console.log(`Order ${orderId} status changed to: ${newStatus}`);
-  };
-
-  const handleEdit = (order: Order) => {
-    console.log('Edit order:', order);
-  };
-
-  const handleDelete = (orderId: string) => {
-    console.log('Delete order:', orderId);
+    console.log('Status change:', orderId, newStatus);
   };
 
   const handleViewDetails = (order: Order) => {
-    console.log('View details for order:', order);
+    console.log('View details:', order);
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold mb-4">OrderCard Demo</h1>
-        <p className="text-muted-foreground mb-6">
-          This demonstrates the new OrderCard component with different order statuses.
-        </p>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-4 p-4">
+      <h2 className="text-2xl font-bold mb-4">Demo de OrderCard</h2>
+      {mockOrders.map((order) => (
         <OrderCard
-          order={sampleOrder}
+          key={order.id}
+          order={order}
           onStatusChange={handleStatusChange}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
           onViewDetails={handleViewDetails}
         />
-        
-        <OrderCard
-          order={sampleOrderPreparing}
-          onStatusChange={handleStatusChange}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onViewDetails={handleViewDetails}
-        />
-        
-        <OrderCard
-          order={sampleOrderReady}
-          onStatusChange={handleStatusChange}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onViewDetails={handleViewDetails}
-        />
-        
-        <OrderCard
-          order={sampleOrderDelivered}
-          onStatusChange={handleStatusChange}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onViewDetails={handleViewDetails}
-        />
-      </div>
+      ))}
     </div>
   );
 } 

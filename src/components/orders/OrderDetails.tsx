@@ -1,91 +1,56 @@
-import { useState } from 'react';
-import { 
-  Calendar,
-  Clock,
-  Copy,
-  Edit3,
-  FileText,
-  MessageCircle,
-  Package,
-  Phone,
-  Trash2,
-  User
-} from 'lucide-react';
-import { toast } from 'sonner';
+import { Calendar, Clock, MessageCircle, Phone, Share2, Trash2, User } from 'lucide-react';
 import type { Order } from '@/types';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
 
 interface OrderDetailsProps {
-  order: Order | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  order: Order;
   onStatusChange?: (orderId: string, newStatus: Order['status']) => void;
-  onEdit?: (order: Order) => void;
   onDelete?: (orderId: string) => void;
+  onClose?: () => void;
 }
 
 export function OrderDetails({ 
   order, 
-  open, 
-  onOpenChange,
-  onStatusChange,
-  onEdit,
-  onDelete
+  onStatusChange, 
+  onDelete,
+  onClose 
 }: OrderDetailsProps) {
-  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-
-  if (!order) return null;
-
-  const totalAmount = order.items.reduce((sum, item) => 
-    sum + (item.quantity * item.unitPrice), 0
+  const totalAmount = order.items?.reduce((sum, item) =>
+    sum + (item.quantity * item.unit_price), 0
   ) || 0;
 
   const handleStatusChange = async (newStatus: Order['status']) => {
-    if (!onStatusChange) return;
-    
-    setIsUpdatingStatus(true);
-    try {
-      await onStatusChange(order.id?.toString() || order.clientGeneratedId, newStatus);
-      toast.success(`Pedido marcado como ${getStatusText(newStatus)}`);
-    } catch (error) {
-      toast.error('Error al actualizar el estado');
-    } finally {
-      setIsUpdatingStatus(false);
+    if (onStatusChange) {
+      const orderId = order.id || order.client_generated_id || '';
+      await onStatusChange(orderId, newStatus);
     }
   };
 
   const getStatusText = (status: Order['status']) => {
-    const texts = {
-      'pending': 'pendiente',
-      'preparing': 'en preparación',
-      'ready': 'listo',
-      'delivered': 'entregado',
-      'cancelled': 'cancelado'
-    };
-    return texts[status];
+    switch (status) {
+      case 'pending': return 'Pendiente';
+      case 'preparing': return 'En Preparación';
+      case 'ready': return 'Listo';
+      case 'delivered': return 'Entregado';
+      case 'cancelled': return 'Cancelado';
+      default: return status;
+    }
   };
 
-  const generateReceipt = () => {
+  const generateWhatsAppMessage = () => {
     const itemsList = order.items
-      .map(item => `• ${item.quantity}x ${item.productName} - ${formatCurrency(item.quantity * item.unitPrice)}`)
+      ?.map(item => `• ${item.quantity}x ${item.product_name} - ${formatCurrency(item.quantity * item.unit_price)}`)
       .join('\n') || '';
 
-    const receipt = `🧾 *PEDIDO #${order.folio || order.clientGeneratedId}*
-    
-Cliente: ${order.clientName}
-${order.clientPhone ? `Teléfono: ${order.clientPhone}` : ''}
+    const receipt = `🧾 *PEDIDO #${order.client_generated_id}*
 
-📅 Entrega: ${formatDate(order.deliveryDate)}${order.deliveryTime ? ` a las ${formatTime(order.deliveryTime)}` : ''}
+Cliente: ${order.client_name}
+${order.client_phone ? `Teléfono: ${order.client_phone}` : ''}
+
+📅 Entrega: ${formatDate(order.delivery_date)}${order.delivery_time ? ` a las ${formatTime(order.delivery_time)}` : ''}
 
 📦 *Productos:*
 ${itemsList}
@@ -94,240 +59,183 @@ ${itemsList}
 
 ${order.notes ? `\n📝 Notas: ${order.notes}` : ''}
 
-✅ Estado: ${getStatusText(order.status).toUpperCase()}
+✅ Gracias por su preferencia
 _${new Date().toLocaleString('es-MX')}_`;
 
-    navigator.clipboard.writeText(receipt);
-    toast.success('Recibo copiado al portapapeles');
+    return receipt;
   };
 
-  const shareWhatsApp = () => {
-    if (!order.clientPhone) {
-      toast.error('No hay número de teléfono para este cliente');
+  const handleShareWhatsApp = () => {
+    if (!order.client_phone) {
+      alert('No hay número de teléfono para enviar WhatsApp');
       return;
     }
 
-    const message = `Hola ${order.clientName}! 👋
+    const message = `Hola ${order.client_name}! 👋
 
-Tu pedido #${order.folio || order.clientGeneratedId} está *${getStatusText(order.status).toUpperCase()}*
+Tu pedido #${order.client_generated_id} está *${getStatusText(order.status).toUpperCase()}*
 
-📦 Total: ${formatCurrency(totalAmount)}
-📅 Entrega: ${formatDate(order.deliveryDate)}
+📅 Entrega: ${formatDate(order.delivery_date)}
 
-¡Gracias por tu preferencia! 🙏`;
+¡Gracias por tu pedido! 🎉`;
 
-    const whatsappUrl = `https://wa.me/${order.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${order.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
-  const getAvailableStatusTransitions = () => {
-    const transitions: Array<{ status: Order['status']; label: string; variant: 'default' | 'secondary' | 'destructive' }> = [];
-    
-    switch (order.status) {
-      case 'pending':
-        transitions.push(
-          { status: 'preparing', label: 'Iniciar Preparación', variant: 'default' },
-          { status: 'cancelled', label: 'Cancelar Pedido', variant: 'destructive' }
-        );
-        break;
-      case 'preparing':
-        transitions.push(
-          { status: 'ready', label: 'Marcar como Listo', variant: 'default' },
-          { status: 'cancelled', label: 'Cancelar Pedido', variant: 'destructive' }
-        );
-        break;
-      case 'ready':
-        transitions.push(
-          { status: 'delivered', label: 'Marcar como Entregado', variant: 'default' }
-        );
-        break;
-    }
-    
-    return transitions;
+  const handleCopyReceipt = () => {
+    const receipt = generateWhatsAppMessage();
+    navigator.clipboard.writeText(receipt);
+    alert('Recibo copiado al portapapeles');
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span>Pedido #{order.folio || order.clientGeneratedId}</span>
-              <StatusBadge status={order.status} size="md" />
-            </div>
-            <Badge variant="secondary" className="font-mono text-lg">
-              {formatCurrency(totalAmount)}
-            </Badge>
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Información del Cliente */}
-          <div className="space-y-3">
-            <h3 className="font-semibold flex items-center gap-2">
-              <User className="w-4 h-4" />
-              Información del Cliente
-            </h3>
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-muted-foreground" />
-                <span className="font-medium">{order.clientName}</span>
-              </div>
-              {order.clientPhone && (
-                <div className="flex items-center gap-2">
-                  <Phone className="w-4 h-4 text-muted-foreground" />
-                  <span>{order.clientPhone}</span>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={shareWhatsApp}
-                    className="ml-auto"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Información de Entrega */}
-          <div className="space-y-3">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Calendar className="w-4 h-4" />
-              Información de Entrega
-            </h3>
-            <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-muted-foreground" />
-                <span>{formatDate(order.deliveryDate)}</span>
-              </div>
-              {order.deliveryTime && (
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-muted-foreground" />
-                  <span>{formatTime(order.deliveryTime)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Productos */}
-          <div className="space-y-3">
-            <h3 className="font-semibold flex items-center gap-2">
-              <Package className="w-4 h-4" />
-              Productos ({order.items.length || 0})
-            </h3>
-            <div className="border rounded-lg">
-              {order.items.map((item, index) => (
-                <div 
-                  key={index} 
-                  className={`p-4 flex justify-between items-center ${
-                    index !== (order.items.length || 0) - 1 ? 'border-b' : ''
-                  }`}
-                >
-                  <div>
-                    <p className="font-medium">{item.productName}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Cantidad: {item.quantity} × {formatCurrency(item.unitPrice)}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
-                      {formatCurrency(item.quantity * item.unitPrice)}
-                    </p>
-                  </div>
-                </div>
-              ))}
-              
-              <div className="p-4 bg-muted/50 border-t">
-                <div className="flex justify-between items-center text-lg font-bold">
-                  <span>Total:</span>
-                  <span>{formatCurrency(totalAmount)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Notas */}
-          {order.notes && (
-            <div className="space-y-3">
-              <h3 className="font-semibold flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Notas
-              </h3>
-              <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-sm">{order.notes}</p>
-              </div>
-            </div>
+    <Card className="max-w-2xl mx-auto">
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            <span>Pedido #{order.client_generated_id}</span>
+          </CardTitle>
+          
+          {onClose && (
+            <Button variant="ghost" size="sm" onClick={onClose}>
+              Cerrar
+            </Button>
           )}
+        </div>
+      </CardHeader>
 
-          <Separator />
-
-          {/* Acciones */}
-          <div className="space-y-4">
-            {/* Cambios de Estado */}
-            {getAvailableStatusTransitions().length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium">Cambiar Estado:</h4>
-                <div className="flex gap-2 flex-wrap">
-                  {getAvailableStatusTransitions().map(({ status, label, variant }) => (
-                    <Button
-                      key={status}
-                      size="sm"
-                      variant={variant}
-                      onClick={() => handleStatusChange(status)}
-                      disabled={isUpdatingStatus}
-                    >
-                      {isUpdatingStatus ? 'Actualizando...' : label}
-                    </Button>
-                  ))}
-                </div>
+      <CardContent className="space-y-6">
+        {/* Client Info */}
+        <div className="space-y-2">
+          <h3 className="font-semibold text-lg">Información del Cliente</h3>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1">
+              <User className="w-4 h-4" />
+              <span className="font-medium">{order.client_name}</span>
+            </div>
+            {order.client_phone && (
+              <div className="flex items-center gap-1">
+                <Phone className="w-4 h-4" />
+                <span>{order.client_phone}</span>
               </div>
             )}
-
-            {/* Otras Acciones */}
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={generateReceipt}
-              >
-                <Copy className="w-4 h-4 mr-2" />
-                Copiar Recibo
-              </Button>
-
-              {order.status === 'pending' && onEdit && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    onEdit(order);
-                    onOpenChange(false);
-                  }}
-                >
-                  <Edit3 className="w-4 h-4 mr-2" />
-                  Editar Pedido
-                </Button>
-              )}
-
-              {['pending', 'cancelled'].includes(order.status) && onDelete && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => {
-                    if (confirm('¿Estás seguro de que quieres eliminar este pedido?')) {
-                      onDelete(order.id?.toString() || order.clientGeneratedId);
-                      onOpenChange(false);
-                    }
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Eliminar
-                </Button>
-              )}
-            </div>
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+
+        <Separator />
+
+        {/* Delivery Info */}
+        <div className="space-y-2">
+          <h3 className="font-semibold text-lg">Información de Entrega</h3>
+          <div className="flex items-center gap-4 text-sm">
+            <div className="flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              <span>{formatDate(order.delivery_date)}</span>
+            </div>
+            {order.delivery_time && (
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                <span>{formatTime(order.delivery_time)}</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Items */}
+        <div className="space-y-2">
+          <h3 className="font-semibold text-lg">
+            Productos ({order.items?.length || 0})
+          </h3>
+          <div className="space-y-2">
+            {order.items?.map((item, index) => (
+              <div 
+                key={index} 
+                className={`flex justify-between items-center py-2 ${
+                  index !== (order.items?.length || 0) - 1 ? 'border-b' : ''
+                }`}
+              >
+                <div className="flex-1">
+                  <p className="font-medium">{item.product_name}</p>
+                  <p className="text-sm text-muted-foreground">
+                    Cantidad: {item.quantity} × {formatCurrency(item.unit_price)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium">
+                    {formatCurrency(item.quantity * item.unit_price)}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* Total */}
+        <div className="flex justify-between items-center text-lg font-bold">
+          <span>Total:</span>
+          <span>{formatCurrency(totalAmount)}</span>
+        </div>
+
+        {/* Notes */}
+        {order.notes && (
+          <>
+            <Separator />
+            <div className="space-y-2">
+              <h3 className="font-semibold text-lg">Notas</h3>
+              <p className="text-sm text-muted-foreground">{order.notes}</p>
+            </div>
+          </>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-2 flex-wrap">
+          {onStatusChange && (
+            <Button 
+              onClick={() => handleStatusChange('delivered')}
+              className="flex-1"
+            >
+              Marcar como Entregado
+            </Button>
+          )}
+          
+          <Button 
+            variant="outline" 
+            onClick={handleCopyReceipt}
+          >
+            <Share2 className="w-4 h-4 mr-2" />
+            Copiar Recibo
+          </Button>
+          
+          {order.client_phone && (
+            <Button 
+              variant="outline" 
+              onClick={handleShareWhatsApp}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              WhatsApp
+            </Button>
+          )}
+          
+          {onDelete && (
+            <Button 
+              variant="destructive" 
+              onClick={() => {
+                const orderId = order.id || order.client_generated_id || '';
+                onDelete(orderId);
+              }}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Eliminar
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 } 

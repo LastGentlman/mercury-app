@@ -4,7 +4,7 @@ import { useBackgroundSync } from '../hooks/useBackgroundSync'
 import { cn } from '../lib/utils'
 
 export function ConnectionStatus() {
-  const { isOnline, syncStatus, pendingCount, syncPendingChanges } = useOfflineSync()
+  const { isOnline, pendingCount, syncPendingChanges } = useOfflineSync()
   const { syncStatus: bgSyncStatus, triggerBackgroundSync } = useBackgroundSync()
 
   // Show background sync status if available
@@ -31,13 +31,13 @@ export function ConnectionStatus() {
               <>
                 <span className="text-xs">•</span>
                 <span>{pendingCount} pending</span>
-                {syncStatus === 'syncing' && (
+                {bgSyncStatus.isSyncing && (
                   <RefreshCw className="h-4 w-4 animate-spin" />
                 )}
-                {syncStatus === 'error' && (
+                {bgSyncStatus.lastSyncError && (
                   <AlertCircle className="h-4 w-4" />
                 )}
-                {syncStatus === 'idle' && pendingCount > 0 && (
+                {!bgSyncStatus.isSyncing && !bgSyncStatus.lastSyncError && pendingCount > 0 && (
                   <button
                     onClick={syncPendingChanges}
                     className="text-xs underline hover:no-underline"

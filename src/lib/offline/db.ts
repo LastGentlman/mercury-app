@@ -37,7 +37,7 @@ export class PedidoListDB extends Dexie {
     if (!oldestOrder) return 30
     
     const daysRemaining = Math.floor(
-      (new Date().getTime() - new Date(oldestOrder.deliveryDate).getTime()) / 
+      (new Date().getTime() - new Date(oldestOrder.delivery_date).getTime()) / 
       (1000 * 60 * 60 * 24)
     )
     

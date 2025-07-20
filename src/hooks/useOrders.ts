@@ -11,7 +11,7 @@ interface CreateOrderData {
   delivery_date: string;
   delivery_time?: string;
   notes?: string;
-  items: Array<Omit<OrderItem, 'id'>>;
+  items: Array<Omit<OrderItem, 'id' | 'order_id'>>;
 }
 
 export function useOrders(businessId: string) {

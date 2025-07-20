@@ -60,7 +60,7 @@ export function registerPWA(): Promise<ServiceWorkerRegistration | null> {
   console.log(`🔄 Starting Service Worker registration (attempt ${registrationAttempts}/${MAX_REGISTRATION_ATTEMPTS})`);
   
   // ✅ Promise con timeout y manejo de errores robusto
-  registrationPromise = new Promise<ServiceWorkerRegistration | null>((resolve, reject) => {
+  registrationPromise = new Promise<ServiceWorkerRegistration | null>((resolve) => {
     // ✅ Timeout para prevenir bloqueos infinitos
     const timeoutId = setTimeout(() => {
       console.error('❌ Service Worker registration timeout');

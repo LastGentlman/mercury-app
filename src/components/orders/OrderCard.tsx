@@ -22,8 +22,8 @@ export function OrderCard({
   onViewDetails,
   className 
 }: OrderCardProps) {
-  const totalAmount = order.items.reduce((sum, item) => 
-    sum + (item.quantity * item.unitPrice), 0
+  const totalAmount = order.items?.reduce((sum, item) => 
+    sum + (item.quantity * item.unit_price), 0
   ) || 0;
 
   const handleStatusClick = () => {
@@ -37,7 +37,8 @@ export function OrderCard({
     
     const nextStatus = statusFlow[order.status];
     if (nextStatus !== order.status && onStatusChange) {
-      onStatusChange(order.id?.toString() || order.clientGeneratedId, nextStatus);
+      const orderId = order.id || order.client_generated_id || '';
+      onStatusChange(orderId, nextStatus);
     }
   };
 
@@ -60,16 +61,16 @@ export function OrderCard({
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg">#{order.folio || order.clientGeneratedId}</h3>
+              <h3 className="font-semibold text-lg">#{order.client_generated_id}</h3>
               <StatusBadge status={order.status} />
             </div>
             <div className="flex items-center text-sm text-muted-foreground">
               <User className="w-4 h-4 mr-1" />
-              {order.clientName}
-              {order.clientPhone && (
+              {order.client_name}
+              {order.client_phone && (
                 <>
                   <Phone className="w-4 h-4 ml-3 mr-1" />
-                  {order.clientPhone}
+                  {order.client_phone}
                 </>
               )}
             </div>
@@ -91,32 +92,29 @@ export function OrderCard({
         <div className="flex items-center gap-4 text-sm">
           <div className="flex items-center text-muted-foreground">
             <Calendar className="w-4 h-4 mr-1" />
-            {formatDate(order.deliveryDate)}
+            {formatDate(order.delivery_date)}
           </div>
-          {order.deliveryTime && (
+          {order.delivery_time && (
             <div className="flex items-center text-muted-foreground">
               <Clock className="w-4 h-4 mr-1" />
-              {formatTime(order.deliveryTime)}
+              {formatTime(order.delivery_time)}
             </div>
           )}
         </div>
 
         {/* Items Preview */}
         <div className="space-y-1">
-          <p className="text-sm font-medium">Productos:</p>
-          <div className="text-sm text-muted-foreground">
-            {order.items.slice(0, 2).map((item, index) => (
-              <div key={index} className="flex justify-between">
-                <span>{item.quantity}x {item.productName}</span>
-                <span>{formatCurrency(item.quantity * item.unitPrice)}</span>
-              </div>
-            ))}
-            {order.items.length > 2 && (
-              <p className="text-xs text-muted-foreground italic">
-                +{order.items.length - 2} productos más...
-              </p>
-            )}
-          </div>
+          {order.items?.slice(0, 2).map((item, index) => (
+            <div key={index} className="flex justify-between text-sm">
+              <span>{item.quantity}x {item.product_name}</span>
+              <span>{formatCurrency(item.quantity * item.unit_price)}</span>
+            </div>
+          ))}
+          {order.items && order.items.length > 2 && (
+            <div className="text-sm text-muted-foreground">
+              +{order.items.length - 2} productos más...
+            </div>
+          )}
         </div>
 
         {/* Notas */}
@@ -128,25 +126,26 @@ export function OrderCard({
         )}
 
         {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          {canAdvanceStatus && (
+        <div className="flex gap-2">
+          {canAdvanceStatus && onStatusChange && (
             <Button 
-              size="sm" 
-              variant={order.status === 'ready' ? 'default' : 'secondary'}
               onClick={handleStatusClick}
               className="flex-1"
+              size="sm"
             >
               {getStatusAction()}
             </Button>
           )}
           
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => onViewDetails?.(order)}
-          >
-            Ver Detalles
-          </Button>
+          {onViewDetails && (
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => onViewDetails(order)}
+            >
+              Ver Detalles
+            </Button>
+          )}
           
           {order.status === 'pending' && (
             <Button 

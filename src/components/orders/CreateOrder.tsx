@@ -79,7 +79,7 @@ export function CreateOrder({
 
   // Hooks
   const { createOrder } = useOrders(businessId);
-  const { products, isLoading: _productsLoading } = useProducts({ businessId });
+  const { products, isLoading: _productsLoading } = useProducts();
 
   const isEditing = !!editOrder;
 
@@ -124,12 +124,16 @@ export function CreateOrder({
   useEffect(() => {
     if (editOrder) {
       reset({
-        clientName: editOrder.clientName,
-        clientPhone: editOrder.clientPhone || '',
-        deliveryDate: editOrder.deliveryDate.split('T')[0],
-        deliveryTime: editOrder.deliveryTime || '',
+        clientName: editOrder.client_name,
+        clientPhone: editOrder.client_phone || '',
+        deliveryDate: editOrder.delivery_date.split('T')[0],
+        deliveryTime: editOrder.delivery_time || '',
         notes: editOrder.notes || '',
-        items: editOrder.items
+        items: editOrder.items?.map(item => ({
+          productName: item.product_name,
+          quantity: item.quantity,
+          unitPrice: item.unit_price
+        })) || []
       });
     }
   }, [editOrder, reset]);
@@ -201,19 +205,17 @@ _${new Date().toLocaleString('es-MX')}_`;
     
     try {
       const orderData = {
-        ...data,
-        deliveryDate: data.deliveryTime 
-          ? `${data.deliveryDate}T${data.deliveryTime}:00`
-          : `${data.deliveryDate}T12:00:00`,
+        client_name: data.clientName,
+        client_phone: data.clientPhone,
+        delivery_date: data.deliveryDate,
+        delivery_time: data.deliveryTime,
+        notes: data.notes,
         items: data.items.map(item => ({
-          productId: `product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          productName: item.productName,
+          product_name: item.productName,
           quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          total: item.quantity * item.unitPrice
-        })),
-        total,
-        status: 'pending' as const
+          unit_price: item.unitPrice,
+          subtotal: item.quantity * item.unitPrice
+        }))
       };
 
       let result;
@@ -233,7 +235,15 @@ _${new Date().toLocaleString('es-MX')}_`;
       toast.success(isEditing ? 'Pedido actualizado correctamente' : 'Pedido creado correctamente');
       
       if (onSuccess) {
-        onSuccess(result);
+        // Add order_id to items to match Order type
+        const orderWithItems = {
+          ...result,
+          items: result.items?.map(item => ({
+            ...item,
+            order_id: result.id || ''
+          })) || []
+        };
+        onSuccess(orderWithItems as Order);
       }
 
     } catch (error) {
@@ -427,7 +437,7 @@ _${new Date().toLocaleString('es-MX')}_`;
                       
                       {/* Product suggestions datalist */}
                       <datalist id={`products-${index}`}>
-                        {products.map(product => (
+                        {products?.map((product: any) => (
                           <option key={product.id} value={product.name} />
                         ))}
                       </datalist>
