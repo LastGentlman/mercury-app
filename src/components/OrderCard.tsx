@@ -2,7 +2,6 @@ import {
   ChevronRight, 
   Clock, 
   Copy,
-  MapPin, 
   MessageSquare,
   Phone, 
   Share2 
@@ -32,14 +31,15 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
 
   const handleAdvanceStatus = () => {
     if (canAdvance) {
-      const orderId = order.id?.toString() || order.clientGeneratedId;
+      const orderId = order.id || order.client_generated_id || '';
       onStatusChange(orderId, currentStatus.nextStatus as Order['status']);
     }
   };
 
   const handleShareWhatsApp = () => {
+    if (!order.client_phone) return;
     const message = generateWhatsAppMessage(order);
-    const whatsappUrl = `https://wa.me/${order.clientPhone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
+    const whatsappUrl = `https://wa.me/${order.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };
 
@@ -54,25 +54,19 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
       <CardHeader className="pb-3">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-semibold text-lg">{order.clientName}</h3>
+            <h3 className="font-semibold text-lg">{order.client_name}</h3>
             <div className="flex items-center space-x-4 text-sm text-gray-600 mt-1">
-              {order.clientPhone && (
+              {order.client_phone && (
                 <div className="flex items-center space-x-1">
                   <Phone className="w-4 h-4" />
-                  <span>{order.clientPhone}</span>
-                </div>
-              )}
-              {order.clientAddress && (
-                <div className="flex items-center space-x-1">
-                  <MapPin className="w-4 h-4" />
-                  <span>{order.clientAddress}</span>
+                  <span>{order.client_phone}</span>
                 </div>
               )}
               <div className="flex items-center space-x-1">
                 <Clock className="w-4 h-4" />
                 <span>
-                  {order.deliveryDate ? 
-                    new Date(order.deliveryDate).toLocaleDateString('es-ES') : 
+                  {order.delivery_date ? 
+                    new Date(order.delivery_date).toLocaleDateString('es-ES') : 
                     'Sin fecha específica'
                   }
                 </span>
@@ -93,14 +87,14 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
       <CardContent className="pt-0">
         {/* Items */}
         <div className="space-y-2 mb-4">
-          {order.items.map((item, index) => (
+          {order.items?.map((item, index) => (
             <div key={index} className="flex justify-between items-center text-sm">
               <div className="flex-1">
                 <span className="font-medium">{item.quantity}x</span>
-                <span className="ml-2">{item.productName}</span>
+                <span className="ml-2">{item.product_name}</span>
               </div>
               <span className="font-medium">
-                ${item.total.toFixed(2)}
+                ${(item.quantity * item.unit_price).toFixed(2)}
               </span>
             </div>
           ))}
@@ -139,7 +133,7 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
             Copiar
           </Button>
           
-          {order.clientPhone && (
+          {order.client_phone && (
             <Button 
               variant="outline" 
               size="sm"
@@ -157,19 +151,17 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
 
 // Función para generar mensaje de WhatsApp
 function generateWhatsAppMessage(order: Order): string {
-  const items = order.items.map(item => 
-    `${item.quantity}x ${item.productName} - $${item.total.toFixed(2)}`
-  ).join('\n');
+  const items = order.items?.map(item => 
+    `${item.quantity}x ${item.product_name} - $${(item.quantity * item.unit_price).toFixed(2)}`
+  ).join('\n') || '';
 
   return `🧾 *Pedido Confirmado*
-📅 Fecha: ${new Date(order.deliveryDate).toLocaleDateString('es-ES')}
+📅 Fecha: ${new Date(order.delivery_date).toLocaleDateString('es-ES')}
 
 📋 *Detalle:*
 ${items}
 
 💰 *Total: $${order.total.toFixed(2)}*
 
-${order.notes ? `📝 *Notas:* ${order.notes}` : ''}
-
-¡Gracias por tu pedido! 🙏`;
+¡Gracias por tu pedido! 🎉`;
 } 

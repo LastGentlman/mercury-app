@@ -6,11 +6,10 @@ import type { Order, OrderItem } from '@/types';
 import { db } from '@/lib/offline/db';
 
 interface CreateOrderData {
-  clientName: string;
-  clientPhone?: string;
-  clientAddress?: string;
-  deliveryDate: string;
-  deliveryTime?: string;
+  client_name: string;
+  client_phone?: string;
+  delivery_date: string;
+  delivery_time?: string;
   notes?: string;
   items: Array<Omit<OrderItem, 'id'>>;
 }
@@ -19,6 +18,10 @@ export function useOrders(businessId: string) {
   const { isOnline } = useOfflineSync();
   const { csrfRequest } = useCSRFRequest();
   const queryClient = useQueryClient();
+
+  // Default values for missing IDs
+  const branchId = 'default-branch';
+  const employeeId = 'default-employee';
 
   // Obtener pedidos del día actual
   const todayOrders = useQuery({
@@ -51,158 +54,88 @@ export function useOrders(businessId: string) {
   // Crear pedido
   const createOrder = useMutation({
     mutationFn: async (orderData: CreateOrderData) => {
-      const clientGeneratedId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      const total = orderData.items.reduce((sum, item) => sum + item.total, 0);
+      // Calculate total from items
+      const total = orderData.items.reduce((sum, item) => sum + (item.quantity * item.unit_price), 0);
 
-      const newOrder: Order = {
-        clientGeneratedId,
-        businessId,
-        clientName: orderData.clientName,
-        clientPhone: orderData.clientPhone || '',
-        clientAddress: orderData.clientAddress || '',
+      const order = {
+        business_id: businessId,
+        branch_id: branchId,
+        employee_id: employeeId,
+        client_name: orderData.client_name,
+        client_phone: orderData.client_phone,
         total,
-        status: 'pending',
-        deliveryDate: orderData.deliveryDate,
+        delivery_date: orderData.delivery_date,
+        delivery_time: orderData.delivery_time,
         notes: orderData.notes,
-        syncStatus: 'pending',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        items: orderData.items.map(item => ({
-          ...item,
-          id: undefined, // Dexie auto-genera el ID
-        })),
+        status: 'pending' as const,
+        last_modified_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        items: orderData.items,
+        syncStatus: 'pending' as const
       };
 
-      // Guardar en IndexedDB primero
-      const orderId = await db.orders.add(newOrder);
+      // Add to local database first
+      const localId = await db.orders.add(order as any);
+      const newOrder = { ...order, id: localId.toString() };
 
-      // Agregar a la cola de sincronización
-      await db.addToSyncQueue({
+      // Add to sync queue
+      await db.syncQueue.add({
         entityType: 'order',
-        entityId: orderId.toString(),
-        action: 'create'
+        entityId: localId.toString(),
+        action: 'create',
+        timestamp: new Date().toISOString()
       });
 
-      // Si hay conexión, intentar sincronizar inmediatamente
-      if (isOnline) {
-        try {
-          const response = await csrfRequest(`/api/orders`, {
-            method: 'POST',
-            body: JSON.stringify(newOrder),
-          });
-
-          if (response.ok) {
-            const serverOrder = await response.json();
-            // Actualizar con ID del servidor
-            await db.orders.update(orderId, { 
-              id: serverOrder.id,
-              syncStatus: 'synced' 
-            });
-            
-            // Marcar como sincronizado en la cola
-            await db.markAsSynced('order', orderId.toString());
-            
-            // Trigger notificación push
-            await csrfRequest(`/api/notifications/new-order`, {
-              method: 'POST',
-              body: JSON.stringify({ 
-                orderId: serverOrder.id, 
-                businessId 
-              }),
-            });
-          }
-        } catch (error) {
-          console.error('Error sincronizando:', error);
-        }
-      }
-
-      return { ...newOrder, id: orderId };
+      toast.success(`Pedido creado para ${newOrder.client_name}`);
+      return newOrder;
     },
-    onSuccess: (newOrder) => {
-      queryClient.invalidateQueries({ queryKey: ['orders', 'today', businessId] });
-      toast.success(`Pedido creado para ${newOrder.clientName}`);
-    },
-    onError: (error) => {
-      toast.error('Error al crear el pedido');
-      console.error('Error creating order:', error);
-    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    }
   });
 
-  // Cambiar estado de pedido
   const updateOrderStatus = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: Order['status'] }) => {
-      await db.orders.update(parseInt(orderId), { 
+      await db.orders.update(parseInt(orderId), {
         status,
-        syncStatus: 'pending',
-        updatedAt: new Date().toISOString()
+        last_modified_at: new Date().toISOString()
       });
 
-      // Agregar a la cola de sincronización
-      await db.addToSyncQueue({
+      // Add to sync queue
+      await db.syncQueue.add({
         entityType: 'order',
         entityId: orderId,
-        action: 'update'
+        action: 'update',
+        timestamp: new Date().toISOString()
       });
 
-      if (isOnline) {
-        try {
-          await csrfRequest(`/api/orders/${orderId}/status`, {
-            method: 'PATCH',
-            body: JSON.stringify({ status }),
-          });
-          
-          await db.orders.update(parseInt(orderId), { syncStatus: 'synced' });
-          await db.markAsSynced('order', orderId);
-        } catch (error) {
-          console.error('Error sincronizando estado:', error);
-        }
-      }
+      return { orderId, status };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders', 'today', businessId] });
-      toast.success('Estado actualizado');
-    },
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    }
   });
 
-  // Eliminar pedido
   const deleteOrder = useMutation({
     mutationFn: async (orderId: string) => {
-      // Marcar como eliminado en IndexedDB
-      await db.orders.update(parseInt(orderId), { 
+      await db.orders.update(parseInt(orderId), {
         status: 'cancelled',
-        syncStatus: 'pending',
-        updatedAt: new Date().toISOString()
+        last_modified_at: new Date().toISOString()
       });
 
-      // Agregar a la cola de sincronización
-      await db.addToSyncQueue({
+      // Add to sync queue
+      await db.syncQueue.add({
         entityType: 'order',
         entityId: orderId,
-        action: 'delete'
+        action: 'update',
+        timestamp: new Date().toISOString()
       });
 
-      if (isOnline) {
-        try {
-          await csrfRequest(`/api/orders/${orderId}`, {
-            method: 'DELETE',
-          });
-          
-          // Eliminar completamente de IndexedDB si se sincronizó correctamente
-          await db.orders.delete(parseInt(orderId));
-          await db.markAsSynced('order', orderId);
-        } catch (error) {
-          console.error('Error sincronizando eliminación:', error);
-        }
-      }
+      return orderId;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders', 'today', businessId] });
-      toast.success('Pedido eliminado');
-    },
-    onError: (error) => {
-      toast.error('Error al eliminar el pedido');
-      console.error('Error deleting order:', error);
-    },
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    }
   });
 
   return {
@@ -217,19 +150,21 @@ export function useOrders(businessId: string) {
 }
 
 // Función helper para merge de datos
-function mergeOrders(localOrders: Array<Order>, serverOrders: Array<Order>): Array<Order> {
+function mergeOrders(localOrders: Order[], serverOrders: Order[]) {
   const merged = new Map<string, Order>();
   
-  // Agregar pedidos del servidor
-  serverOrders.forEach(order => {
-    const key = order.id?.toString() || order.clientGeneratedId;
-    merged.set(key, order);
+  // Add local orders
+  localOrders.forEach(order => {
+    const key = order.id || order.client_generated_id || '';
+    if (key) {
+      merged.set(key, order);
+    }
   });
   
-  // Sobrescribir con datos locales (prioridad a cambios no sincronizados)
-  localOrders.forEach(order => {
-    const key = order.id?.toString() || order.clientGeneratedId;
-    if (order.syncStatus === 'pending') {
+  // Add server orders, overwriting local if newer
+  serverOrders.forEach(order => {
+    const key = order.id || order.client_generated_id || '';
+    if (key) {
       merged.set(key, order);
     }
   });

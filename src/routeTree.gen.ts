@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PwaDemoPageRouteImport } from './routes/pwa-demo-page'
+import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-design-system-demo'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClientsRouteImport } from './routes/clients'
@@ -21,6 +23,17 @@ import { Route as DemoStoreRouteImport } from './routes/demo.store'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo.form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo.form.address'
 
+const PwaDemoPageRoute = PwaDemoPageRouteImport.update({
+  id: '/pwa-demo-page',
+  path: '/pwa-demo-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EnhancedDesignSystemDemoRoute =
+  EnhancedDesignSystemDemoRouteImport.update({
+    id: '/enhanced-design-system-demo',
+    path: '/enhanced-design-system-demo',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const DesignSystemRoute = DesignSystemRouteImport.update({
   id: '/design-system',
   path: '/design-system',
@@ -84,6 +97,8 @@ export interface FileRoutesByFullPath {
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
+  '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/pwa-demo-page': typeof PwaDemoPageRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -97,6 +112,8 @@ export interface FileRoutesByTo {
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
+  '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/pwa-demo-page': typeof PwaDemoPageRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -111,6 +128,8 @@ export interface FileRoutesById {
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
+  '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/pwa-demo-page': typeof PwaDemoPageRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -126,6 +145,8 @@ export interface FileRouteTypes {
     | '/clients'
     | '/dashboard'
     | '/design-system'
+    | '/enhanced-design-system-demo'
+    | '/pwa-demo-page'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -139,6 +160,8 @@ export interface FileRouteTypes {
     | '/clients'
     | '/dashboard'
     | '/design-system'
+    | '/enhanced-design-system-demo'
+    | '/pwa-demo-page'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -152,6 +175,8 @@ export interface FileRouteTypes {
     | '/clients'
     | '/dashboard'
     | '/design-system'
+    | '/enhanced-design-system-demo'
+    | '/pwa-demo-page'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -166,6 +191,8 @@ export interface RootRouteChildren {
   ClientsRoute: typeof ClientsRoute
   DashboardRoute: typeof DashboardRoute
   DesignSystemRoute: typeof DesignSystemRoute
+  EnhancedDesignSystemDemoRoute: typeof EnhancedDesignSystemDemoRoute
+  PwaDemoPageRoute: typeof PwaDemoPageRoute
   DemoStoreRoute: typeof DemoStoreRoute
   DemoTableRoute: typeof DemoTableRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
@@ -175,6 +202,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pwa-demo-page': {
+      id: '/pwa-demo-page'
+      path: '/pwa-demo-page'
+      fullPath: '/pwa-demo-page'
+      preLoaderRoute: typeof PwaDemoPageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/enhanced-design-system-demo': {
+      id: '/enhanced-design-system-demo'
+      path: '/enhanced-design-system-demo'
+      fullPath: '/enhanced-design-system-demo'
+      preLoaderRoute: typeof EnhancedDesignSystemDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/design-system': {
       id: '/design-system'
       path: '/design-system'
@@ -262,6 +303,8 @@ const rootRouteChildren: RootRouteChildren = {
   ClientsRoute: ClientsRoute,
   DashboardRoute: DashboardRoute,
   DesignSystemRoute: DesignSystemRoute,
+  EnhancedDesignSystemDemoRoute: EnhancedDesignSystemDemoRoute,
+  PwaDemoPageRoute: PwaDemoPageRoute,
   DemoStoreRoute: DemoStoreRoute,
   DemoTableRoute: DemoTableRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,

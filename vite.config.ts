@@ -3,7 +3,6 @@ import viteReact from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath } from 'node:url'
 import { VitePWA } from 'vite-plugin-pwa'
-
 import { tanstackRouter } from '@tanstack/router-vite-plugin'
 import { resolve } from 'node:path'
 
@@ -17,6 +16,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // ✅ Optimización PWA: Excluir archivos grandes del cache
+        navigateFallbackDenylist: [/^\/api\//, /^\/_/],
+        maximumFileSizeToCacheInBytes: 3000000, // 3MB max por archivo
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -140,6 +142,88 @@ export default defineConfig({
       }
     })
   ],
+  resolve: {
+    alias: {
+      '@': resolve(fileURLToPath(new URL('.', import.meta.url)), './src'),
+    },
+  },
+  build: {
+    // ✅ OPTIMIZACIÓN: Code Splitting y Bundle Size
+    rollupOptions: {
+      output: {
+        // Manual chunking para mejores cargas
+        manualChunks: {
+          // Vendor chunks separados
+          'react-vendor': ['react', 'react-dom'],
+          'router-vendor': ['@tanstack/react-router', '@tanstack/react-router-devtools'],
+          'query-vendor': ['@tanstack/react-query', '@tanstack/react-query-devtools'],
+          'ui-vendor': ['lucide-react', '@radix-ui/react-dialog', '@radix-ui/react-label'],
+          
+          // Feature-based chunks
+          'forms': ['@tanstack/react-form', 'react-hook-form', '@hookform/resolvers'],
+          'table-charts': ['@tanstack/react-table'],
+          'store': ['@tanstack/react-store', '@tanstack/store'],
+          
+          // Utils y helpers
+          'utils': ['clsx', 'class-variance-authority', 'tailwind-merge'],
+          'validation': ['zod'],
+          'security': ['dompurify'],
+          
+          // Separate large demo components
+          'demo-components': [
+            './src/routes/demo.table.tsx',
+            './src/routes/demo.form.simple.tsx',
+            './src/routes/demo.form.address.tsx',
+            './src/routes/design-system.tsx',
+            './src/routes/enhanced-design-system-demo.tsx',
+            './src/routes/pwa-demo-page.tsx'
+          ]
+        },
+        
+        // ✅ Nombres de chunk más descriptivos
+        chunkFileNames: (chunkInfo) => {
+          const facadeModuleId = chunkInfo.facadeModuleId ? 
+            chunkInfo.facadeModuleId.split('/').pop()?.replace('.tsx', '').replace('.ts', '') : 
+            'chunk'
+          return `assets/${facadeModuleId}-[hash].js`
+        },
+        
+        // ✅ Límite de tamaño de warning más alto para chunks específicos
+        assetFileNames: 'assets/[name]-[hash].[ext]'
+      }
+    },
+    
+    // ✅ Configuración de chunk size optimizada
+    chunkSizeWarningLimit: 600, // Aumentar de 500KB a 600KB
+    
+    // ✅ Optimización de minificación
+    minify: 'esbuild',
+    target: 'esnext',
+    
+    // ✅ Source maps solo en desarrollo
+    sourcemap: process.env.NODE_ENV === 'development',
+    
+    // ✅ Optimización de assets
+    assetsInlineLimit: 4096, // 4KB limit para inline assets
+  },
+  
+  // ✅ Optimización de dependencias
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      '@tanstack/react-router',
+      '@tanstack/react-query',
+      'lucide-react'
+    ],
+    exclude: [
+      // Excluir componentes de demo del pre-bundling
+      '@tanstack/react-router-devtools',
+      '@tanstack/react-query-devtools'
+    ]
+  },
+  
+  // ✅ Configuración del servidor de desarrollo
   server: {
     allowedHosts: [
       '.ngrok-free.app', // permite cualquier subdominio de ngrok (solo string, no RegExp)
@@ -151,10 +235,23 @@ export default defineConfig({
         secure: false,
       },
     },
+    port: 3000,
+    host: true, // Para acceso desde otros dispositivos
+    strictPort: true,
+    hmr: {
+      overlay: false // Deshabilitar overlay de errores en dev
+    }
   },
-  resolve: {
-    alias: {
-      '@': resolve(fileURLToPath(new URL('.', import.meta.url)), './src'),
-    },
+  
+  // ✅ Preview configuration
+  preview: {
+    port: 4173,
+    host: true,
+    strictPort: true
   },
+  
+  // ✅ CSS optimization
+  css: {
+    devSourcemap: process.env.NODE_ENV === 'development'
+  }
 })

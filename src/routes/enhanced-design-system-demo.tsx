@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 import { 
   DollarSign,
@@ -14,6 +15,11 @@ import { StatsCard } from '@/components/ui/stats-card'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { EnhancedOrderCard } from '@/components/EnhancedOrderCard'
+
+// ✅ CORRECCIÓN: Crear y exportar la ruta correctamente
+export const Route = createFileRoute('/enhanced-design-system-demo')({
+  component: EnhancedDesignSystemPage,
+})
 
 export default function EnhancedDesignSystemPage() {
   const [loading, setLoading] = useState(false)

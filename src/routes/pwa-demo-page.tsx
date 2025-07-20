@@ -1,3 +1,4 @@
+import { createFileRoute } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { 
   CheckCircle,
@@ -19,6 +20,11 @@ import {
   showInstallPrompt,
   wasEverInstalledAsPWA
 } from '../pwa-fixed'
+
+// ✅ CORRECCIÓN: Crear y exportar la ruta correctamente
+export const Route = createFileRoute('/pwa-demo-page')({
+  component: PWADemo,
+})
 
 export function PWADemo() {
   const [pwaState, setPwaState] = useState({
