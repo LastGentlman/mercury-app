@@ -4,18 +4,18 @@ import type { Order, Product } from '../types'
 
 export function useOfflineData() {
   // Operaciones de pedidos
-  const createOrder = useCallback(async (order: Omit<Order, 'id' | 'syncStatus' | 'createdAt' | 'updatedAt' | 'version' | 'lastModifiedAt'>) => {
+  const createOrder = useCallback(async (order: Omit<Order, 'id' | 'syncStatus' | 'created_at' | 'updatedAt' | 'version' | 'last_modified_at'>) => {
     const now = new Date().toISOString()
-    const newOrder: Order = {
+    const newOrder: Omit<Order, 'id'> & { id?: string } = {
       ...order,
       syncStatus: 'pending',
-      createdAt: now,
+      created_at: now,
       updatedAt: now,
       version: 1,
-      lastModifiedAt: now
+      last_modified_at: now
     }
 
-    const id = await db.orders.add(newOrder)
+    const id = await db.orders.add(newOrder as any)
     
     // Agregar a la cola de sincronización
     await db.addToSyncQueue({
@@ -32,7 +32,7 @@ export function useOfflineData() {
     const updatedOrder = {
       ...updates,
       updatedAt: now,
-      lastModifiedAt: now,
+      last_modified_at: now,
       syncStatus: 'pending' as const
     }
 

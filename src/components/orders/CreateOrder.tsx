@@ -16,7 +16,7 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Order } from '@/types';
+import type { Order, OrderFormData } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +28,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useProducts } from '@/hooks/useProducts';
 import { formatCurrency } from '@/lib/utils';
 
-// Schema de validación
+// ✅ ACTUALIZADO: Schema de validación usando OrderFormData
 const orderSchema = z.object({
   clientName: z.string()
     .min(2, 'Nombre del cliente debe tener al menos 2 caracteres')
@@ -52,11 +52,10 @@ const orderSchema = z.object({
       .max(999, 'Cantidad máxima: 999'),
     unitPrice: z.number()
       .min(0, 'Precio debe ser mayor o igual a 0')
-      .max(999999, 'Precio muy alto')
+      .max(999999, 'Precio muy alto'),
+    notes: z.string().optional()
   })).min(1, 'Agrega al menos un producto')
 });
-
-type OrderFormData = z.infer<typeof orderSchema>;
 
 interface CreateOrderProps {
   onSuccess?: (order: Order) => void;
@@ -78,7 +77,7 @@ export function CreateOrder({
   const [lastReceipt, setLastReceipt] = useState('');
 
   // Hooks
-  const { createOrder } = useOrders(businessId);
+  const { createOrderFromForm } = useOrders(businessId);
   const { products, isLoading: _productsLoading } = useProducts();
 
   const isEditing = !!editOrder;
@@ -95,7 +94,7 @@ export function CreateOrder({
   } = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
-      items: [{ productName: '', quantity: 1, unitPrice: 0 }],
+      items: [{ productName: '', quantity: 1, unitPrice: 0, notes: '' }],
       deliveryDate: new Date().toISOString().split('T')[0],
       deliveryTime: '',
       clientName: '',
@@ -132,43 +131,39 @@ export function CreateOrder({
         items: editOrder.items?.map(item => ({
           productName: item.product_name,
           quantity: item.quantity,
-          unitPrice: item.unit_price
+          unitPrice: item.unit_price,
+          notes: item.notes || ''
         })) || []
       });
     }
   }, [editOrder, reset]);
 
   const addItem = () => {
-    append({ productName: '', quantity: 1, unitPrice: 0 });
+    append({ productName: '', quantity: 1, unitPrice: 0, notes: '' });
   };
 
   const removeItem = (index: number) => {
     if (fields.length > 1) {
       remove(index);
-    } else {
-      toast.error('Debe haber al menos un producto');
     }
   };
 
-  const generateReceipt = (data: OrderFormData): string => {
+  const generateReceipt = (data: OrderFormData) => {
     const itemsList = data.items
       .map(item => `• ${item.quantity}x ${item.productName} - ${formatCurrency(item.quantity * item.unitPrice)}`)
       .join('\n');
 
-    const deliveryDateTime = new Date(data.deliveryDate);
-    const formattedDate = deliveryDateTime.toLocaleDateString('es-MX', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-
-    const receipt = `🧾 *${isEditing ? 'PEDIDO ACTUALIZADO' : 'PEDIDO CONFIRMADO'}*
+    const receipt = `🧾 *PEDIDO CONFIRMADO*
     
-👤 Cliente: ${data.clientName}
-${data.clientPhone ? `📞 Teléfono: ${data.clientPhone}` : ''}
+Cliente: ${data.clientName}
+${data.clientPhone ? `Teléfono: ${data.clientPhone}` : ''}
 
-📅 Entrega: ${formattedDate}${data.deliveryTime ? ` a las ${data.deliveryTime}` : ''}
+📅 Entrega: ${new Date(data.deliveryDate).toLocaleDateString('es-MX', {
+  weekday: 'long',
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric'
+})}${data.deliveryTime ? ` a las ${data.deliveryTime}` : ''}
 
 📦 *Productos:*
 ${itemsList}
@@ -177,54 +172,42 @@ ${itemsList}
 
 ${data.notes ? `\n📝 Notas: ${data.notes}` : ''}
 
-✅ ${isEditing ? 'Pedido actualizado exitosamente' : 'Gracias por su preferencia'}
+✅ Gracias por su preferencia
 _${new Date().toLocaleString('es-MX')}_`;
 
     return receipt;
   };
 
-  const copyReceipt = () => {
-    navigator.clipboard.writeText(lastReceipt);
-    toast.success('Recibo copiado al portapapeles');
-  };
-
-  const shareWhatsApp = () => {
-    const phone = getValues('clientPhone');
-    if (!phone) {
-      toast.error('Agrega un número de teléfono para enviar por WhatsApp');
-      return;
+  const handleCopyReceipt = () => {
+    if (lastReceipt) {
+      navigator.clipboard.writeText(lastReceipt);
+      toast.success('Recibo copiado al portapapeles');
     }
-
-    const cleanPhone = phone.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lastReceipt)}`;
-    window.open(whatsappUrl, '_blank');
   };
 
+  const handleShareWhatsApp = () => {
+    const formData = getValues();
+    if (lastReceipt && formData.clientPhone) {
+      const cleanPhone = formData.clientPhone.replace(/\D/g, '');
+      const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lastReceipt)}`;
+      window.open(whatsappUrl, '_blank');
+    } else {
+      toast.error('Se requiere número de teléfono para compartir por WhatsApp');
+    }
+  };
+
+  // ✅ ACTUALIZADO: Usar createOrderFromForm con tipos unificados
   const onSubmit = async (data: OrderFormData) => {
     setIsCreating(true);
     
     try {
-      const orderData = {
-        client_name: data.clientName,
-        client_phone: data.clientPhone,
-        delivery_date: data.deliveryDate,
-        delivery_time: data.deliveryTime,
-        notes: data.notes,
-        items: data.items.map(item => ({
-          product_name: item.productName,
-          quantity: item.quantity,
-          unit_price: item.unitPrice,
-          subtotal: item.quantity * item.unitPrice
-        }))
-      };
-
       let result;
       if (isEditing) {
         // For now, we'll just create a new order since updateOrder is not implemented
         // You can implement updateOrder in useOrders hook if needed
-        result = await createOrder.mutateAsync(orderData);
+        result = await createOrderFromForm.mutateAsync(data);
       } else {
-        result = await createOrder.mutateAsync(orderData);
+        result = await createOrderFromForm.mutateAsync(data);
       }
 
       // Generate and show receipt
@@ -280,12 +263,12 @@ _${new Date().toLocaleString('es-MX')}_`;
           </div>
           
           <div className="flex gap-2 flex-wrap">
-            <Button onClick={copyReceipt} variant="outline">
+            <Button onClick={handleCopyReceipt} variant="outline">
               <Copy className="w-4 h-4 mr-2" />
               Copiar Recibo
             </Button>
             
-            <Button onClick={shareWhatsApp} variant="outline">
+            <Button onClick={handleShareWhatsApp} variant="outline">
               <MessageCircle className="w-4 h-4 mr-2" />
               Enviar WhatsApp
             </Button>

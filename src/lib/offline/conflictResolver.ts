@@ -15,16 +15,22 @@ export interface ConflictResolution {
 
 export class ConflictResolver {
   /**
-   * Resuelve conflictos usando "last write wins"
-   * Compara los timestamps de última modificación
+   * Resuelve conflictos usando la estrategia "last write wins"
+   * Compara timestamps y el más reciente gana
    */
   static resolveLastWriteWins(
     localData: Order | Product,
     serverData: Order | Product,
     entityType: 'order' | 'product'
   ): ConflictResolution {
-    const localTimestamp = localData.lastModifiedAt || localData.updatedAt
-    const serverTimestamp = serverData.lastModifiedAt || serverData.updatedAt
+    // ✅ CORREGIDO: Usar las propiedades correctas según el tipo
+    const localTimestamp = entityType === 'order' 
+      ? (localData as Order).last_modified_at || (localData as Order).updatedAt || new Date().toISOString()
+      : (localData as Product).lastModifiedAt || (localData as Product).updatedAt || new Date().toISOString();
+    
+    const serverTimestamp = entityType === 'order'
+      ? (serverData as Order).last_modified_at || (serverData as Order).updatedAt || new Date().toISOString()
+      : (serverData as Product).lastModifiedAt || (serverData as Product).updatedAt || new Date().toISOString();
 
     // Convertir a timestamps numéricos para comparación
     const localTime = new Date(localTimestamp).getTime()
@@ -56,7 +62,10 @@ export class ConflictResolver {
         resolvedData: {
           ...localData,
           version: (localData.version || 0) + 1,
-          lastModifiedAt: new Date().toISOString()
+          ...(entityType === 'order' 
+            ? { last_modified_at: new Date().toISOString() }
+            : { lastModifiedAt: new Date().toISOString() }
+          )
         }
       }
     } else {
@@ -66,7 +75,10 @@ export class ConflictResolver {
         resolvedData: {
           ...serverData,
           version: (serverData.version || 0) + 1,
-          lastModifiedAt: new Date().toISOString()
+          ...(entityType === 'order' 
+            ? { last_modified_at: new Date().toISOString() }
+            : { lastModifiedAt: new Date().toISOString() }
+          )
         }
       }
     }
@@ -93,7 +105,10 @@ export class ConflictResolver {
           resolvedData: {
             ...serverData,
             version: (serverData.version || 0) + 1,
-            lastModifiedAt: new Date().toISOString()
+            ...(entityType === 'order' 
+              ? { last_modified_at: new Date().toISOString() }
+              : { lastModifiedAt: new Date().toISOString() }
+            )
           }
         }
       
@@ -104,7 +119,10 @@ export class ConflictResolver {
           resolvedData: {
             ...localData,
             version: (localData.version || 0) + 1,
-            lastModifiedAt: new Date().toISOString()
+            ...(entityType === 'order' 
+              ? { last_modified_at: new Date().toISOString() }
+              : { lastModifiedAt: new Date().toISOString() }
+            )
           }
         }
       
@@ -121,7 +139,7 @@ export class ConflictResolver {
         }
       
       default:
-        return this.resolveLastWriteWins(localData, serverData, entityType)
+        throw new Error(`Estrategia de resolución no válida: ${strategy}`)
     }
   }
 
@@ -138,8 +156,17 @@ export class ConflictResolver {
     }
 
     // Si los timestamps de modificación son muy diferentes, hay conflicto
-    const localTime = new Date(localData.lastModifiedAt || localData.updatedAt).getTime()
-    const serverTime = new Date(serverData.lastModifiedAt || serverData.updatedAt).getTime()
+    // ✅ CORREGIDO: Usar propiedades correctas según el tipo
+    const localTimestamp = 'last_modified_at' in localData 
+      ? localData.last_modified_at || localData.updatedAt || new Date().toISOString()
+      : (localData as Product).lastModifiedAt || localData.updatedAt || new Date().toISOString();
+    
+    const serverTimestamp = 'last_modified_at' in serverData
+      ? serverData.last_modified_at || serverData.updatedAt || new Date().toISOString()
+      : (serverData as Product).lastModifiedAt || serverData.updatedAt || new Date().toISOString();
+    
+    const localTime = new Date(localTimestamp).getTime()
+    const serverTime = new Date(serverTimestamp).getTime()
     const timeDifference = Math.abs(localTime - serverTime)
 
     return timeDifference > 1000 // Más de 1 segundo de diferencia
@@ -163,8 +190,8 @@ export class ConflictResolver {
   private static mergeOrderData(localOrder: Order, serverOrder: Order): Order {
     // Estrategia de fusión para pedidos
     // Mantener el estado más reciente, pero preservar datos importantes
-    const localTime = new Date(localOrder.lastModifiedAt || localOrder.updatedAt).getTime()
-    const serverTime = new Date(serverOrder.lastModifiedAt || serverOrder.updatedAt).getTime()
+    const localTime = new Date(localOrder.last_modified_at || localOrder.updatedAt || new Date().toISOString()).getTime()
+    const serverTime = new Date(serverOrder.last_modified_at || serverOrder.updatedAt || new Date().toISOString()).getTime()
 
     const baseOrder = localTime > serverTime ? localOrder : serverOrder
     const otherOrder = localTime > serverTime ? serverOrder : localOrder
@@ -177,15 +204,15 @@ export class ConflictResolver {
       status: baseOrder.status,
       // Actualizar versiones
       version: Math.max(baseOrder.version || 0, serverOrder.version || 0) + 1,
-      lastModifiedAt: new Date().toISOString(),
+      last_modified_at: new Date().toISOString(),
       syncStatus: 'synced' as const
     }
   }
 
   private static mergeProductData(localProduct: Product, serverProduct: Product): Product {
     // Estrategia de fusión para productos
-    const localTime = new Date(localProduct.lastModifiedAt || localProduct.updatedAt).getTime()
-    const serverTime = new Date(serverProduct.lastModifiedAt || serverProduct.updatedAt).getTime()
+    const localTime = new Date(localProduct.lastModifiedAt || localProduct.updatedAt || new Date().toISOString()).getTime()
+    const serverTime = new Date(serverProduct.lastModifiedAt || serverProduct.updatedAt || new Date().toISOString()).getTime()
 
     const baseProduct = localTime > serverTime ? localProduct : serverProduct
     const otherProduct = localTime > serverTime ? serverProduct : localProduct

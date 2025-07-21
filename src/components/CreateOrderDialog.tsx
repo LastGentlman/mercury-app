@@ -1,5 +1,5 @@
 import React from 'react';
-import { Copy, MessageCircle, Minus, Plus, X } from 'lucide-react';
+import { Copy, MessageCircle, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOrders } from '@/hooks/useOrders';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import type { OrderFormData } from '@/types';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -16,31 +17,26 @@ interface CreateOrderDialogProps {
 }
 
 export function CreateOrderDialog({ open, onOpenChange, businessId }: CreateOrderDialogProps) {
-  const { createOrder } = useOrders(businessId);
+  const { createOrderFromForm } = useOrders(businessId);
   
-  const [formData, setFormData] = React.useState({
+  const [formData, setFormData] = React.useState<OrderFormData>({
     clientName: '',
     clientPhone: '',
-    clientAddress: '',
     deliveryDate: new Date().toISOString().split('T')[0],
+    deliveryTime: '',
     notes: '',
+    items: [
+      { productName: '', quantity: 1, unitPrice: 0, notes: '' }
+    ]
   });
-
-  const [items, setItems] = React.useState<Array<{
-    productName: string;
-    quantity: number;
-    unitPrice: number;
-  }>>([
-    { productName: '', quantity: 1, unitPrice: 0 }
-  ]);
 
   const [lastReceipt, setLastReceipt] = React.useState<string>('');
 
-  const total = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+  const total = formData.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
 
-  const generateWhatsAppReceipt = (orderData: any) => {
+  const generateWhatsAppReceipt = (orderData: OrderFormData) => {
     const itemsList = orderData.items
-      .map((item: any) => `• ${item.quantity}x ${item.productName} - $${(item.quantity * item.unitPrice).toFixed(2)}`)
+      .map((item) => `• ${item.quantity}x ${item.productName} - $${(item.quantity * item.unitPrice).toFixed(2)}`)
       .join('\n');
 
     const receipt = `🧾 *PEDIDO CONFIRMADO*
@@ -93,7 +89,7 @@ _${new Date().toLocaleString('es-MX')}_`;
       return;
     }
 
-    const validItems = items.filter(item => 
+    const validItems = formData.items.filter(item => 
       item.productName.trim() && item.quantity > 0 && item.unitPrice > 0
     );
 
@@ -102,22 +98,15 @@ _${new Date().toLocaleString('es-MX')}_`;
       return;
     }
 
-    const orderData = {
-      ...formData,
-      items: validItems.map(item => ({
-        productId: `product_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        productName: item.productName,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        total: item.quantity * item.unitPrice,
-      })),
-    };
-
     try {
-      await createOrder.mutateAsync(orderData);
+      // ✅ ACTUALIZADO: Usar createOrderFromForm con tipos unificados
+      await createOrderFromForm.mutateAsync({
+        ...formData,
+        items: validItems
+      });
       
       // Generate receipt after successful order creation
-      const receipt = generateWhatsAppReceipt(orderData);
+      const receipt = generateWhatsAppReceipt(formData);
       setLastReceipt(receipt);
       
       // Show success with receipt options
@@ -137,28 +126,40 @@ _${new Date().toLocaleString('es-MX')}_`;
       setFormData({
         clientName: '',
         clientPhone: '',
-        clientAddress: '',
         deliveryDate: new Date().toISOString().split('T')[0],
+        deliveryTime: '',
         notes: '',
+        items: [{ productName: '', quantity: 1, unitPrice: 0, notes: '' }]
       });
-      setItems([{ productName: '', quantity: 1, unitPrice: 0 }]);
     } catch (error) {
       console.error('Error creating order:', error);
     }
   };
 
   const addItem = () => {
-    setItems([...items, { productName: '', quantity: 1, unitPrice: 0 }]);
+    setFormData({
+      ...formData,
+      items: [...formData.items, { productName: '', quantity: 1, unitPrice: 0, notes: '' }]
+    });
   };
 
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    if (formData.items.length > 1) {
+      setFormData({
+        ...formData,
+        items: formData.items.filter((_, i) => i !== index)
+      });
+    }
   };
 
-  const updateItem = (index: number, field: string, value: any) => {
-    const newItems = [...items];
+  const updateItem = (index: number, field: keyof OrderFormData['items'][0], value: any) => {
+    const newItems = [...formData.items];
     newItems[index] = { ...newItems[index], [field]: value };
-    setItems(newItems);
+    setFormData({ ...formData, items: newItems });
+  };
+
+  const updateFormData = (field: keyof OrderFormData, value: any) => {
+    setFormData({ ...formData, [field]: value });
   };
 
   return (
@@ -177,7 +178,7 @@ _${new Date().toLocaleString('es-MX')}_`;
                 <Input
                   id="clientName"
                   value={formData.clientName}
-                  onChange={(e) => setFormData({...formData, clientName: e.target.value})}
+                  onChange={(e) => updateFormData('clientName', e.target.value)}
                   placeholder="Nombre completo"
                   required
                 />
@@ -188,21 +189,10 @@ _${new Date().toLocaleString('es-MX')}_`;
                   id="clientPhone"
                   type="tel"
                   value={formData.clientPhone}
-                  onChange={(e) => setFormData({...formData, clientPhone: e.target.value})}
+                  onChange={(e) => updateFormData('clientPhone', e.target.value)}
                   placeholder="123-456-7890"
                 />
               </div>
-            </div>
-
-            {/* Dirección */}
-            <div>
-              <Label htmlFor="clientAddress">Dirección</Label>
-              <Input
-                id="clientAddress"
-                value={formData.clientAddress}
-                onChange={(e) => setFormData({...formData, clientAddress: e.target.value})}
-                placeholder="Dirección de entrega"
-              />
             </div>
 
             {/* Fecha */}
@@ -212,137 +202,118 @@ _${new Date().toLocaleString('es-MX')}_`;
                 id="deliveryDate"
                 type="date"
                 value={formData.deliveryDate}
-                onChange={(e) => setFormData({...formData, deliveryDate: e.target.value})}
+                onChange={(e) => updateFormData('deliveryDate', e.target.value)}
                 required
               />
             </div>
 
-            {/* Items */}
+            {/* Hora */}
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <Label>Productos/Servicios</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addItem}>
-                  <Plus className="w-4 h-4 mr-1" />
-                  Agregar
-                </Button>
-              </div>
-              
-              <div className="space-y-3">
-                {items.map((item, index) => (
-                  <Card key={index}>
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-12 gap-2 items-end">
-                        <div className="col-span-5">
-                          <Label className="text-xs">Producto/Servicio</Label>
-                          <Input
-                            value={item.productName}
-                            onChange={(e) => updateItem(index, 'productName', e.target.value)}
-                            placeholder="Nombre del producto"
-                            className="text-sm"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label className="text-xs">Cantidad</Label>
-                          <div className="flex items-center space-x-1">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateItem(index, 'quantity', Math.max(1, item.quantity - 1))}
-                              className="w-8 h-8 p-0"
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <Input
-                              type="number"
-                              value={item.quantity}
-                              onChange={(e) => updateItem(index, 'quantity', Math.max(1, parseInt(e.target.value) || 1))}
-                              className="text-center text-sm w-12"
-                              min="1"
-                            />
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => updateItem(index, 'quantity', item.quantity + 1)}
-                              className="w-8 h-8 p-0"
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        <div className="col-span-2">
-                          <Label className="text-xs">Precio Unit.</Label>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={item.unitPrice}
-                            onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                            placeholder="0.00"
-                            className="text-sm"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <Label className="text-xs">Subtotal</Label>
-                          <div className="text-sm font-medium bg-gray-50 p-2 rounded">
-                            ${(item.quantity * item.unitPrice).toFixed(2)}
-                          </div>
-                        </div>
-                        <div className="col-span-1">
-                          {items.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => removeItem(index)}
-                              className="w-8 h-8 p-0 text-red-500 hover:text-red-700"
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <Label htmlFor="deliveryTime">Hora de Entrega</Label>
+              <Input
+                id="deliveryTime"
+                type="time"
+                value={formData.deliveryTime}
+                onChange={(e) => updateFormData('deliveryTime', e.target.value)}
+              />
             </div>
 
-            {/* Notas del pedido */}
+            {/* Notas */}
             <div>
-              <Label htmlFor="notes">Notas del Pedido</Label>
+              <Label htmlFor="notes">Notas</Label>
               <Textarea
                 id="notes"
                 value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
-                placeholder="Instrucciones especiales, dirección de entrega, etc."
+                onChange={(e) => updateFormData('notes', e.target.value)}
+                placeholder="Instrucciones especiales..."
                 rows={3}
               />
             </div>
 
-            {/* Total */}
-            <div className="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
-              <span className="text-lg font-semibold">Total:</span>
-              <span className="text-2xl font-bold text-green-600">
-                ${total.toFixed(2)}
-              </span>
+            {/* Productos */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Productos *</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addItem}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Agregar Producto
+                </Button>
+              </div>
+
+              {formData.items.map((item, index) => (
+                <Card key={index} className="p-4">
+                  <div className="grid grid-cols-12 gap-3 items-end">
+                    <div className="col-span-5">
+                      <Label>Producto *</Label>
+                      <Input
+                        value={item.productName}
+                        onChange={(e) => updateItem(index, 'productName', e.target.value)}
+                        placeholder="Nombre del producto"
+                        required
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Label>Cantidad *</Label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.quantity}
+                        onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                        required
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Label>Precio Unitario *</Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={item.unitPrice}
+                        onChange={(e) => updateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                    <div className="col-span-1">
+                      <Label>Subtotal</Label>
+                      <div className="text-sm font-medium">
+                        ${(item.quantity * item.unitPrice).toFixed(2)}
+                      </div>
+                    </div>
+                    <div className="col-span-1">
+                      {formData.items.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeItem(index)}
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
 
+            {/* Total */}
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold">Total:</span>
+                  <span className="text-2xl font-bold">${total.toFixed(2)}</span>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Botones */}
-            <div className="flex justify-end space-x-3">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-              >
-                Cancelar
+            <div className="flex gap-3">
+              <Button type="submit" className="flex-1">
+                Crear Pedido
               </Button>
-              <Button
-                type="submit"
-                disabled={createOrder.isPending}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
-                {createOrder.isPending ? 'Creando...' : 'Crear Pedido'}
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancelar
               </Button>
             </div>
           </form>

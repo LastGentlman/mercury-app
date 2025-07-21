@@ -2,56 +2,35 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useOfflineSync } from './useOfflineSync';
 import { useCSRFRequest } from './useCSRF';
-import type { Order, OrderItem } from '@/types';
+import type { Order, CreateOrderData, OrderFormData } from '@/types';
+import { convertFormDataToCreateOrderData } from '@/types';
 import { db } from '@/lib/offline/db';
 
-interface CreateOrderData {
-  client_name: string;
-  client_phone?: string;
-  delivery_date: string;
-  delivery_time?: string;
-  notes?: string;
-  items: Array<Omit<OrderItem, 'id' | 'order_id'>>;
-}
+// ✅ ACTUALIZADO: Usar tipos unificados del archivo de tipos
+// interface CreateOrderData ya está definida en @/types
 
 export function useOrders(businessId: string) {
+  const queryClient = useQueryClient();
   const { isOnline } = useOfflineSync();
   const { csrfRequest } = useCSRFRequest();
-  const queryClient = useQueryClient();
 
-  // Default values for missing IDs
-  const branchId = 'default-branch';
-  const employeeId = 'default-employee';
-
-  // Obtener pedidos del día actual
-  const todayOrders = useQuery({
-    queryKey: ['orders', 'today', businessId],
+  // Obtener pedidos
+  const { data: orders = [], isLoading, error } = useQuery({
+    queryKey: ['orders', businessId],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
-      
-      // Obtener de IndexedDB
-      const localOrders = await db.getOrdersByBusinessAndDate(businessId, today);
-
-      // Si hay conexión, intentar sincronizar
       if (isOnline) {
-        try {
-          const response = await csrfRequest(`/api/orders/${businessId}/today`);
-          if (response.ok) {
-            const serverOrders = await response.json();
-            // Merge con datos locales (prioridad a cambios locales no sincronizados)
-            return mergeOrders(localOrders, serverOrders);
-          }
-        } catch (error) {
-          console.error('Error obteniendo del servidor:', error);
-        }
+        const response = await csrfRequest(`/api/orders?businessId=${businessId}`);
+        if (!response.ok) throw new Error('Error fetching orders');
+        return response.json();
+      } else {
+        // Fallback a datos offline
+        return await db.getOrdersByBusinessAndDate(businessId, new Date().toISOString().split('T')[0]);
       }
-
-      return localOrders;
     },
-    refetchInterval: isOnline ? 30000 : false,
+    staleTime: 30000, // 30 segundos
   });
 
-  // Crear pedido
+  // ✅ ACTUALIZADO: Crear pedido usando tipos unificados
   const createOrder = useMutation({
     mutationFn: async (orderData: CreateOrderData) => {
       // Calculate total from items
@@ -59,8 +38,8 @@ export function useOrders(businessId: string) {
 
       const order = {
         business_id: businessId,
-        branch_id: branchId,
-        employee_id: employeeId,
+        branch_id: 'default-branch', // TODO: Get from context
+        employee_id: 'default-employee', // TODO: Get from context
         client_name: orderData.client_name,
         client_phone: orderData.client_phone,
         total,
@@ -94,6 +73,17 @@ export function useOrders(businessId: string) {
     }
   });
 
+  // ✅ NUEVO: Función helper para crear pedido desde formulario
+  const createOrderFromForm = useMutation({
+    mutationFn: async (formData: OrderFormData) => {
+      const orderData = convertFormDataToCreateOrderData(formData);
+      return createOrder.mutateAsync(orderData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    }
+  });
+
   const updateOrderStatus = useMutation({
     mutationFn: async ({ orderId, status }: { orderId: string; status: Order['status'] }) => {
       await db.orders.update(parseInt(orderId), {
@@ -116,58 +106,12 @@ export function useOrders(businessId: string) {
     }
   });
 
-  const deleteOrder = useMutation({
-    mutationFn: async (orderId: string) => {
-      await db.orders.update(parseInt(orderId), {
-        status: 'cancelled',
-        last_modified_at: new Date().toISOString()
-      });
-
-      // Add to sync queue
-      await db.syncQueue.add({
-        entityType: 'order',
-        entityId: orderId,
-        action: 'update',
-        timestamp: new Date().toISOString()
-      });
-
-      return orderId;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orders'] });
-    }
-  });
-
   return {
-    orders: todayOrders.data || [],
-    isLoading: todayOrders.isLoading,
-    error: todayOrders.error,
+    orders,
+    isLoading,
+    error,
     createOrder,
-    updateOrderStatus,
-    deleteOrder,
-    refetch: todayOrders.refetch,
+    createOrderFromForm, // ✅ NUEVO: Para usar con formularios
+    updateOrderStatus
   };
-}
-
-// Función helper para merge de datos
-function mergeOrders(localOrders: Order[], serverOrders: Order[]) {
-  const merged = new Map<string, Order>();
-  
-  // Add local orders
-  localOrders.forEach(order => {
-    const key = order.id || order.client_generated_id || '';
-    if (key) {
-      merged.set(key, order);
-    }
-  });
-  
-  // Add server orders, overwriting local if newer
-  serverOrders.forEach(order => {
-    const key = order.id || order.client_generated_id || '';
-    if (key) {
-      merged.set(key, order);
-    }
-  });
-  
-  return Array.from(merged.values());
 } 

@@ -35,25 +35,25 @@ export function Dashboard({ businessId }: DashboardProps) {
     }
 
     // Fallback to local calculation
-    const today = orders.filter(order => 
+    const today = orders.filter((order: Order) => 
       order.delivery_date === new Date().toISOString().split('T')[0]
     );
     
     return {
       total: today.length,
-      pending: today.filter(o => o.status === 'pending').length,
-      preparing: today.filter(o => o.status === 'preparing').length,
-      ready: today.filter(o => o.status === 'ready').length,
-      delivered: today.filter(o => o.status === 'delivered').length,
-      cancelled: today.filter(o => o.status === 'cancelled').length,
-      totalAmount: today.reduce((sum, order) => sum + order.total, 0),
+      pending: today.filter((o: Order) => o.status === 'pending').length,
+      preparing: today.filter((o: Order) => o.status === 'preparing').length,
+      ready: today.filter((o: Order) => o.status === 'ready').length,
+      delivered: today.filter((o: Order) => o.status === 'delivered').length,
+      cancelled: today.filter((o: Order) => o.status === 'cancelled').length,
+      totalAmount: today.reduce((sum: number, order: Order) => sum + order.total, 0),
     };
   }, [orders, dashboardStats]);
 
   const sortedOrders = React.useMemo(() => {
-    return [...orders].sort((a, b) => {
+    return [...orders].sort((a: Order, b: Order) => {
       // Ordenar por estado (pending primero) y luego por hora
-      const statusOrder = { pending: 0, preparing: 1, ready: 2, delivered: 3, cancelled: 4 };
+      const statusOrder: Record<Order['status'], number> = { pending: 0, preparing: 1, ready: 2, delivered: 3, cancelled: 4 };
       const statusDiff = statusOrder[a.status] - statusOrder[b.status];
       
       if (statusDiff !== 0) return statusDiff;
@@ -271,14 +271,18 @@ export function Dashboard({ businessId }: DashboardProps) {
       />
 
       {/* Order Details Dialog */}
-      <OrderDetails
-        order={selectedOrder}
-        open={showOrderDetails}
-        onOpenChange={setShowOrderDetails}
-        onStatusChange={(orderId, status) => 
-          updateOrderStatus.mutate({ orderId, status })
-        }
-      />
+      {selectedOrder && showOrderDetails && (
+        <OrderDetails
+          order={selectedOrder}
+          onStatusChange={(orderId, status) => 
+            updateOrderStatus.mutate({ orderId, status })
+          }
+          onClose={() => {
+            setSelectedOrder(null);
+            setShowOrderDetails(false);
+          }}
+        />
+      )}
     </div>
   );
 } 
