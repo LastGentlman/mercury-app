@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { BACKEND_URL } from '../config'
 import { useCSRFRequest } from './useCSRF'
+import { useAuthToken } from './useStorageSync'
 
 import type { User } from '../types'
 
@@ -25,6 +26,42 @@ export function useAuth() {
   })
   const { csrfRequest: _csrfRequest } = useCSRFRequest()
   const queryClient = useQueryClient()
+  
+  // ✅ Usar el nuevo sistema de storage sync seguro
+  const { value: authToken, setValue: setAuthToken, isLoading: isTokenLoading } = useAuthToken()
+
+  // ✅ fetchUserProfile usando useCallback para evitar recreación
+  const fetchUserProfile = useCallback(async () => {
+    try {
+      if (!authToken) {
+        setAuthState({ user: null, isAuthenticated: false, isLoading: false })
+        return
+      }
+
+      const response = await fetch(`${BACKEND_URL}/api/auth/profile`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setAuthState({
+          user: data.profile,
+          isAuthenticated: true,
+          isLoading: false
+        })
+      } else {
+        // Token is invalid, clear it usando storage sync
+        setAuthToken(null)
+        setAuthState({ user: null, isAuthenticated: false, isLoading: false })
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      setAuthToken(null)
+      setAuthState({ user: null, isAuthenticated: false, isLoading: false })
+    }
+  }, [authToken, setAuthToken])
 
   // Helper function to translate error messages to Spanish
   const translateErrorMessage = (message: string): string => {
@@ -61,49 +98,18 @@ export function useAuth() {
     return message
   }
 
-  // Check if user is authenticated on mount
+  // ✅ Check if user is authenticated on mount - usando storage sync seguro
   useEffect(() => {
-    const token = localStorage.getItem('authToken')
-    if (token) {
+    // Esperar a que el token se cargue del storage
+    if (isTokenLoading) return
+    
+    if (authToken) {
       // Verify token and get user profile
       fetchUserProfile()
     } else {
       setAuthState(prev => ({ ...prev, isLoading: false }))
     }
-  }, [])
-
-  const fetchUserProfile = async () => {
-    try {
-      const token = localStorage.getItem('authToken')
-      if (!token) {
-        setAuthState({ user: null, isAuthenticated: false, isLoading: false })
-        return
-      }
-
-      const response = await fetch(`${BACKEND_URL}/api/auth/profile`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setAuthState({
-          user: data.profile,
-          isAuthenticated: true,
-          isLoading: false
-        })
-      } else {
-        // Token is invalid, clear it
-        localStorage.removeItem('authToken')
-        setAuthState({ user: null, isAuthenticated: false, isLoading: false })
-      }
-    } catch (error) {
-      console.error('Error fetching user profile:', error)
-      localStorage.removeItem('authToken')
-      setAuthState({ user: null, isAuthenticated: false, isLoading: false })
-    }
-  }
+  }, [authToken, isTokenLoading, fetchUserProfile])
 
   const login = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
@@ -141,7 +147,8 @@ export function useAuth() {
     },
     onSuccess: (data) => {
       if (data.session?.access_token) {
-        localStorage.setItem('authToken', data.session.access_token)
+        // ✅ Usar storage sync seguro
+        setAuthToken(data.session.access_token)
         setAuthState({
           user: data.user,
           isAuthenticated: true,
@@ -260,7 +267,8 @@ export function useAuth() {
     },
     onSuccess: () => {
       console.log('✅ Logout successful, clearing auth state...')
-      localStorage.removeItem('authToken')
+      // ✅ Usar storage sync seguro
+      setAuthToken(null)
       setAuthState({ user: null, isAuthenticated: false, isLoading: false })
       queryClient.clear() // Clear all queries
     },

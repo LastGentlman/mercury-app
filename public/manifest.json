@@ -1,64 +1,66 @@
 {
-  "name": "PedidoList",
+  "name": "Mercury App",
   "short_name": "Mercury",
-  "description": "A modern web application built with React and TanStack Router",
+  "description": "Una Progressive Web App moderna para gestión de órdenes",
   "start_url": "/?source=pwa",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
-  "orientation": "portrait-primary",
   "scope": "/",
-  "lang": "en",
-  "categories": ["productivity", "utilities"],
-  "prefer_related_applications": false,
+  "background_color": "#3b82f6",
+  "theme_color": "#1e40af",
+  "orientation": "portrait",
+  "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
+      "src": "/favicon.ico",
+      "sizes": "16x16 32x32",
+      "type": "image/x-icon"
     },
     {
-      "src": "logo-optimized.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
+      "src": "/logo192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo519.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
   "shortcuts": [
     {
-      "name": "Login",
-      "short_name": "Login",
-      "description": "Quick access to login",
-      "url": "/auth?source=pwa-shortcut",
+      "name": "Nueva Orden",
+      "short_name": "Nueva Orden",
+      "description": "Crear una nueva orden rápidamente",
+      "url": "/orders/new?source=pwa-shortcut",
       "icons": [
         {
-          "src": "logo-optimized.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
+          "src": "/icons/new-order.png",
+          "sizes": "96x96"
         }
       ]
     },
     {
       "name": "Dashboard",
       "short_name": "Dashboard",
-      "description": "Access your dashboard",
+      "description": "Ver resumen de órdenes",
       "url": "/dashboard?source=pwa-shortcut",
       "icons": [
         {
-          "src": "logo-optimized.svg",
-          "sizes": "any",
-          "type": "image/svg+xml"
+          "src": "/icons/dashboard.png",
+          "sizes": "96x96"
         }
       ]
     }
   ],
-  "screenshots": [
+  "protocol_handlers": [
     {
-      "src": "logo-optimized.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "form_factor": "wide"
+      "protocol": "web+mercury",
+      "url": "/?handler=%s"
     }
-  ]
+  ],
+  "prefer_related_applications": false,
+  "dir": "ltr",
+  "lang": "es"
 }
