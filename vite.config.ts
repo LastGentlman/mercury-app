@@ -1,65 +1,47 @@
 import { defineConfig } from 'vite'
-import viteReact from '@vitejs/plugin-react'
-import tailwindcss from '@tailwindcss/vite'
-import { fileURLToPath } from 'node:url'
+import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { resolve } from 'path'
+import { fileURLToPath } from 'url'
 import { tanstackRouter } from '@tanstack/router-vite-plugin'
-import { resolve } from 'node:path'
+import tailwindcss from '@tailwindcss/vite'
 
-// https://vitejs.dev/config/
+const isDev = process.env.NODE_ENV === 'development'
+
 export default defineConfig({
   plugins: [
+    // ✅ TanStack Router con configuración estable
     tanstackRouter({ 
       autoCodeSplitting: true,
-      // ✅ FIX: Configuración más estricta del code splitting
       generatedRouteTree: './src/routeTree.gen.ts'
     }),
-    viteReact(),
+    
+    // ✅ React plugin con configuración explícita
+    react({
+      include: /\.(tsx|ts|jsx|js)$/,
+      exclude: /node_modules/,
+      jsxImportSource: 'react'
+    }),
+    
+    // ✅ Tailwind CSS
     tailwindcss(),
-    VitePWA({
-      registerType: 'autoUpdate',
-      // ✅ FIX: Deshabilitar devOptions que pueden causar problemas
-      devOptions: {
-        enabled: false // Importante: deshabilitar en desarrollo
-      },
+    
+    // ✅ PWA SOLO en producción con configuración robusta
+    !isDev && VitePWA({
+      registerType: 'prompt',
+      includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       workbox: {
-        // ✅ FIX CRÍTICO: Patrones más específicos que excluyen archivos problemáticos
+        // ✅ Patrones seguros para el precaching
         globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,woff2}',
-          // Excluir explícitamente archivos de TanStack Router con tsr-split
-          '!**/*tsr-split*',
-          '!**/api-test*',
-          '!**/component-*.js'
+          '**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp}',
+          '!**/*.map',
+          '!**/node_modules/**',
+          '!**/tests/**',
+          '!**/test-*/**',
+          '!**/mock*/**'
         ],
         
-        // ✅ FIX: Exclusiones más específicas
-        globIgnores: [
-          '**/node_modules/**/*',
-          '**/dev-dist/**/*',
-          '**/*tsr-split*',
-          '**/api-test*',
-          '**/component-*.js',
-          '**/*.map',
-          '**/test/**/*',
-          '**/tests/**/*'
-        ],
-        
-        // ✅ FIX: Configuración de navegación más robusta
-        navigateFallback: '/',
-        navigateFallbackDenylist: [
-          /^\/api\//,
-          /^\/_/,
-          /^\/dev-dist\//,
-          /^\/node_modules\//,
-          // Excluir rutas de test y debug
-          /^\/api-test/,
-          /\.map$/
-        ],
-        
-        // ✅ FIX: Tamaño máximo ajustado para chunks grandes pero necesarios
-        maximumFileSizeToCacheInBytes: 4000000, // 4MB max
-        
-        // ✅ FIX: Estrategias de caching más robustas
+        // ✅ Configuración de runtime caching simplificada
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -68,90 +50,35 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 1 año
               }
             }
           },
           {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'gstatic-fonts-cache',
-              expiration: {
-                maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365
-              }
-            }
-          },
-          {
-            urlPattern: /^https:\/\/api\./,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24
-              },
-              networkTimeoutSeconds: 3
-            }
-          },
-          {
-            urlPattern: /^https:\/\/.*\.supabase\.co\//,
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-cache',
+              networkTimeoutSeconds: 3,
               expiration: {
                 maxEntries: 50,
-                maxAgeSeconds: 60 * 60
-              }
-            }
-          },
-          {
-            urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/i,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'images-cache',
-              expiration: {
-                maxEntries: 100,
-                maxAgeSeconds: 60 * 60 * 24 * 30
+                maxAgeSeconds: 60 * 60 // 1 hora
               }
             }
           }
         ],
         
-        // ✅ FIX: Configuración más robusta de manifestTransforms
-        manifestTransforms: [
-          (manifestEntries) => {
-            // Filtrar entradas problemáticas
-            const filteredManifest = manifestEntries.filter((entry) => {
-              // Excluir archivos con patrones problemáticos
-              return !entry.url.includes('tsr-split') && 
-                     !entry.url.includes('api-test') &&
-                     !entry.url.includes('component-') &&
-                     !entry.url.endsWith('.map') &&
-                     !entry.url.includes('?') // Excluir URLs con query params
-            })
-            
-            console.log('🔧 PWA Manifest filtered:', {
-              original: manifestEntries.length,
-              filtered: filteredManifest.length,
-              excluded: manifestEntries.length - filteredManifest.length
-            })
-            
-            return { manifest: filteredManifest }
-          }
-        ],
+        // ✅ Configuración de archivos a ignorar
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/_/, /\/api\//],
         
-        // ✅ FIX: Modo de depuración para development
-        mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
-        
-        // ✅ FIX: Configuración adicional de limpieza
+        // ✅ Limpieza de caches obsoletos
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true
       },
       
-      // ✅ FIX: Configuración de manifest más robusta
+      // ✅ Manifest simplificado y seguro
       manifest: {
         name: 'PedidoList - Gestión de Pedidos',
         short_name: 'PedidoList',
@@ -166,112 +93,76 @@ export default defineConfig({
           {
             src: '/logo192.png',
             sizes: '192x192',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
           },
           {
             src: '/logo512.png',
             sizes: '512x512',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any maskable'
           }
         ]
+      },
+      
+      // ✅ Desarrollo sin interferencias
+      devOptions: {
+        enabled: false,
+        type: 'module'
       }
     })
-  ],
+  ].filter(Boolean), // Filtrar plugins undefined
+
   resolve: {
     alias: {
-      '@': resolve(fileURLToPath(new URL('.', import.meta.url)), './src'),
-    },
+      '@': resolve(fileURLToPath(new URL('./src', import.meta.url)))
+    }
   },
-  build: {
-    rollupOptions: {
-      output: {
-        // ✅ FIX: Manual chunking más específico y estable
-        manualChunks: (id) => {
-          // Vendor chunks más específicos para evitar chunks gigantes
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor'
-            }
-            if (id.includes('@tanstack/react-router')) {
-              return 'router-vendor'
-            }
-            if (id.includes('@tanstack/react-query')) {
-              return 'query-vendor'
-            }
-            if (id.includes('lucide-react') || id.includes('@radix-ui')) {
-              return 'ui-vendor'
-            }
-            // Dividir vendor en chunks más pequeños
-            if (id.includes('@tanstack/') || id.includes('tanstack')) {
-              return 'tanstack-vendor'
-            }
-            if (id.includes('tailwind') || id.includes('clsx') || id.includes('class-variance')) {
-              return 'styles-vendor'
-            }
-            if (id.includes('dompurify') || id.includes('zod') || id.includes('@hookform')) {
-              return 'utils-vendor'
-            }
-            // Resto de dependencias en vendor más pequeño
-            return 'vendor'
-          }
-          
-          // ✅ FIX: Manejo especial para archivos de rutas
-          if (id.includes('/routes/')) {
-            // Evitar chunking de api-test para prevenir el error
-            if (id.includes('api-test')) {
-              return 'api-test-route'
-            }
-            if (id.includes('demo.')) {
-              return 'demo-routes'
-            }
-            return 'routes'
-          }
-          
-          // Utils y helpers
-          if (id.includes('/utils/') || id.includes('/hooks/')) {
-            return 'utils'
-          }
-          
-          // Componentes UI
-          if (id.includes('/components/')) {
-            return 'components'
-          }
-        },
-        
-        // ✅ FIX: Nombres de archivos más predecibles
-        chunkFileNames: (chunkInfo) => {
-          const name = chunkInfo.name || 'chunk'
-          // Evitar caracteres especiales en nombres de archivo
-          const safeName = name.replace(/[^a-zA-Z0-9-_]/g, '-')
-          return `assets/${safeName}-[hash].js`
-        },
-        
-        entryFileNames: 'assets/entry-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]'
-      }
-    },
-    
-    chunkSizeWarningLimit: 600,
-    minify: 'esbuild',
-    target: 'esnext',
-    sourcemap: process.env.NODE_ENV === 'development',
-    assetsInlineLimit: 4096,
+
+  // ✅ Configuración optimizada para React
+  esbuild: {
+    jsx: 'automatic',
+    jsxFactory: undefined,
+    jsxFragment: undefined,
+    jsxImportSource: 'react'
   },
-  
+
+  // ✅ Optimización de dependencias
   optimizeDeps: {
     include: [
       'react',
       'react-dom',
-      '@tanstack/react-router',
-      '@tanstack/react-query',
-      'lucide-react'
+      'react/jsx-runtime'
     ],
-    exclude: [
-      '@tanstack/react-router-devtools',
-      '@tanstack/react-query-devtools'
-    ]
+    exclude: []
   },
-  
+
+  // ✅ Configuración de build optimizada
+  build: {
+    target: 'es2022',
+    outDir: 'dist',
+    assetsDir: 'assets',
+    sourcemap: false,
+    minify: 'esbuild',
+    
+    rollupOptions: {
+      output: {
+        // ✅ Nombres de chunks deterministas
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        
+        // ✅ Separación de vendors para mejor caching
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'router-vendor': ['@tanstack/react-router'],
+          'query-vendor': ['@tanstack/react-query']
+        }
+      }
+    }
+  },
+
+  // ✅ Configuración del servidor de desarrollo
   server: {
     allowedHosts: ['.ngrok-free.app'],
     proxy: {
@@ -288,14 +179,15 @@ export default defineConfig({
       overlay: false
     }
   },
-  
+
+  // ✅ Preview server para testing PWA
   preview: {
     port: 4173,
-    host: true,
-    strictPort: true
+    host: true
   },
-  
-  css: {
-    devSourcemap: process.env.NODE_ENV === 'development'
+
+  // ✅ Variables de entorno tipadas
+  define: {
+    __DEV__: isDev
   }
 })
