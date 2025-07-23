@@ -114,7 +114,9 @@ export interface User {
   email: string;
   name?: string;
   businessId?: string;
-  role: 'owner' | 'employee';
+  role?: 'owner' | 'employee';
+  avatar_url?: string;
+  provider?: string;
 }
 
 export interface Business {
