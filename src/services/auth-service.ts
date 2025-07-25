@@ -17,11 +17,14 @@ import { env } from '../env'
 
 /**
  * Supabase client configuration
+ * Only create client if environment variables are properly configured
  */
-const supabase = createClient(
-  env.VITE_SUPABASE_URL || '',
-  env.VITE_SUPABASE_ANON_KEY || ''
-)
+const supabaseUrl = env.VITE_SUPABASE_URL
+const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY
+
+const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null
 
 /**
  * Gets the API base URL from environment
@@ -35,6 +38,11 @@ export class AuthService {
    * Gets current user session from Supabase OAuth
    */
   static async getOAuthSession(): Promise<AuthUser | null> {
+    if (!supabase) {
+      // Supabase not configured, return null silently
+      return null
+    }
+
     try {
       const { data: { session } } = await supabase.auth.getSession()
       
@@ -91,6 +99,14 @@ export class AuthService {
    * Performs social login via Supabase
    */
   static async socialLogin({ provider, redirectTo }: SocialLoginOptions) {
+    if (!supabase) {
+      throw createAuthError(
+        'OAuth no está configurado. Por favor contacta al administrador.',
+        'OAUTH_NOT_CONFIGURED',
+        provider
+      )
+    }
+
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
@@ -171,11 +187,17 @@ export class AuthService {
    */
   static async logout(): Promise<void> {
     // Logout from Supabase OAuth
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        console.error('Supabase logout error:', error)
+    if (supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session) {
+          const { error } = await supabase.auth.signOut()
+          if (error) {
+            console.error('Supabase logout error:', error)
+          }
+        }
+      } catch (error) {
+        console.error('Error during Supabase logout:', error)
       }
     }
 
@@ -217,6 +239,16 @@ export class AuthService {
    * Gets Supabase auth state change subscription
    */
   static onAuthStateChange(callback: (event: string, session: any) => void) {
+    if (!supabase) {
+      // Return a dummy subscription object that matches Supabase's structure
+      return {
+        data: {
+          subscription: {
+            unsubscribe: () => {}
+          }
+        }
+      }
+    }
     return supabase.auth.onAuthStateChange(callback)
   }
 }
