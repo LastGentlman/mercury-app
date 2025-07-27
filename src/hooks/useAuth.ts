@@ -9,7 +9,7 @@
  * const { user, isAuthenticated, login, loginWithGoogle } = useAuth()
  * 
  * // Traditional login
- * await login({ email: 'user@example.com', password: 'password' })
+ * await login.mutateAsync({ email: 'user@example.com', password: 'password' })
  * 
  * // OAuth login
  * loginWithGoogle()
@@ -18,12 +18,21 @@
 
 import { useEffect, useCallback } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { AuthHookReturn, AuthUser } from '../types/auth'
+import type { 
+  AuthHookReturn, 
+  AuthUser, 
+  LoginCredentials, 
+  RegisterCredentials,
+  SocialLoginOptions,
+  LoginResponse,
+  RegistrationResponse
+} from '../types/auth'
 import { AuthService } from '../services/auth-service'
 import { useAuthToken } from './useStorageSync'
 
 /**
  * Main authentication hook
+ * Returns mutation objects with all expected properties (mutate, mutateAsync, isPending, etc.)
  */
 export function useAuth(): AuthHookReturn {
   const queryClient = useQueryClient()
@@ -55,6 +64,7 @@ export function useAuth(): AuthHookReturn {
       if (!traditionalUser) {
         // Token is invalid, clear it
         setAuthToken(null)
+        localStorage.removeItem('authToken')
         return null
       }
 
@@ -63,70 +73,117 @@ export function useAuth(): AuthHookReturn {
     enabled: !isTokenLoading, // Wait for token to load from storage
     retry: 1,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
   })
 
   /**
-   * Memoized refetch function to prevent unnecessary re-renders
+   * Refetch user function for backward compatibility
    */
-  const refetchUser = useCallback(async (): Promise<AuthUser | null> => {
+  const refetchUser = useCallback(async () => {
     const result = await refetch()
     return result.data || null
   }, [refetch])
 
   /**
-   * Social login mutation
-   */
-  const socialLogin = useMutation({
-    mutationFn: AuthService.socialLogin,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
-    },
-  })
-
-  /**
    * Traditional login mutation
    */
   const login = useMutation({
-    mutationFn: AuthService.login,
-    onSuccess: (data) => {
-      if (data.session?.access_token) {
-        setAuthToken(data.session.access_token)
-      }
-      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+    mutationFn: async (credentials: LoginCredentials): Promise<LoginResponse> => {
+      return await AuthService.login(credentials)
     },
+    onSuccess: (response) => {
+      // Store auth token
+      setAuthToken(response.session.access_token)
+      
+      // Update user cache and invalidate to trigger re-fetch
+      queryClient.setQueryData(['auth-user'], response.user)
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+      
+      console.log('✅ Login successful')
+    },
+    onError: (error) => {
+      console.error('❌ Login failed:', error)
+      setAuthToken(null)
+      localStorage.removeItem('authToken')
+    }
   })
 
   /**
    * Registration mutation
    */
   const register = useMutation({
-    mutationFn: AuthService.register,
-    // Don't invalidate queries on registration - user needs to confirm email
+    mutationFn: async (credentials: RegisterCredentials): Promise<RegistrationResponse> => {
+      return await AuthService.register(credentials)
+    },
+    onSuccess: (response) => {
+      // Store auth token if no email confirmation required
+      if (!response.emailConfirmationRequired && response.user) {
+        queryClient.setQueryData(['auth-user'], response.user)
+      }
+      
+      console.log('✅ Registration successful')
+    },
+    onError: (error) => {
+      console.error('❌ Registration failed:', error)
+    }
   })
 
   /**
    * Logout mutation
    */
   const logout = useMutation({
-    mutationFn: AuthService.logout,
+    mutationFn: async (): Promise<void> => {
+      await AuthService.logout()
+    },
     onSuccess: () => {
+      // Clear auth state
       setAuthToken(null)
       queryClient.setQueryData(['auth-user'], null)
       queryClient.invalidateQueries({ queryKey: ['auth-user'] })
-      queryClient.clear() // Clear all cached data on logout
+      
+      // Also clear localStorage directly for immediate effect
+      localStorage.removeItem('authToken')
+      
+      console.log('✅ Logout successful')
     },
+    onError: (error) => {
+      console.error('❌ Logout failed:', error)
+      // Even if logout fails on server, clear local state
+      setAuthToken(null)
+      queryClient.setQueryData(['auth-user'], null)
+      localStorage.removeItem('authToken')
+    }
   })
 
   /**
    * Resend confirmation email mutation
    */
   const resendConfirmationEmail = useMutation({
-    mutationFn: AuthService.resendConfirmationEmail,
+    mutationFn: async (email: string): Promise<void> => {
+      await AuthService.resendConfirmationEmail(email)
+    },
+    onSuccess: () => {
+      console.log('✅ Confirmation email sent')
+    },
+    onError: (error) => {
+      console.error('❌ Failed to resend confirmation email:', error)
+    }
   })
 
   /**
-   * OAuth helper functions
+   * Social login mutation (for OAuth via Supabase)
+   */
+  const socialLogin = useMutation({
+    mutationFn: async (options: SocialLoginOptions) => {
+      await AuthService.socialLogin(options)
+      // Note: The actual auth happens via redirect, so this just initiates the flow
+    },
+    onError: (error) => {
+      console.error('❌ Social login failed:', error)
+    }
+  })
+
+  /**
+   * Google login shortcut
    */
   const loginWithGoogle = useCallback(() => {
     socialLogin.mutate({ 
@@ -135,6 +192,9 @@ export function useAuth(): AuthHookReturn {
     })
   }, [socialLogin])
 
+  /**
+   * Facebook login shortcut
+   */
   const loginWithFacebook = useCallback(() => {
     socialLogin.mutate({ 
       provider: 'facebook',
@@ -166,26 +226,33 @@ export function useAuth(): AuthHookReturn {
   const isAuthenticated = Boolean(user)
   const provider = user?.provider || 'email'
 
+  /**
+   * Return object with all expected properties for backward compatibility
+   * This matches the AuthHookReturn interface and provides access to both
+   * mutation objects (with mutate, isPending, etc.) and simple async functions
+   */
   return {
     // State
-    user,
+    user: user || null,
     isAuthenticated,
     isLoading,
     provider,
     
-    // Methods (async versions for backward compatibility)
-    login: login.mutateAsync,
-    register: register.mutateAsync,
-    logout: logout.mutateAsync,
-    resendConfirmationEmail: resendConfirmationEmail.mutateAsync,
+    // Mutation objects (with all TanStack Query properties)
+    login,
+    register, 
+    logout,
+    resendConfirmationEmail,
+    socialLogin,
+    
+    // Utility functions
     refetchUser,
     
-         // OAuth methods
-     loginWithGoogle,
-     loginWithFacebook,
-     socialLogin: (options: SocialLoginOptions) => socialLogin.mutateAsync(options).then(() => {}),
+    // OAuth methods
+    loginWithGoogle,
+    loginWithFacebook,
     
-    // Loading states
+    // Loading states (extracted from mutations for convenience)
     isLoginLoading: login.isPending,
     isRegisterLoading: register.isPending,
     isLogoutLoading: logout.isPending,

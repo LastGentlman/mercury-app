@@ -77,7 +77,7 @@ function AuthPage() {
     
     if (isLogin) {
       try {
-        await login({ email: formData.email, password: formData.password })
+        await login.mutateAsync({ email: formData.email, password: formData.password })
         notifications.success('¡Bienvenido a PedidoList!')
       } catch (error: any) {
         console.error('Login error:', error)
@@ -90,7 +90,7 @@ function AuthPage() {
       }
       
       try {
-        await register({ email: formData.email, password: formData.password, name: formData.name || '' })
+        await register.mutateAsync({ email: formData.email, password: formData.password, name: formData.name || '' })
         setRegisteredEmail(formData.email)
         setShowEmailConfirmation(true)
         notifications.success('¡Registro exitoso! Revisa tu email para verificar tu cuenta.')

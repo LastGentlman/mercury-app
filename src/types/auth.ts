@@ -1,6 +1,9 @@
 /**
  * Authentication-related type definitions
+ * Updated to match TanStack Query mutation objects and test expectations
  */
+
+import type { UseMutationResult } from '@tanstack/react-query'
 
 export type AuthProvider = 'email' | 'google' | 'facebook'
 
@@ -60,20 +63,26 @@ export interface AuthError extends Error {
   provider?: AuthProvider
 }
 
+/**
+ * Complete return type for useAuth hook
+ * Includes both mutation objects and convenience methods
+ */
 export interface AuthHookReturn extends AuthState {
-  // Traditional auth methods
-  login: (credentials: LoginCredentials) => Promise<LoginResponse>
-  register: (credentials: RegisterCredentials) => Promise<RegistrationResponse>
-  logout: () => Promise<void>
-  resendConfirmationEmail: (email: string) => Promise<void>
+  // Mutation objects (full TanStack Query mutations with all properties)
+  login: UseMutationResult<LoginResponse, Error, LoginCredentials>
+  register: UseMutationResult<RegistrationResponse, Error, RegisterCredentials>
+  logout: UseMutationResult<void, Error, void>
+  resendConfirmationEmail: UseMutationResult<void, Error, string>
+  socialLogin: UseMutationResult<any, Error, SocialLoginOptions>
+  
+  // Utility functions
   refetchUser: () => Promise<AuthUser | null>
   
-  // OAuth methods
+  // OAuth convenience methods
   loginWithGoogle: () => void
   loginWithFacebook: () => void
-  socialLogin: (options: SocialLoginOptions) => Promise<any>
   
-  // Loading states
+  // Loading states (convenience accessors)
   isLoginLoading: boolean
   isRegisterLoading: boolean
   isLogoutLoading: boolean

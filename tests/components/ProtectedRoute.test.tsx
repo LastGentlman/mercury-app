@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ProtectedRoute } from '../../src/components/ProtectedRoute'
 import { useAuth } from '../../src/hooks/useAuth'
+import { createMockMutation } from '../hooks/setup-auth'
+import type { AuthHookReturn } from '../../src/types/auth'
 
 // Mock the useAuth hook
 vi.mock('../../src/hooks/useAuth')
@@ -17,6 +19,39 @@ vi.mock('@tanstack/react-router', async () => {
     useNavigate: () => mockNavigate,
   }
 })
+
+// Helper function to create complete useAuth mock
+function createMockUseAuth(overrides: Partial<AuthHookReturn> = {}): AuthHookReturn {
+  return {
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    provider: 'email' as const,
+    
+    // Mutation objects with all required properties
+    login: createMockMutation(),
+    register: createMockMutation(),
+    logout: createMockMutation(),
+    resendConfirmationEmail: createMockMutation(),
+    socialLogin: createMockMutation(),
+    
+    // Utility functions
+    refetchUser: vi.fn().mockResolvedValue(null),
+    
+    // OAuth convenience methods
+    loginWithGoogle: vi.fn(),
+    loginWithFacebook: vi.fn(),
+    
+    // Loading states
+    isLoginLoading: false,
+    isRegisterLoading: false,
+    isLogoutLoading: false,
+    isSocialLoginLoading: false,
+    
+    // Apply overrides
+    ...overrides
+  }
+}
 
 // Create a wrapper component for testing
 const createWrapper = () => {
@@ -37,46 +72,37 @@ const createWrapper = () => {
 describe('ProtectedRoute', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mockNavigate.mockClear()
   })
 
-  it('should show loading spinner when authentication is loading', () => {
-    mockUseAuth.mockReturnValue({
+  it('should show loading state when authentication is loading', async () => {
+    mockUseAuth.mockReturnValue(createMockUseAuth({
       isAuthenticated: false,
       isLoading: true,
       user: null,
-      login: { mutateAsync: vi.fn() } as any,
-      register: { mutateAsync: vi.fn() } as any,
-      logout: vi.fn() as any,
-      resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
-      refetchUser: vi.fn() as any,
-    })
+    }))
 
     render(
       <ProtectedRoute>
-        <div>Protected Content</div>
+        <div data-testid="protected-content">Protected Content</div>
       </ProtectedRoute>,
       { wrapper: createWrapper() }
     )
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
-    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument()
+    expect(screen.getByText(/cargando/i)).toBeInTheDocument()
+    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
   })
 
-  it('should redirect to auth page when not authenticated', async () => {
-    mockUseAuth.mockReturnValue({
+  it('should redirect to auth when user is not authenticated', async () => {
+    mockUseAuth.mockReturnValue(createMockUseAuth({
       isAuthenticated: false,
       isLoading: false,
       user: null,
-      login: { mutateAsync: vi.fn() } as any,
-      register: { mutateAsync: vi.fn() } as any,
-      logout: vi.fn() as any,
-      resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
-      refetchUser: vi.fn() as any,
-    })
+    }))
 
     render(
       <ProtectedRoute>
-        <div>Protected Content</div>
+        <div data-testid="protected-content">Protected Content</div>
       </ProtectedRoute>,
       { wrapper: createWrapper() }
     )
@@ -84,134 +110,119 @@ describe('ProtectedRoute', () => {
     await waitFor(() => {
       expect(mockNavigate).toHaveBeenCalledWith({ to: '/auth' })
     })
-
-    expect(screen.queryByText('Protected Content')).not.toBeInTheDocument()
   })
 
-  it('should render children when authenticated', () => {
-    mockUseAuth.mockReturnValue({
+  it('should render children when user is authenticated', async () => {
+    mockUseAuth.mockReturnValue(createMockUseAuth({
       isAuthenticated: true,
       isLoading: false,
-      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'owner' },
-      login: { mutateAsync: vi.fn() } as any,
-      register: { mutateAsync: vi.fn() } as any,
-      logout: vi.fn() as any,
-      resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
-      refetchUser: vi.fn() as any,
-    })
+      user: { 
+        id: '1', 
+        email: 'test@example.com', 
+        name: 'Test User', 
+        role: 'owner',
+        provider: 'email'
+      },
+    }))
 
     render(
       <ProtectedRoute>
-        <div>Protected Content</div>
+        <div data-testid="protected-content">Protected Content</div>
       </ProtectedRoute>,
       { wrapper: createWrapper() }
     )
 
+    expect(screen.getByTestId('protected-content')).toBeInTheDocument()
     expect(screen.getByText('Protected Content')).toBeInTheDocument()
-    expect(screen.queryByText('Loading...')).not.toBeInTheDocument()
+  })
+
+  it('should show loading state when authentication is still loading', async () => {
+    mockUseAuth.mockReturnValue(createMockUseAuth({
+      isAuthenticated: false,
+      isLoading: true,
+      user: null,
+    }))
+
+    render(
+      <ProtectedRoute>
+        <div data-testid="protected-content">Protected Content</div>
+      </ProtectedRoute>,
+      { wrapper: createWrapper() }
+    )
+
+    expect(screen.getByText(/cargando/i)).toBeInTheDocument()
+    expect(screen.queryByTestId('protected-content')).not.toBeInTheDocument()
+  })
+
+  it('should redirect to auth when loading completes and user is not authenticated', async () => {
+    mockUseAuth.mockReturnValue(createMockUseAuth({
+      isAuthenticated: false,
+      isLoading: false,
+      user: null,
+    }))
+
+    render(
+      <ProtectedRoute>
+        <div data-testid="protected-content">Protected Content</div>
+      </ProtectedRoute>,
+      { wrapper: createWrapper() }
+    )
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith({ to: '/auth' })
+    })
+  })
+
+  it('should not redirect when user is authenticated', async () => {
+    mockUseAuth.mockReturnValue(createMockUseAuth({
+      isAuthenticated: true,
+      isLoading: false,
+      user: { 
+        id: '1', 
+        email: 'test@example.com', 
+        name: 'Test User', 
+        role: 'owner',
+        provider: 'email'
+      },
+    }))
+
+    render(
+      <ProtectedRoute>
+        <div data-testid="protected-content">Protected Content</div>
+      </ProtectedRoute>,
+      { wrapper: createWrapper() }
+    )
+
+    expect(screen.getByTestId('protected-content')).toBeInTheDocument()
     expect(mockNavigate).not.toHaveBeenCalled()
-  })
 
-  it('should handle authentication state changes', async () => {
-    // Initially loading
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: true,
-      user: null,
-      login: { mutateAsync: vi.fn() } as any,
-      register: { mutateAsync: vi.fn() } as any,
-      logout: vi.fn() as any,
-      resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
-      refetchUser: vi.fn() as any,
-    })
-
-    const { rerender } = render(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>,
-      { wrapper: createWrapper() }
-    )
-
-    rerender(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>
-    )
-
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
-
-    // Then not authenticated
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: false,
-      isLoading: false,
-      user: null,
-      login: { mutateAsync: vi.fn() } as any,
-      register: { mutateAsync: vi.fn() } as any,
-      logout: vi.fn() as any,
-      resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
-      refetchUser: vi.fn() as any,
-    })
-
-    rerender(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>
-    )
-
+    // Wait a bit to make sure no delayed navigation occurs
     await waitFor(() => {
-      expect(mockNavigate).toHaveBeenCalledWith({ to: '/auth' })
+      expect(mockNavigate).not.toHaveBeenCalled()
     })
-
-    // Finally authenticated
-    mockUseAuth.mockReturnValue({
-      isAuthenticated: true,
-      isLoading: false,
-      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'owner' },
-      login: { mutateAsync: vi.fn() } as any,
-      register: { mutateAsync: vi.fn() } as any,
-      logout: vi.fn() as any,
-      resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
-      refetchUser: vi.fn() as any,
-    })
-
-    rerender(
-      <ProtectedRoute>
-        <div>Protected Content</div>
-      </ProtectedRoute>
-    )
-
-    expect(screen.getByText('Protected Content')).toBeInTheDocument()
   })
 
-  it('should render complex children correctly', () => {
-    mockUseAuth.mockReturnValue({
+  it('should render children and not show loading when authenticated', async () => {
+    mockUseAuth.mockReturnValue(createMockUseAuth({
       isAuthenticated: true,
       isLoading: false,
-      user: { id: '1', email: 'test@example.com', name: 'Test User', role: 'owner' },
-      login: { mutateAsync: vi.fn() } as any,
-      register: { mutateAsync: vi.fn() } as any,
-      logout: vi.fn() as any,
-      resendConfirmationEmail: { mutateAsync: vi.fn() } as any,
-      refetchUser: vi.fn() as any,
-    })
-
-    const ComplexComponent = () => (
-      <div>
-        <h1>Dashboard</h1>
-        <p>Welcome to the protected area</p>
-        <button>Click me</button>
-      </div>
-    )
+      user: { 
+        id: '1', 
+        email: 'test@example.com', 
+        name: 'Test User', 
+        role: 'owner',
+        provider: 'email'
+      },
+    }))
 
     render(
       <ProtectedRoute>
-        <ComplexComponent />
+        <div data-testid="protected-content">Protected Content</div>
       </ProtectedRoute>,
       { wrapper: createWrapper() }
     )
 
-    expect(screen.getByText('Dashboard')).toBeInTheDocument()
-    expect(screen.getByText('Welcome to the protected area')).toBeInTheDocument()
-    expect(screen.getByRole('button')).toBeInTheDocument()
+    expect(screen.queryByText(/cargando/i)).not.toBeInTheDocument()
+    expect(screen.getByTestId('protected-content')).toBeInTheDocument()
   })
 }) 

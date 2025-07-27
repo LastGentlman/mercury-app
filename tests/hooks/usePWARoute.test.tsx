@@ -3,6 +3,41 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { usePWARoute } from '../../src/hooks/usePWARoute'
 import { useAuth } from '../../src/hooks/useAuth'
 import { isPWAInstalled } from '../../src/pwa'
+import { createMockMutation } from './setup-auth'
+import type { AuthHookReturn } from '../../src/types/auth'
+
+// Helper function to create complete useAuth mock
+function createMockUseAuth(overrides: Partial<AuthHookReturn> = {}): AuthHookReturn {
+  return {
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    provider: 'email' as const,
+    
+    // Mutation objects with all required properties
+    login: createMockMutation(),
+    register: createMockMutation(),
+    logout: createMockMutation(),
+    resendConfirmationEmail: createMockMutation(),
+    socialLogin: createMockMutation(),
+    
+    // Utility functions
+    refetchUser: vi.fn().mockResolvedValue(null),
+    
+    // OAuth convenience methods
+    loginWithGoogle: vi.fn(),
+    loginWithFacebook: vi.fn(),
+    
+    // Loading states
+    isLoginLoading: false,
+    isRegisterLoading: false,
+    isLogoutLoading: false,
+    isSocialLoginLoading: false,
+    
+    // Apply overrides
+    ...overrides
+  }
+}
 
 // Mock the dependencies
 vi.mock('../../src/hooks/useAuth')
@@ -24,16 +59,11 @@ describe('usePWARoute', () => {
     vi.mocked(isPWAInstalled).mockReturnValue(true)
     
     // Mock user as not authenticated and not loading
-    vi.mocked(useAuth).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue(createMockUseAuth({
       isAuthenticated: false,
       isLoading: false,
       user: null,
-      login: {} as any,
-      register: {} as any,
-      logout: {} as any,
-      resendConfirmationEmail: {} as any,
-      refetchUser: vi.fn()
-    })
+    }))
 
     renderHook(() => usePWARoute())
 
@@ -47,16 +77,11 @@ describe('usePWARoute', () => {
     vi.mocked(isPWAInstalled).mockReturnValue(false)
     
     // Mock user as not authenticated and not loading
-    vi.mocked(useAuth).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue(createMockUseAuth({
       isAuthenticated: false,
       isLoading: false,
       user: null,
-      login: {} as any,
-      register: {} as any,
-      logout: {} as any,
-      resendConfirmationEmail: {} as any,
-      refetchUser: vi.fn()
-    })
+    }))
 
     renderHook(() => usePWARoute())
 
@@ -70,16 +95,11 @@ describe('usePWARoute', () => {
     vi.mocked(isPWAInstalled).mockReturnValue(true)
     
     // Mock user as authenticated and not loading
-    vi.mocked(useAuth).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue(createMockUseAuth({
       isAuthenticated: true,
       isLoading: false,
-      user: {} as any,
-      login: {} as any,
-      register: {} as any,
-      logout: {} as any,
-      resendConfirmationEmail: {} as any,
-      refetchUser: vi.fn()
-    })
+      user: { id: '1', email: 'test@example.com', name: 'Test User', provider: 'email' },
+    }))
 
     renderHook(() => usePWARoute())
 
@@ -93,16 +113,11 @@ describe('usePWARoute', () => {
     vi.mocked(isPWAInstalled).mockReturnValue(true)
     
     // Mock auth as loading
-    vi.mocked(useAuth).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue(createMockUseAuth({
       isAuthenticated: false,
       isLoading: true,
       user: null,
-      login: {} as any,
-      register: {} as any,
-      logout: {} as any,
-      resendConfirmationEmail: {} as any,
-      refetchUser: vi.fn()
-    })
+    }))
 
     renderHook(() => usePWARoute())
 
@@ -113,16 +128,11 @@ describe('usePWARoute', () => {
 
   it('should return correct values', () => {
     vi.mocked(isPWAInstalled).mockReturnValue(true)
-    vi.mocked(useAuth).mockReturnValue({
+    vi.mocked(useAuth).mockReturnValue(createMockUseAuth({
       isAuthenticated: false,
       isLoading: false,
       user: null,
-      login: {} as any,
-      register: {} as any,
-      logout: {} as any,
-      resendConfirmationEmail: {} as any,
-      refetchUser: vi.fn()
-    })
+    }))
 
     const { result } = renderHook(() => usePWARoute())
 

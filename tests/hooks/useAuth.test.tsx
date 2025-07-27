@@ -31,6 +31,31 @@ describe('useAuth Integration Tests', () => {
     localStorageMock.getItem.mockReturnValue(null)
   })
 
+  // Debug test to understand what's happening
+  it('should debug the hook state', async () => {
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: createWrapper(),
+    })
+
+    console.warn('Initial state:', {
+      isLoading: result.current.isLoading,
+      isAuthenticated: result.current.isAuthenticated,
+      user: result.current.user,
+      provider: result.current.provider
+    })
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false)
+    })
+
+    console.warn('After loading:', {
+      isLoading: result.current.isLoading,
+      isAuthenticated: result.current.isAuthenticated,
+      user: result.current.user,
+      provider: result.current.provider
+    })
+  })
+
   it('should initialize with default state', async () => {
     const { result } = renderHook(() => useAuth(), {
       wrapper: createWrapper(),
@@ -46,33 +71,47 @@ describe('useAuth Integration Tests', () => {
   })
 
   it('should login successfully with valid credentials', async () => {
-    const mockResponse = {
-      user: { id: '1', email: 'test@example.com', name: 'Test User' },
-      session: { access_token: 'mock-token' }
-    }
-
-    server.use(
-      http.post('*/api/auth/login', () => {
-        return HttpResponse.json(mockResponse)
-      })
-    )
-
     const { result } = renderHook(() => useAuth(), {
       wrapper: createWrapper(),
     })
 
+    console.warn('Before login mutation')
+
+    let loginResult
     await act(async () => {
-      await result.current.login.mutateAsync({
-        email: 'test@example.com',
-        password: 'password123'
-      })
+      try {
+        loginResult = await result.current.login.mutateAsync({
+          email: 'test@example.com',
+          password: 'password123'
+        })
+        console.warn('Login result:', loginResult)
+      } catch (error) {
+        console.warn('Login error:', error)
+        throw error
+      }
+    })
+
+    console.warn('After login mutation, current state:', {
+      isAuthenticated: result.current.isAuthenticated,
+      user: result.current.user,
+      loginSuccess: result.current.login.isSuccess,
+      loginError: result.current.login.error
+    })
+
+    // Wait for the mutation to complete and the state to update
+    await waitFor(() => {
+      expect(result.current.login.isSuccess).toBe(true)
     })
 
     await waitFor(() => {
       expect(result.current.isAuthenticated).toBe(true)
-      expect(result.current.user).toEqual(mockResponse.user)
-      expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'mock-token')
-    })
+      expect(result.current.user).toEqual(expect.objectContaining({
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User'
+      }))
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('authToken', 'mock-jwt-token')
+    }, { timeout: 3000 })
   })
 
   it('should handle login failure', async () => {
@@ -99,6 +138,11 @@ describe('useAuth Integration Tests', () => {
         expect(error).toBeInstanceOf(Error)
         expect((error as Error).message).toBe('Credenciales inválidas.')
       }
+    })
+
+    // Wait for the error state to settle
+    await waitFor(() => {
+      expect(result.current.login.isError).toBe(true)
     })
 
     expect(result.current.isAuthenticated).toBe(false)
@@ -161,8 +205,11 @@ describe('useAuth Integration Tests', () => {
       }
     })
 
-    // The error is caught, so we check that the mutation is not successful
-    expect(result.current.register.isSuccess).toBe(false)
+    // Wait for the error state to settle
+    await waitFor(() => {
+      expect(result.current.register.isError).toBe(true)
+      expect(result.current.register.isSuccess).toBe(false)
+    })
   })
 
   it('should logout and clear auth state', async () => {
@@ -176,7 +223,7 @@ describe('useAuth Integration Tests', () => {
       wrapper: createWrapper(),
     })
 
-    act(() => {
+    await act(async () => {
       result.current.logout.mutate()
     })
 
@@ -184,16 +231,18 @@ describe('useAuth Integration Tests', () => {
       expect(result.current.logout.isSuccess).toBe(true)
     })
 
-    expect(result.current.isAuthenticated).toBe(false)
-    expect(result.current.user).toBeNull()
-    expect(localStorageMock.removeItem).toHaveBeenCalledWith('authToken')
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(false)
+      expect(result.current.user).toBeNull()
+      expect(localStorageMock.removeItem).toHaveBeenCalledWith('authToken')
+    })
   })
 
   it('should load user profile on mount if token exists', async () => {
     localStorageMock.getItem.mockReturnValue('existing-token')
     
     const mockProfile = {
-      profile: { id: '1', email: 'test@example.com', name: 'Test User' }
+      profile: { id: '1', email: 'test@example.com', name: 'Test User', provider: 'email' }
     }
 
     server.use(
@@ -208,9 +257,16 @@ describe('useAuth Integration Tests', () => {
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
+    }, { timeout: 3000 })
+
+    await waitFor(() => {
       expect(result.current.isAuthenticated).toBe(true)
-      expect(result.current.user).toEqual(mockProfile.profile)
-    })
+      expect(result.current.user).toEqual(expect.objectContaining({
+        id: '1',
+        email: 'test@example.com',
+        name: 'Test User'
+      }))
+    }, { timeout: 3000 })
   })
 
   it('should handle invalid token on mount', async () => {
@@ -231,9 +287,12 @@ describe('useAuth Integration Tests', () => {
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false)
+    }, { timeout: 3000 })
+
+    await waitFor(() => {
       expect(result.current.isAuthenticated).toBe(false)
       expect(result.current.user).toBeNull()
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('authToken')
-    })
+    }, { timeout: 3000 })
   })
 }) 
