@@ -110,7 +110,7 @@ export class AuthService {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: redirectTo || `${window.location.origin}/dashboard`,
+        redirectTo: redirectTo || `${window.location.origin}/callback`,
         queryParams: provider === 'google' ? {
           access_type: 'offline',
           prompt: 'consent'

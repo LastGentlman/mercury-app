@@ -14,6 +14,7 @@ import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClientsRouteImport } from './routes/clients'
+import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ApiTestRouteImport } from './routes/api-test'
 import { Route as IndexRouteImport } from './routes/index'
@@ -47,6 +48,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const ClientsRoute = ClientsRouteImport.update({
   id: '/clients',
   path: '/clients',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CallbackRoute = CallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRoute
+  '/callback': typeof CallbackRoute
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRoute
+  '/callback': typeof CallbackRoute
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRoute
+  '/callback': typeof CallbackRoute
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
@@ -142,6 +151,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api-test'
     | '/auth'
+    | '/callback'
     | '/clients'
     | '/dashboard'
     | '/design-system'
@@ -157,6 +167,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api-test'
     | '/auth'
+    | '/callback'
     | '/clients'
     | '/dashboard'
     | '/design-system'
@@ -172,6 +183,7 @@ export interface FileRouteTypes {
     | '/'
     | '/api-test'
     | '/auth'
+    | '/callback'
     | '/clients'
     | '/dashboard'
     | '/design-system'
@@ -188,6 +200,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiTestRoute: typeof ApiTestRoute
   AuthRoute: typeof AuthRoute
+  CallbackRoute: typeof CallbackRoute
   ClientsRoute: typeof ClientsRoute
   DashboardRoute: typeof DashboardRoute
   DesignSystemRoute: typeof DesignSystemRoute
@@ -235,6 +248,13 @@ declare module '@tanstack/react-router' {
       path: '/clients'
       fullPath: '/clients'
       preLoaderRoute: typeof ClientsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/callback': {
+      id: '/callback'
+      path: '/callback'
+      fullPath: '/callback'
+      preLoaderRoute: typeof CallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -300,6 +320,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiTestRoute: ApiTestRoute,
   AuthRoute: AuthRoute,
+  CallbackRoute: CallbackRoute,
   ClientsRoute: ClientsRoute,
   DashboardRoute: DashboardRoute,
   DesignSystemRoute: DesignSystemRoute,
