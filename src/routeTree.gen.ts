@@ -14,13 +14,13 @@ import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClientsRouteImport } from './routes/clients'
-import { Route as CallbackRouteImport } from './routes/callback'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ApiTestRouteImport } from './routes/api-test'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
 import { Route as DemoTableRouteImport } from './routes/demo.table'
 import { Route as DemoStoreRouteImport } from './routes/demo.store'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as DemoFormSimpleRouteImport } from './routes/demo.form.simple'
 import { Route as DemoFormAddressRouteImport } from './routes/demo.form.address'
 
@@ -48,11 +48,6 @@ const DashboardRoute = DashboardRouteImport.update({
 const ClientsRoute = ClientsRouteImport.update({
   id: '/clients',
   path: '/clients',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CallbackRoute = CallbackRouteImport.update({
-  id: '/callback',
-  path: '/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -85,6 +80,11 @@ const DemoStoreRoute = DemoStoreRouteImport.update({
   path: '/demo/store',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/callback',
+  path: '/callback',
+  getParentRoute: () => AuthRoute,
+} as any)
 const DemoFormSimpleRoute = DemoFormSimpleRouteImport.update({
   id: '/demo/form/simple',
   path: '/demo/form/simple',
@@ -99,13 +99,13 @@ const DemoFormAddressRoute = DemoFormAddressRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/api-test': typeof ApiTestRoute
-  '/auth': typeof AuthRoute
-  '/callback': typeof CallbackRoute
+  '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/pwa-demo-page': typeof PwaDemoPageRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -115,13 +115,13 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api-test': typeof ApiTestRoute
-  '/auth': typeof AuthRoute
-  '/callback': typeof CallbackRoute
+  '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/pwa-demo-page': typeof PwaDemoPageRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -132,13 +132,13 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/api-test': typeof ApiTestRoute
-  '/auth': typeof AuthRoute
-  '/callback': typeof CallbackRoute
+  '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/pwa-demo-page': typeof PwaDemoPageRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/table': typeof DemoTableRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
@@ -151,12 +151,12 @@ export interface FileRouteTypes {
     | '/'
     | '/api-test'
     | '/auth'
-    | '/callback'
     | '/clients'
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
     | '/pwa-demo-page'
+    | '/auth/callback'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -167,12 +167,12 @@ export interface FileRouteTypes {
     | '/'
     | '/api-test'
     | '/auth'
-    | '/callback'
     | '/clients'
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
     | '/pwa-demo-page'
+    | '/auth/callback'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -183,12 +183,12 @@ export interface FileRouteTypes {
     | '/'
     | '/api-test'
     | '/auth'
-    | '/callback'
     | '/clients'
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
     | '/pwa-demo-page'
+    | '/auth/callback'
     | '/demo/store'
     | '/demo/table'
     | '/demo/tanstack-query'
@@ -199,8 +199,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApiTestRoute: typeof ApiTestRoute
-  AuthRoute: typeof AuthRoute
-  CallbackRoute: typeof CallbackRoute
+  AuthRoute: typeof AuthRouteWithChildren
   ClientsRoute: typeof ClientsRoute
   DashboardRoute: typeof DashboardRoute
   DesignSystemRoute: typeof DesignSystemRoute
@@ -250,13 +249,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/callback': {
-      id: '/callback'
-      path: '/callback'
-      fullPath: '/callback'
-      preLoaderRoute: typeof CallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -299,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoStoreRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/demo/form/simple': {
       id: '/demo/form/simple'
       path: '/demo/form/simple'
@@ -316,11 +315,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AuthRouteChildren {
+  AuthCallbackRoute: typeof AuthCallbackRoute
+}
+
+const AuthRouteChildren: AuthRouteChildren = {
+  AuthCallbackRoute: AuthCallbackRoute,
+}
+
+const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApiTestRoute: ApiTestRoute,
-  AuthRoute: AuthRoute,
-  CallbackRoute: CallbackRoute,
+  AuthRoute: AuthRouteWithChildren,
   ClientsRoute: ClientsRoute,
   DashboardRoute: DashboardRoute,
   DesignSystemRoute: DesignSystemRoute,

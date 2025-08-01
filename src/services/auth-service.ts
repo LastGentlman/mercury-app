@@ -16,15 +16,31 @@ import { handleApiError, createAuthError } from '../utils/auth-errors'
 import { env } from '../env'
 
 /**
- * Supabase client configuration
+ * Supabase client configuration with debugging
  * Only create client if environment variables are properly configured
  */
 const supabaseUrl = env.VITE_SUPABASE_URL
 const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY
 
+console.log('🔧 Supabase Config:', {
+  url: supabaseUrl ? '✅ Configured' : '❌ Missing',
+  key: supabaseAnonKey ? '✅ Configured' : '❌ Missing',
+  env: import.meta.env.MODE
+})
+
 const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: true
+      }
+    })
   : null
+
+if (!supabase) {
+  console.warn('⚠️ Supabase no está configurado. OAuth no funcionará.')
+}
 
 /**
  * Gets the API base URL from environment
@@ -34,32 +50,66 @@ function getApiUrl(): string {
 }
 
 export class AuthService {
+  static supabase = supabase
+
   /**
-   * Gets current user session from Supabase OAuth
+   * Gets current user session from Supabase OAuth - Versión mejorada
    */
   static async getOAuthSession(): Promise<AuthUser | null> {
     if (!supabase) {
-      // Supabase not configured, return null silently
+      console.log('⚠️ Supabase no configurado, saltando OAuth session check')
       return null
     }
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      console.log('🔍 Verificando sesión OAuth...')
       
-      if (!session?.user) return null
-
-      const supabaseUser = session.user
-      return {
-        id: supabaseUser.id,
-        email: supabaseUser.email || '',
-        name: supabaseUser.user_metadata?.full_name || 
-              supabaseUser.user_metadata?.name ||
-              supabaseUser.email?.split('@')[0] || '',
-        avatar_url: supabaseUser.user_metadata?.avatar_url,
-        provider: (supabaseUser.app_metadata?.provider as any) || 'email'
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('❌ Error obteniendo sesión OAuth:', error)
+        return null
       }
+
+      if (!session?.user) {
+        console.log('ℹ️ No hay sesión OAuth activa')
+        return null
+      }
+
+      const { user } = session
+      console.log('📊 Datos de usuario OAuth:', {
+        id: user.id,
+        email: user.email,
+        provider: user.app_metadata?.provider,
+        confirmed_at: user.email_confirmed_at,
+        metadata: user.user_metadata
+      })
+      
+      // Mapear datos de usuario OAuth a nuestro formato
+      const authUser: AuthUser = {
+        id: user.id,
+        email: user.email || '',
+        name: user.user_metadata?.name || 
+              user.user_metadata?.full_name || 
+              user.user_metadata?.display_name ||
+              user.email?.split('@')[0] || 
+              'Usuario',
+        avatar_url: user.user_metadata?.avatar_url || 
+                   user.user_metadata?.picture,
+        provider: (user.app_metadata?.provider || 'email') as 'email' | 'google' | 'facebook',
+        businessId: user.user_metadata?.businessId,
+        role: user.user_metadata?.role || 'owner'
+      }
+
+      console.log('✅ Usuario OAuth mapeado:', {
+        email: authUser.email,
+        provider: authUser.provider,
+        name: authUser.name
+      })
+
+      return authUser
     } catch (error) {
-      console.error('Error getting OAuth session:', error)
+      console.error('❌ Error inesperado obteniendo sesión OAuth:', error)
       return null
     }
   }
@@ -96,36 +146,46 @@ export class AuthService {
   }
 
   /**
-   * Performs social login via Supabase
+   * OAuth Social Login - Versión mejorada con debugging
    */
-  static async socialLogin({ provider, redirectTo }: SocialLoginOptions) {
+  static async socialLogin({ provider, redirectTo }: SocialLoginOptions): Promise<void> {
     if (!supabase) {
-      throw createAuthError(
-        'OAuth no está configurado. Por favor contacta al administrador.',
-        'OAUTH_NOT_CONFIGURED',
-        provider
-      )
+      const error = 'OAuth no está configurado. Verifica las variables VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY'
+      console.error('❌', error)
+      throw new Error(error)
     }
 
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider,
-      options: {
-        redirectTo: redirectTo || `${window.location.origin}/callback`,
-        queryParams: provider === 'google' ? {
-          access_type: 'offline',
-          prompt: 'consent'
-        } : {},
-        scopes: provider === 'google' 
-          ? 'openid email profile'
-          : 'email public_profile'
+    try {
+      const callbackUrl = redirectTo || `${window.location.origin}/auth/callback`
+      console.log(`🚀 Iniciando login con ${provider}...`)
+      console.log('📍 Redirect URL:', callbackUrl)
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: callbackUrl,
+          queryParams: provider === 'google' ? {
+            access_type: 'offline',
+            prompt: 'consent',
+          } : {},
+          scopes: provider === 'google' 
+            ? 'openid email profile'
+            : 'email'
+        },
+      })
+
+      if (error) {
+        console.error(`❌ Error en signInWithOAuth:`, error)
+        throw new Error(`Error en login con ${provider}: ${error.message}`)
       }
-    })
-    
-    if (error) {
-      throw createAuthError(error.message, error.name, provider)
+
+      console.log(`✅ OAuth iniciado correctamente para ${provider}`, data)
+      console.log('🔄 Redirigiendo al proveedor...')
+      
+    } catch (error) {
+      console.error(`❌ Error inesperado en socialLogin:`, error)
+      throw error
     }
-    
-    return data
   }
 
   /**
@@ -183,28 +243,35 @@ export class AuthService {
   }
 
   /**
-   * Logs out from both OAuth and traditional auth
+   * Logout mejorado
    */
   static async logout(): Promise<void> {
-    // Logout from Supabase OAuth
+    console.log('🚪 Iniciando logout...')
+    
+    // Logout de Supabase OAuth
     if (supabase) {
       try {
         const { data: { session } } = await supabase.auth.getSession()
         if (session) {
+          console.log('🔓 Cerrando sesión OAuth...')
           const { error } = await supabase.auth.signOut()
           if (error) {
-            console.error('Supabase logout error:', error)
+            console.error('❌ Error en logout OAuth:', error)
+          } else {
+            console.log('✅ Logout OAuth exitoso')
           }
         }
       } catch (error) {
-        console.error('Error during Supabase logout:', error)
+        console.error('❌ Error durante logout OAuth:', error)
       }
     }
 
-    // Logout from traditional auth
+    // Limpiar token tradicional
     const authToken = localStorage.getItem('authToken')
     if (authToken) {
+      console.log('🧹 Limpiando token tradicional...')
       try {
+        // Llamada al backend para logout tradicional
         await fetch(`${getApiUrl()}/api/auth/logout`, {
           method: 'POST',
           headers: {
@@ -212,10 +279,16 @@ export class AuthService {
             'Content-Type': 'application/json'
           }
         })
+        localStorage.removeItem('authToken')
+        console.log('✅ Logout tradicional exitoso')
       } catch (error) {
-        console.error('Traditional logout error:', error)
+        console.error('❌ Error logout tradicional:', error)
+        // Remover token aunque haya error en el servidor
+        localStorage.removeItem('authToken')
       }
     }
+    
+    console.log('✅ Logout completo')
   }
 
   /**
@@ -236,20 +309,31 @@ export class AuthService {
   }
 
   /**
-   * Gets Supabase auth state change subscription
+   * Escuchar cambios de estado - Versión mejorada
    */
   static onAuthStateChange(callback: (event: string, session: any) => void) {
     if (!supabase) {
-      // Return a dummy subscription object that matches Supabase's structure
+      console.log('⚠️ Supabase no configurado, auth state change no disponible')
       return {
         data: {
           subscription: {
-            unsubscribe: () => {}
+            unsubscribe: () => console.log('🔕 Dummy unsubscribe called')
           }
         }
       }
     }
-    return supabase.auth.onAuthStateChange(callback)
+
+    console.log('👂 Configurando listener de auth state changes...')
+    
+    return supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`🔄 Auth state cambió: ${event}`, {
+        hasSession: !!session,
+        userEmail: session?.user?.email,
+        provider: session?.user?.app_metadata?.provider,
+        timestamp: new Date().toISOString()
+      })
+      callback(event, session)
+    })
   }
 }
 
