@@ -188,7 +188,7 @@ export function useAuth(): AuthHookReturn {
   const loginWithGoogle = useCallback(() => {
     socialLogin.mutate({ 
       provider: 'google',
-      redirectTo: `${window.location.origin}/callback`
+      redirectTo: `${window.location.origin}/auth/callback`
     })
   }, [socialLogin])
 
@@ -198,7 +198,7 @@ export function useAuth(): AuthHookReturn {
   const loginWithFacebook = useCallback(() => {
     socialLogin.mutate({ 
       provider: 'facebook',
-      redirectTo: `${window.location.origin}/callback`
+      redirectTo: `${window.location.origin}/auth/callback`
     })
   }, [socialLogin])
 

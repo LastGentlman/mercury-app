@@ -46,7 +46,7 @@ if (!supabase) {
  * Gets the API base URL from environment
  */
 function getApiUrl(): string {
-  return env.VITE_BACKEND_URL || 'http://localhost:3000'
+  return env.VITE_BACKEND_URL || 'http://localhost:3030'
 }
 
 export class AuthService {
