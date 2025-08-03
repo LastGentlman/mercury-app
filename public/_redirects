@@ -1,0 +1,5 @@
+# Netlify redirects for SPA routing
+/*    /index.html   200
+
+# API redirects to backend - SOLO si necesitas proxy
+# /api/*  https://api.pedidolist.com/api/:splat  200 
