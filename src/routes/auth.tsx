@@ -7,6 +7,7 @@ import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { SuccessMessage } from '../components/SuccessMessage'
 import { SocialLoginButtons } from '../components/SocialLoginButtons' // 🆕 Import agregado
+import { OAuthProductionDebugger } from '../components/OAuthProductionDebugger'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
 
@@ -138,6 +139,7 @@ function AuthPage() {
             </Button>
           </div>
         </div>
+        <OAuthProductionDebugger />
       </div>
     )
   }
@@ -269,6 +271,7 @@ function AuthPage() {
           </div>
         </div>
       </div>
+      <OAuthProductionDebugger />
     </div>
   )
 } 
