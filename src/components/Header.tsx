@@ -29,46 +29,9 @@ export default function Header() {
               </Link>
             </div>
 
-            <div className="px-2 font-medium">
-              <Link to="/demo/form/simple" className="hover:text-blue-600 transition-colors">
-                Simple Form
-              </Link>
-            </div>
-
-            <div className="px-2 font-medium">
-              <Link to="/demo/form/address" className="hover:text-blue-600 transition-colors">
-                Address Form
-              </Link>
-            </div>
-
-            <div className="px-2 font-medium">
-              <Link to="/demo/store" className="hover:text-blue-600 transition-colors">
-                Store
-              </Link>
-            </div>
-
-            <div className="px-2 font-medium">
-              <Link to="/demo/table" className="hover:text-blue-600 transition-colors">
-                TanStack Table
-              </Link>
-            </div>
-
-            <div className="px-2 font-medium">
-              <Link to="/demo/tanstack-query" className="hover:text-blue-600 transition-colors">
-                TanStack Query
-              </Link>
-            </div>
-
-
           </>
         )}
 
-        {/* API Test Link - Always visible for debugging */}
-        <div className="px-2 font-medium">
-          <Link to="/api-test" className="hover:text-blue-600 transition-colors text-sm">
-            API Test
-          </Link>
-        </div>
       </nav>
 
       {/* Authentication Section */}
