@@ -21,7 +21,7 @@ export const BACKGROUND_SYNC_CONFIG = {
   DB_VERSION: 1,
   
   // API endpoints
-  BACKEND_URL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001',
+  BACKEND_URL: import.meta.env.VITE_BACKEND_URL || 'http://localhost:3030',
   
   // Sync batch size
   BATCH_SIZE: 10,

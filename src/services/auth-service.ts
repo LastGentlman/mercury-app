@@ -12,7 +12,7 @@ import type {
   RegistrationResponse,
   SocialLoginOptions 
 } from '../types/auth'
-import { handleApiError, createAuthError } from '../utils/auth-errors'
+import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors'
 import { env } from '../env'
 
 /**
@@ -46,7 +46,7 @@ if (!supabase) {
  * Gets the API base URL from environment
  */
 function getApiUrl(): string {
-  return env.VITE_API_URL || 'http://localhost:3000'
+  return env.VITE_BACKEND_URL || 'http://localhost:3000'
 }
 
 export class AuthService {
