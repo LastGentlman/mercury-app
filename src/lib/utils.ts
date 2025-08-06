@@ -42,3 +42,19 @@ export function formatTime(timeString: string): string {
   // Assuming timeString is in HH:mm format
   return timeString
 }
+
+// Mobile device detection
+export function isMobileDevice(): boolean {
+  if (typeof window === 'undefined') return false
+  
+  // Check user agent for mobile indicators
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+  
+  // Check for mobile patterns
+  const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
+  
+  // Also check screen size as additional validation
+  const isMobileScreen = window.innerWidth <= 768
+  
+  return mobileRegex.test(userAgent) || isMobileScreen
+}
