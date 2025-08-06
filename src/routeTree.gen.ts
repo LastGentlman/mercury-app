@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProductsRouteImport } from './routes/products'
 import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-design-system-demo'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -18,6 +19,11 @@ import { Route as ApiTestRouteImport } from './routes/api-test'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const ProductsRoute = ProductsRouteImport.update({
+  id: '/products',
+  path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnhancedDesignSystemDemoRoute =
   EnhancedDesignSystemDemoRouteImport.update({
     id: '/enhanced-design-system-demo',
@@ -68,6 +74,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/products': typeof ProductsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -78,6 +85,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/products': typeof ProductsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
@@ -89,6 +97,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/products': typeof ProductsRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -101,6 +110,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/products'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -111,6 +121,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/products'
     | '/auth/callback'
   id:
     | '__root__'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/products'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -132,10 +144,18 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DesignSystemRoute: typeof DesignSystemRoute
   EnhancedDesignSystemDemoRoute: typeof EnhancedDesignSystemDemoRoute
+  ProductsRoute: typeof ProductsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/products': {
+      id: '/products'
+      path: '/products'
+      fullPath: '/products'
+      preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enhanced-design-system-demo': {
       id: '/enhanced-design-system-demo'
       path: '/enhanced-design-system-demo'
@@ -213,6 +233,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DesignSystemRoute: DesignSystemRoute,
   EnhancedDesignSystemDemoRoute: EnhancedDesignSystemDemoRoute,
+  ProductsRoute: ProductsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

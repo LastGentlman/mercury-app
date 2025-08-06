@@ -4,9 +4,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { tanstackRouter } from '@tanstack/router-vite-plugin'
-import tailwindcss from '@tailwindcss/vite'
+// Remove Tailwind v4 import
 
 const isDev = process.env.NODE_ENV === 'development'
+const isPWADisabled = process.env.VITE_PWA_DISABLED === 'true'
 
 export default defineConfig({
   plugins: [
@@ -23,11 +24,10 @@ export default defineConfig({
       jsxImportSource: 'react'
     }),
     
-    // ✅ Tailwind CSS
-    tailwindcss(),
+    // ✅ Tailwind CSS v3 (via PostCSS)
     
-    // ✅ PWA SOLO en producción con configuración robusta
-    !isDev && VitePWA({
+    // ✅ PWA SOLO en producción y cuando no esté deshabilitado
+    !isDev && !isPWADisabled && VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       workbox: {
