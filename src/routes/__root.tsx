@@ -2,6 +2,7 @@ import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
 import Header from '../components/Header'
+import BottomNavigation from '../components/BottomNavigation'
 import { PWAInstallButton } from '../components/PWAInstallButton'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { OAuthDebugger } from '../components/OAuthDebugger'
@@ -19,9 +20,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     <>
       <Header />
 
-      <Outlet />
-      <TanStackRouterDevtools />
+      <main className="min-h-screen">
+        <Outlet />
+      </main>
 
+      <BottomNavigation />
+      
+      <TanStackRouterDevtools />
       <TanStackQueryLayout />
       <PWAInstallButton />
       <ConnectionStatus />

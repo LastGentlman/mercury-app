@@ -1,7 +1,8 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
-import { Loader2, Smartphone, Globe } from 'lucide-react'
+import { Loader2, Smartphone, Globe, Navigation } from 'lucide-react'
 import { usePWARouteStrategy, PWARouteConfigs } from '../hooks/usePWARouteStrategy'
 import { Button } from '@/components/ui/button'
+import NavigationDemo from '../components/NavigationDemo'
 
 export const Route = createFileRoute('/')({
   component: Index,
@@ -183,15 +184,20 @@ function Index() {
             </div>
             
             <div className="bg-white/60 backdrop-blur-sm rounded-xl p-6 border border-white/50">
-              <Loader2 className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+              <Navigation className="h-12 w-12 text-purple-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                Sincronización Inteligente
+                Navegación Mobile-First
               </h3>
               <p className="text-gray-600">
-                Trabaja offline y sincroniza cuando vuelva la conexión. 
-                Nunca pierdas datos importantes.
+                Diseño optimizado para móviles con bottom navigation 
+                y CTA central para máxima conversión.
               </p>
             </div>
+          </div>
+
+          {/* Navigation Demo Section */}
+          <div className="mb-16">
+            <NavigationDemo />
           </div>
 
           {/* Social Proof / Trust Indicators */}
