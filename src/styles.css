@@ -1,27 +1,19 @@
-/* @tailwind base;
+@tailwind base;
 @tailwind components;
-@tailwind utilities; */
+@tailwind utilities;
 
-/* Base styles */
-*, *::before, *::after {
-  box-sizing: border-box;
+@layer base {
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: white;
+    color: rgb(17 24 39); /* gray-900 */
+  }
 }
 
-* {
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: white;
-  color: rgb(17 24 39); /* gray-900 */
-}
-
-/* Utilities */
+@layer utilities {
   /* Mobile-first responsive improvements */
   @media (max-width: 768px) {
     .mobile-content {
@@ -296,6 +288,7 @@ body {
     transition: all 0.5s ease;
     transform-origin: left;
   }
+}
 
 code {
   font-family:
@@ -305,6 +298,7 @@ code {
 /* Simplified CSS variables for PWA compatibility */
 
 /* 🎯 Mobile-first utility classes */
+@layer components {
   /* Quick utility classes for mobile auth */
   .auth-mobile {
     min-height: 100vh;
@@ -399,6 +393,7 @@ code {
   .auth-mobile-link:active {
     transform: scale(0.98);
   }
+}
 
 
 
