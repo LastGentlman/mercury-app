@@ -1,5 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
+import { ProtectedRoute } from '../components/ProtectedRoute'
 import { Button } from '../components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card'
 import { testAPIConnection, testRegistration, testLogin, testRegistrationErrorHandling } from '../utils/apiTest'
@@ -93,7 +94,8 @@ function APITestPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <ProtectedRoute>
+      <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-4">
@@ -293,5 +295,6 @@ function APITestPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   )
 } 

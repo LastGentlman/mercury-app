@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ProtectedRoute } from '../components/ProtectedRoute'
 import { ProductsList } from '../components/ProductsList'
 
 export const Route = createFileRoute('/products')({
@@ -6,5 +7,9 @@ export const Route = createFileRoute('/products')({
 })
 
 function ProductsPage() {
-  return <ProductsList />
+  return (
+    <ProtectedRoute>
+      <ProductsList />
+    </ProtectedRoute>
+  )
 }
