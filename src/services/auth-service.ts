@@ -146,6 +146,48 @@ export class AuthService {
   }
 
   /**
+   * Gets current user - used by useAuth hook
+   */
+  static async getCurrentUser(): Promise<AuthUser | null> {
+    try {
+      // First check OAuth session
+      const oauthUser = await this.getOAuthSession()
+      if (oauthUser) {
+        return oauthUser
+      }
+
+      // Then check traditional auth
+      const authToken = localStorage.getItem('authToken')
+      if (!authToken) return null
+
+      const response = await fetch(`${getApiUrl()}/api/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          // Token invalid, remove it
+          localStorage.removeItem('authToken')
+          return null
+        }
+        throw new Error('Failed to get user')
+      }
+
+      const userData = await response.json()
+      return {
+        ...userData,
+        provider: 'email' as const
+      }
+    } catch (error) {
+      console.error('Error getting current user:', error)
+      return null
+    }
+  }
+
+  /**
    * OAuth Social Login - Versión mejorada con debugging
    */
   static async socialLogin({ provider, redirectTo }: SocialLoginOptions): Promise<void> {

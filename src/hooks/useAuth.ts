@@ -26,9 +26,9 @@ import type {
   SocialLoginOptions,
   LoginResponse,
   RegistrationResponse
-} from '../types/auth'
-import { AuthService } from '../services/auth-service'
-import { useAuthToken } from './useStorageSync'
+} from '../types/auth.ts'
+import { AuthService } from '../services/auth-service.ts'
+import { useAuthToken } from './useStorageSync.ts'
 
 /**
  * Main authentication hook
@@ -38,11 +38,11 @@ export function useAuth(): AuthHookReturn {
   const queryClient = useQueryClient()
   
   // Use secure storage sync for auth token
-  const { value: authToken, setValue: setAuthToken, isLoading: isTokenLoading } = useAuthToken()
+  const { value: _authToken, setValue: setAuthToken, isLoading: isTokenLoading } = useAuthToken()
 
   /**
    * Query to get current user profile
-   * Checks OAuth session first, then falls back to traditional auth
+   * Uses the new getCurrentUser method for better consistency
    */
   const { 
     data: user, 
@@ -51,24 +51,7 @@ export function useAuth(): AuthHookReturn {
   } = useQuery({
     queryKey: ['auth-user'],
     queryFn: async (): Promise<AuthUser | null> => {
-      // Priority 1: Check Supabase OAuth session
-      const oauthUser = await AuthService.getOAuthSession()
-      if (oauthUser) {
-        return oauthUser
-      }
-
-      // Priority 2: Check traditional auth token
-      if (!authToken) return null
-      
-      const traditionalUser = await AuthService.getTraditionalProfile(authToken)
-      if (!traditionalUser) {
-        // Token is invalid, clear it
-        setAuthToken(null)
-        localStorage.removeItem('authToken')
-        return null
-      }
-
-      return traditionalUser
+      return await AuthService.getCurrentUser()
     },
     enabled: !isTokenLoading, // Wait for token to load from storage
     retry: 1,
@@ -94,11 +77,20 @@ export function useAuth(): AuthHookReturn {
       // Store auth token
       setAuthToken(response.session.access_token)
       
-      // Update user cache and invalidate to trigger re-fetch
-      queryClient.setQueryData(['auth-user'], response.user)
-      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+      // CRITICAL: Set user data immediately and then invalidate
+      const userData = {
+        ...response.user,
+        provider: 'email' as const
+      }
       
-      console.log('✅ Login successful')
+      queryClient.setQueryData(['auth-user'], userData)
+      
+      // Wait a bit then refetch to ensure consistency
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+      }, 100)
+      
+      console.log('✅ Login successful, user state updated')
     },
     onError: (error) => {
       console.error('❌ Login failed:', error)
@@ -188,7 +180,7 @@ export function useAuth(): AuthHookReturn {
   const loginWithGoogle = useCallback(() => {
     socialLogin.mutate({ 
       provider: 'google',
-      redirectTo: `${window.location.origin}/auth/callback`
+      redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback`
     })
   }, [socialLogin])
 
@@ -198,7 +190,7 @@ export function useAuth(): AuthHookReturn {
   const loginWithFacebook = useCallback(() => {
     socialLogin.mutate({ 
       provider: 'facebook',
-      redirectTo: `${window.location.origin}/auth/callback`
+      redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback`
     })
   }, [socialLogin])
 

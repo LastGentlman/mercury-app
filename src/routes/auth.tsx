@@ -2,15 +2,15 @@
 
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { useAuth } from '../hooks/useAuth'
-import { useMobileAuth } from '../hooks/useMobileAuth'
-import { Button } from '../components/ui/button'
-import { Input } from '../components/ui/input'
-import { Label } from '../components/ui/label'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useMobileAuth } from '../hooks/useMobileAuth.ts'
+import { Button } from '../components/ui/button.tsx'
+import { Input } from '../components/ui/input.tsx'
+import { Label } from '../components/ui/label.tsx'
 import { CheckCircle, Eye, EyeOff } from 'lucide-react'
-import { SuccessMessage } from '../components/SuccessMessage'
-import { SocialLoginButtons } from '../components/SocialLoginButtons'
-import { useNotifications } from '../hooks/useNotifications'
+import { SuccessMessage } from '../components/SuccessMessage.tsx'
+import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
+import { useNotifications } from '../hooks/useNotifications.ts'
 
 interface AuthFormData {
   email: string
@@ -21,6 +21,63 @@ interface AuthFormData {
 export const Route = createFileRoute('/auth')({
   component: AuthPage,
 })
+
+// Debug component for development
+function AuthDebug() {
+  const auth = useAuth()
+  const [token, setToken] = useState<string | null>(null)
+  
+  useEffect(() => {
+    const updateToken = () => {
+      setToken(localStorage.getItem('authToken'))
+    }
+    updateToken()
+    
+    // Listen for localStorage changes
+    globalThis.addEventListener('storage', updateToken)
+    return () => globalThis.removeEventListener('storage', updateToken)
+  }, [])
+  
+  if (import.meta.env.PROD) return null // Only show in development
+  
+  return (
+    <div style={{ 
+      position: 'fixed', 
+      top: 10, 
+      right: 10, 
+      background: 'rgba(0,0,0,0.8)', 
+      color: 'white', 
+      padding: '16px',
+      borderRadius: '8px',
+      fontSize: '12px',
+      maxWidth: '300px',
+      zIndex: 9999
+    }}>
+      <div><strong>🐛 Auth Debug</strong></div>
+      <div>isAuthenticated: <span style={{color: auth.isAuthenticated ? '#4ade80' : '#f87171'}}>{auth.isAuthenticated.toString()}</span></div>
+      <div>isLoading: {auth.isLoading.toString()}</div>
+      <div>user: {auth.user ? auth.user.email : 'null'}</div>
+      <div>provider: {auth.user?.provider || 'none'}</div>
+      <div>token: {token ? `${token.substring(0, 20)}...` : 'null'}</div>
+      <button 
+        type="button"
+        onClick={() => auth.refetchUser()} 
+        style={{ 
+          marginTop: '8px', 
+          padding: '4px 8px', 
+          background: '#3b82f6', 
+          color: 'white', 
+          border: 'none', 
+          borderRadius: '4px',
+          cursor: 'pointer',
+          fontSize: '11px'
+        }}
+      >
+        Refetch User
+      </button>
+    </div>
+  )
+}
 
 function AuthPage() {
   const navigate = useNavigate()
@@ -42,6 +99,7 @@ function AuthPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('🔄 Redirecting to dashboard, user authenticated:', isAuthenticated)
       navigate({ to: '/dashboard' })
     }
   }, [isAuthenticated, navigate])
@@ -88,9 +146,10 @@ function AuthPage() {
         })
         notifications.success('¡Bienvenido a Mercury!')
         // Redirect handled by useEffect above
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Login error:', error)
-        notifications.error(error.message || 'Error durante el inicio de sesión. Inténtalo de nuevo.')
+        const message = error instanceof Error ? error.message : 'Error durante el inicio de sesión. Inténtalo de nuevo.'
+        notifications.error(message)
       }
     } else {
       // Register logic
@@ -108,9 +167,10 @@ function AuthPage() {
         setRegisteredEmail(formData.email)
         setShowEmailConfirmation(true)
         notifications.success('¡Registro exitoso! Revisa tu email para verificar tu cuenta.')
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Registration error:', error)
-        notifications.error(error.message || 'Error durante el registro. Inténtalo de nuevo.')
+        const message = error instanceof Error ? error.message : 'Error durante el registro. Inténtalo de nuevo.'
+        notifications.error(message)
       }
     }
   }
@@ -168,6 +228,7 @@ function AuthPage() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center p-4 ${styles.container}`}>
+      <AuthDebug />
       <div className="w-full max-w-md">
         {/* 🎯 MOBILE-FIRST: Logo cuando no hay header */}
         {shouldShowLogo && (
