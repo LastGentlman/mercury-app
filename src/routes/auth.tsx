@@ -3,13 +3,13 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth'
+import { useMobileAuth } from '../hooks/useMobileAuth'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
 import { CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { SuccessMessage } from '../components/SuccessMessage'
 import { SocialLoginButtons } from '../components/SocialLoginButtons'
-import { isMobileDevice } from '../lib/utils'
 import { useNotifications } from '../hooks/useNotifications'
 
 interface AuthFormData {
@@ -24,9 +24,9 @@ export const Route = createFileRoute('/auth')({
 
 function AuthPage() {
   const navigate = useNavigate()
-  const { login, register, isAuthenticated, isLoginLoading, isRegisterLoading, isSocialLoginLoading } = useAuth()
+  const { login, register, isLoginLoading, isRegisterLoading, isSocialLoginLoading } = useAuth()
   const notifications = useNotifications()
-  const [isMobile, setIsMobile] = useState(false)
+  const { shouldShowLogo, styles, isMobile, isAuthenticated } = useMobileAuth()
   
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
@@ -38,17 +38,6 @@ function AuthPage() {
     password: '',
     name: ''
   })
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(isMobileDevice())
-    }
-    
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -129,10 +118,10 @@ function AuthPage() {
   // Show email confirmation screen after successful registration
   if (showEmailConfirmation) {
     return (
-      <div className={`min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center p-4 ${isMobile ? 'pt-8' : ''}`}>
+      <div className={`min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center p-4 ${styles.container}`}>
         <div className="w-full max-w-md">
           {/* 🎯 MOBILE-FIRST: Logo en confirmación cuando no hay header */}
-          {isMobile && (
+          {shouldShowLogo && (
             <div className="text-center mb-8">
               <div className="font-bold text-3xl text-slate-800 mb-2">
                 Mercury
@@ -178,10 +167,10 @@ function AuthPage() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center p-4 ${isMobile ? 'pt-8' : ''}`}>
+    <div className={`min-h-screen bg-gradient-to-br from-[#f8fafc] via-[#f1f5f9] to-[#e2e8f0] flex items-center justify-center p-4 ${styles.container}`}>
       <div className="w-full max-w-md">
         {/* 🎯 MOBILE-FIRST: Logo cuando no hay header */}
-        {isMobile && (
+        {shouldShowLogo && (
           <div className="text-center mb-8">
             <div className="font-bold text-3xl text-slate-800 mb-2">
               Mercury
@@ -199,7 +188,7 @@ function AuthPage() {
               </div>
             )}
             
-            <h1 className={`font-bold text-[#111827] mb-2 ${isMobile ? 'text-xl' : 'text-2xl'}`}>
+            <h1 className={`font-bold text-[#111827] mb-2 ${styles.title}`}>
               {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
             </h1>
             <p className="text-[#6b7280] text-sm">
@@ -211,7 +200,7 @@ function AuthPage() {
           </div>
 
           {/* 🆕 MOBILE-FIRST: Botones sociales más prominentes en móvil */}
-          <div className={`mb-6 ${isMobile ? 'mb-8' : ''}`}>
+          <div className={`mb-6 ${styles.spacing}`}>
             <SocialLoginButtons 
               disabled={isFormLoading}
               className="w-full"
@@ -232,7 +221,7 @@ function AuthPage() {
                   placeholder="Tu nombre completo"
                   value={formData.name}
                   onChange={handleInputChange('name')}
-                  className={`w-full border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10 ${isMobile ? 'px-4 py-4 text-lg' : 'px-4 py-3'}`}
+                  className={`w-full border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10 ${styles.input}`}
                   required={!isLogin}
                   disabled={isFormLoading}
                 />
@@ -250,7 +239,7 @@ function AuthPage() {
                 placeholder="tu@email.com"
                 value={formData.email}
                 onChange={handleInputChange('email')}
-                className={`w-full border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10 ${isMobile ? 'px-4 py-4 text-lg' : 'px-4 py-3'}`}
+                className={`w-full border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10 ${styles.input}`}
                 required
                 disabled={isFormLoading}
               />
@@ -268,17 +257,17 @@ function AuthPage() {
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={handleInputChange('password')}
-                  className={`w-full border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10 pr-12 ${isMobile ? 'px-4 py-4 text-lg' : 'px-4 py-3'}`}
+                  className={`w-full border border-[#d1d5db] rounded-lg text-base transition-colors focus:border-[#3b82f6] focus:ring-0 focus:ring-[#3b82f6] focus:ring-opacity-10 pr-12 ${styles.input}`}
                   required
                   disabled={isFormLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280] disabled:opacity-50 ${isMobile ? 'p-2' : ''}`}
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 text-[#9ca3af] hover:text-[#6b7280] disabled:opacity-50 ${styles.icon}`}
                   disabled={isFormLoading}
                 >
-                  {showPassword ? <EyeOff className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} /> : <Eye className={`${isMobile ? 'w-6 h-6' : 'w-5 h-5'}`} />}
+                  {showPassword ? <EyeOff className={styles.icon} /> : <Eye className={styles.icon} />}
                 </button>
               </div>
             </div>
@@ -287,7 +276,7 @@ function AuthPage() {
             <Button
               type="submit"
               disabled={isFormLoading}
-              className={`w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium rounded-lg transition-colors mt-6 disabled:opacity-50 disabled:cursor-not-allowed ${isMobile ? 'py-4 px-4 text-lg' : 'py-3 px-4'}`}
+              className={`w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium rounded-lg transition-colors mt-6 disabled:opacity-50 disabled:cursor-not-allowed ${styles.button}`}
             >
               {isFormLoading 
                 ? (isLogin ? 'Iniciando sesión...' : 'Creando cuenta...') 
@@ -316,7 +305,7 @@ function AuthPage() {
         </div>
 
         {/* 🎯 MOBILE-FIRST: Link de regreso solo en móvil */}
-        {isMobile && !showEmailConfirmation && (
+        {shouldShowLogo && !showEmailConfirmation && (
           <div className="text-center mt-6">
             <Link 
               to="/"

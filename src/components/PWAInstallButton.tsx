@@ -3,24 +3,21 @@ import { Download } from 'lucide-react'
 import { getPWALaunchMethod, isPWAInstalled, markAsInstalledPWA, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa-fixed'
 import { useWindowEventListener } from '../hooks/useEventListener'
 import { useAuth } from '../hooks/useAuth'
-import { isMobileDevice } from '../lib/utils'
+import { useMobileAuth } from '../hooks/useMobileAuth'
 
 export function PWAInstallButton() {
   const [canInstall, setCanInstall] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
   const [_launchMethod, setLaunchMethod] = useState<'browser' | 'installed' | 'unknown'>('unknown')
-  const [isMobile, setIsMobile] = useState(false)
   
-  // Get authentication status
+  // Get authentication status and mobile detection
   const { isAuthenticated } = useAuth()
+  const { isMobile } = useMobileAuth({ enableMobileOptimizations: false })
 
   useEffect(() => {
     // Check if already installed
     setIsInstalled(isPWAInstalled())
     setLaunchMethod(getPWALaunchMethod())
-    
-    // Check if mobile device
-    setIsMobile(isMobileDevice())
   }, [])
 
   // ✅ CORREGIDO: Usar hook seguro para event listeners

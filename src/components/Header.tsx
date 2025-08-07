@@ -8,40 +8,15 @@
  * 5. **Visual Hierarchy**: Logo debe ser el único elemento de marca visible
  */
 
-import { Link, useRouterState } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { Loader2, LogOut, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
+import { useMobileAuth } from '../hooks/useMobileAuth'
 import { Button } from './ui/button'
-import { isMobileDevice } from '../lib/utils'
-import { useEffect, useState } from 'react'
 
 export default function Header() {
-  const { user, isAuthenticated, isLoading, logout } = useAuth()
-  const [isMobile, setIsMobile] = useState(false)
-  
-  // Get current route information
-  const router = useRouterState()
-  const currentPath = router.location.pathname
-  
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(isMobileDevice())
-    }
-    
-    checkMobile()
-    
-    // Re-check on window resize for responsive behavior
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
-
-  // 🎯 MOBILE-FIRST LOGIC: Hide header on auth pages when on mobile
-  const shouldHideHeader = isMobile && (
-    currentPath === '/auth' || 
-    currentPath === '/auth/callback' ||
-    currentPath.startsWith('/auth/')
-  )
+  const { user, logout } = useAuth()
+  const { shouldHideHeader, isAuthenticated, isLoading } = useMobileAuth()
 
   // Early return if header should be hidden
   if (shouldHideHeader) {
