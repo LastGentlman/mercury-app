@@ -123,10 +123,10 @@ function AuthPage() {
           {/* 🎯 MOBILE-FIRST: Logo en confirmación cuando no hay header */}
           {shouldShowLogo && (
             <div className="text-center mb-8">
-              <div className="font-bold text-3xl text-slate-800 mb-2">
+              <div className={`font-bold text-3xl text-slate-800 mb-2 ${styles.logo}`}>
                 Mercury
               </div>
-              <div className="w-16 h-1 bg-gradient-to-r from-blue-600 to-purple-600 mx-auto rounded-full"></div>
+              <div className="auth-mobile-divider"></div>
             </div>
           )}
           
@@ -144,7 +144,7 @@ function AuthPage() {
                 setShowEmailConfirmation(false)
                 setFormData({ email: '', password: '', name: '' })
               }}
-              className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium py-3 px-4 rounded-lg transition-colors"
+              className={`w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium py-3 px-4 rounded-lg transition-colors ${isMobile ? 'auth-mobile-button auth-touch-feedback' : ''}`}
             >
               Ir al Login
             </Button>
@@ -156,7 +156,7 @@ function AuthPage() {
                 setShowEmailConfirmation(false)
                 setFormData({ email: '', password: '', name: '' })
               }}
-              className="w-full"
+              className={`w-full ${isMobile ? 'auth-mobile-button auth-touch-feedback' : ''}`}
             >
               Crear otra cuenta
             </Button>
@@ -179,9 +179,9 @@ function AuthPage() {
           </div>
         )}
 
-        <div className="bg-white rounded-2xl shadow-xl border border-[#e5e7eb] p-8">
+        <div className={`bg-white rounded-2xl shadow-xl border border-[#e5e7eb] p-8 ${isMobile ? 'auth-slide-up auth-mobile-optimized' : ''}`}>
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className={`text-center mb-8 ${isFormLoading && isMobile ? 'auth-mobile-loading' : ''}`}>
             {!isMobile && (
               <div className="w-16 h-16 bg-gradient-to-r from-[#3b82f6] to-[#1d4ed8] rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-white" />
@@ -208,7 +208,7 @@ function AuthPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className={`space-y-5 ${isMobile ? 'auth-mobile-form' : ''}`}>
             {/* Name field (only for registration) */}
             {!isLogin && (
               <div className="space-y-2">
@@ -295,7 +295,7 @@ function AuthPage() {
                   setIsLogin(!isLogin)
                   setFormData({ email: '', password: '', name: '' })
                 }}
-                className="text-[#3b82f6] font-medium hover:underline disabled:opacity-50"
+                className={`text-[#3b82f6] font-medium hover:underline disabled:opacity-50 ${isMobile ? 'auth-touch-feedback auth-mode-switch' : ''}`}
                 disabled={isFormLoading}
               >
                 {isLogin ? 'Crear cuenta' : 'Iniciar sesión'}

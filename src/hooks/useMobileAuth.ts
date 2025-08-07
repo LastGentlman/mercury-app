@@ -74,7 +74,7 @@ export function useMobileAuth(config: MobileAuthConfig = {}): MobileAuthReturn {
   // Should show logo in auth form?
   const shouldShowLogo = showLogoInAuth && isMobile && isAuthPage
 
-  // Mobile-specific styles
+  // Mobile-specific styles with CSS classes integration
   const getMobileAuthStyles = (): MobileAuthStyles => {
     if (!isMobile || !isAuthPage) {
       return {
@@ -90,14 +90,14 @@ export function useMobileAuth(config: MobileAuthConfig = {}): MobileAuthReturn {
     }
 
     return {
-      container: 'pt-8 min-h-screen',
-      form: 'px-4 py-4 text-lg',
-      button: 'py-4 px-4 text-lg',
-      input: 'px-4 py-4 text-lg',
-      icon: 'w-6 h-6 p-2',
-      title: 'text-xl',
+      container: 'auth-mobile-container auth-mobile-bg auth-safe-area auth-mobile-optimized',
+      form: 'auth-mobile-form',
+      button: 'auth-mobile-button auth-touch-feedback',
+      input: 'auth-mobile-input auth-mobile-focus',
+      icon: 'w-6 h-6 p-2 auth-touch-feedback',
+      title: 'auth-responsive-title',
       spacing: 'mb-8',
-      logo: 'block'
+      logo: 'auth-mobile-logo auth-logo-float'
     }
   }
 
