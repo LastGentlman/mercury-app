@@ -1,10 +1,52 @@
-import { Link } from '@tanstack/react-router'
+/**
+ * 🔄 Mobile-First Philosophy:
+ * 
+ * 1. **Cognitive Load**: Eliminar distracciones en pantallas pequeñas
+ * 2. **Focus Flow**: El usuario debe centrarse 100% en la autenticación
+ * 3. **Conversion Rate**: Menos elementos = mayor conversión
+ * 4. **Touch Targets**: Optimizar para interacción táctil
+ * 5. **Visual Hierarchy**: Logo debe ser el único elemento de marca visible
+ */
+
+import { Link, useRouterState } from '@tanstack/react-router'
 import { Loader2, LogOut, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { Button } from './ui/button'
+import { isMobileDevice } from '../lib/utils'
+import { useEffect, useState } from 'react'
 
 export default function Header() {
   const { user, isAuthenticated, isLoading, logout } = useAuth()
+  const [isMobile, setIsMobile] = useState(false)
+  
+  // Get current route information
+  const router = useRouterState()
+  const currentPath = router.location.pathname
+  
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(isMobileDevice())
+    }
+    
+    checkMobile()
+    
+    // Re-check on window resize for responsive behavior
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // 🎯 MOBILE-FIRST LOGIC: Hide header on auth pages when on mobile
+  const shouldHideHeader = isMobile && (
+    currentPath === '/auth' || 
+    currentPath === '/auth/callback' ||
+    currentPath.startsWith('/auth/')
+  )
+
+  // Early return if header should be hidden
+  if (shouldHideHeader) {
+    return null
+  }
 
   return (
     <header className="sticky top-0 bg-white shadow-sm border-b border-gray-200 z-50 transition-all duration-300">
@@ -32,14 +74,6 @@ export default function Header() {
               </Link>
               
               <Link 
-                to="/orders" 
-                className="font-medium text-slate-700 hover:text-blue-600 transition-colors duration-300 py-2 relative group"
-              >
-                Pedidos
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-              
-              <Link 
                 to="/clients" 
                 className="font-medium text-slate-700 hover:text-blue-600 transition-colors duration-300 py-2 relative group"
               >
@@ -48,18 +82,10 @@ export default function Header() {
               </Link>
               
               <Link 
-                to="/reports" 
+                to="/products" 
                 className="font-medium text-slate-700 hover:text-blue-600 transition-colors duration-300 py-2 relative group"
               >
-                Reportes
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
-              </Link>
-              
-              <Link 
-                to="/settings" 
-                className="font-medium text-slate-700 hover:text-blue-600 transition-colors duration-300 py-2 relative group"
-              >
-                Configuración
+                Productos
                 <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
               </Link>
             </nav>
