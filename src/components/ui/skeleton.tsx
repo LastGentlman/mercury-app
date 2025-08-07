@@ -1,5 +1,5 @@
 import React from 'react'
-import { cn } from '../../lib/ui-utils'
+import { cn } from '../../lib/ui-utils.ts'
 
 interface SkeletonProps {
   className?: string

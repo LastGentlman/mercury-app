@@ -1,13 +1,13 @@
-// auth.tsx - Mejoras Mobile-First
+// auth.tsx - Enhanced with Progressive Loading States and Performance Optimizations
 
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useMobileAuth } from '../hooks/useMobileAuth.ts'
 import { Button } from '../components/ui/button.tsx'
 import { Input } from '../components/ui/input.tsx'
 import { Label } from '../components/ui/label.tsx'
-import { CheckCircle, Eye, EyeOff } from 'lucide-react'
+import { CheckCircle, Eye, EyeOff, Loader2 } from 'lucide-react'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { useNotifications } from '../hooks/useNotifications.ts'
@@ -18,9 +18,79 @@ interface AuthFormData {
   name?: string
 }
 
+// Enhanced loading states for granular feedback
+interface AuthLoadingState {
+  isValidating: boolean     // Client-side validation
+  isAuthenticating: boolean // Server authentication
+  isRedirecting: boolean   // Post-auth redirect
+  phase: 'idle' | 'validating' | 'authenticating' | 'redirecting'
+}
+
 export const Route = createFileRoute('/auth')({
   component: AuthPage,
 })
+
+// Client-side validation with immediate feedback
+const validateCredentials = (formData: AuthFormData, isLogin: boolean) => {
+  const errors: string[] = []
+  
+  if (!formData.email || !formData.password) {
+    errors.push('Completa todos los campos')
+    return { isValid: false, errors }
+  }
+  
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(formData.email)) {
+    errors.push('Por favor ingresa un email válido.')
+    return { isValid: false, errors }
+  }
+  
+  // Password validation for registration
+  if (!isLogin && formData.password.length < 6) {
+    errors.push('La contraseña debe tener al menos 6 caracteres.')
+    return { isValid: false, errors }
+  }
+  
+  if (!isLogin && !formData.name) {
+    errors.push('El nombre es requerido para el registro')
+    return { isValid: false, errors }
+  }
+  
+  return { isValid: true, errors: [] }
+}
+
+// Performance tracking for auth flow
+const createAuthPerformanceTracker = () => {
+  const start = Date.now()
+  return {
+    trackValidation: () => {
+      const validationTime = Date.now() - start
+      console.log(`⏱️ Client validation: ${validationTime}ms`)
+      return validationTime
+    },
+    trackAuthentication: () => {
+      const authTime = Date.now() - start
+      console.log(`⏱️ Authentication: ${authTime}ms`)
+      return authTime
+    },
+    trackTotal: () => {
+      const totalTime = Date.now() - start
+      console.log(`⏱️ Total auth time: ${totalTime}ms`)
+      
+      // Performance alerts
+      if (totalTime < 1000) {
+        console.log('🚀 Fast auth achieved!')
+      } else if (totalTime < 2000) {
+        console.log('✅ Acceptable auth time')
+      } else {
+        console.log('⚠️ Slow auth detected')
+      }
+      
+      return totalTime
+    }
+  }
+}
 
 // Debug component for development
 function AuthDebug() {
@@ -90,6 +160,14 @@ function AuthPage() {
   const [showEmailConfirmation, setShowEmailConfirmation] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
   
+  // Enhanced loading state management
+  const [loadingState, setLoadingState] = useState<AuthLoadingState>({
+    isValidating: false,
+    isAuthenticating: false,
+    isRedirecting: false,
+    phase: 'idle'
+  })
+  
   const [formData, setFormData] = useState<AuthFormData>({
     email: '',
     password: '',
@@ -100,6 +178,7 @@ function AuthPage() {
   useEffect(() => {
     if (isAuthenticated) {
       console.log('🔄 Redirecting to dashboard, user authenticated:', isAuthenticated)
+      setLoadingState(prev => ({ ...prev, isRedirecting: true, phase: 'redirecting' }))
       navigate({ to: '/dashboard' })
     }
   }, [isAuthenticated, navigate])
@@ -113,66 +192,119 @@ function AuthPage() {
     }))
   }
 
-  const isFormLoading = isLoginLoading || isRegisterLoading || isSocialLoginLoading
+  // Optimized form loading state
+  const isFormLoading = loadingState.isValidating || loadingState.isAuthenticating || 
+                       isLoginLoading || isRegisterLoading || isSocialLoginLoading
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Enhanced submit handler with progressive states
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Basic validation
-    if (!formData.email || !formData.password) {
-      notifications.error('Completa todos los campos')
-      return
-    }
+    const tracker = createAuthPerformanceTracker()
     
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(formData.email)) {
-      notifications.error('Por favor ingresa un email válido.')
-      return
-    }
-    
-    // Password validation for registration
-    if (!isLogin && formData.password.length < 6) {
-      notifications.error('La contraseña debe tener al menos 6 caracteres.')
-      return
-    }
-    
-    if (isLogin) {
-      // Login logic
-      try {
+    try {
+      // Phase 1: Client-side validation
+      setLoadingState({
+        isValidating: true,
+        isAuthenticating: false,
+        isRedirecting: false,
+        phase: 'validating'
+      })
+      
+      const validation = validateCredentials(formData, isLogin)
+      tracker.trackValidation()
+      
+      if (!validation.isValid) {
+        validation.errors.forEach(error => notifications.error(error))
+        setLoadingState({
+          isValidating: false,
+          isAuthenticating: false,
+          isRedirecting: false,
+          phase: 'idle'
+        })
+        return
+      }
+      
+      // Phase 2: Server authentication
+      setLoadingState({
+        isValidating: false,
+        isAuthenticating: true,
+        isRedirecting: false,
+        phase: 'authenticating'
+      })
+      
+      if (isLogin) {
+        // Login logic
         await login.mutateAsync({
           email: formData.email,
           password: formData.password
         })
+        
+        tracker.trackAuthentication()
         notifications.success('¡Bienvenido a Mercury!')
+        
+        // Phase 3: Redirecting
+        setLoadingState({
+          isValidating: false,
+          isAuthenticating: false,
+          isRedirecting: true,
+          phase: 'redirecting'
+        })
+        
         // Redirect handled by useEffect above
-      } catch (error: unknown) {
-        console.error('Login error:', error)
-        const message = error instanceof Error ? error.message : 'Error durante el inicio de sesión. Inténtalo de nuevo.'
-        notifications.error(message)
-      }
-    } else {
-      // Register logic
-      if (!formData.name) {
-        notifications.error('El nombre es requerido para el registro')
-        return
-      }
-      
-      try {
+      } else {
+        // Register logic
         await register.mutateAsync({
           email: formData.email,
           password: formData.password,
           name: formData.name || ''
         })
+        
+        tracker.trackAuthentication()
         setRegisteredEmail(formData.email)
         setShowEmailConfirmation(true)
         notifications.success('¡Registro exitoso! Revisa tu email para verificar tu cuenta.')
-      } catch (error: unknown) {
-        console.error('Registration error:', error)
-        const message = error instanceof Error ? error.message : 'Error durante el registro. Inténtalo de nuevo.'
-        notifications.error(message)
       }
+      
+      tracker.trackTotal()
+      
+    } catch (error: unknown) {
+      console.error('Auth error:', error)
+      const message = error instanceof Error ? error.message : 
+        `Error durante ${isLogin ? 'el inicio de sesión' : 'el registro'}. Inténtalo de nuevo.`
+      notifications.error(message)
+    } finally {
+      // Reset loading state
+      setLoadingState({
+        isValidating: false,
+        isAuthenticating: false,
+        isRedirecting: false,
+        phase: 'idle'
+      })
     }
+  }, [formData, isLogin, login, register, notifications])
+
+  // Progressive loading indicator
+  const getLoadingMessage = () => {
+    switch (loadingState.phase) {
+      case 'validating':
+        return 'Validando datos...'
+      case 'authenticating':
+        return isLogin ? 'Iniciando sesión...' : 'Creando cuenta...'
+      case 'redirecting':
+        return 'Redirigiendo...'
+      default:
+        return isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'
+    }
+  }
+
+  // Loading icon component
+  const LoadingIcon = () => {
+    if (loadingState.phase === 'idle') return null
+    
+    return (
+      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+    )
   }
 
   // Show email confirmation screen after successful registration
@@ -258,6 +390,28 @@ function AuthPage() {
                 : 'Completa los campos para crear tu nueva cuenta'
               }
             </p>
+            
+            {/* Progressive loading indicator */}
+            {loadingState.phase !== 'idle' && (
+              <div className="mt-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center justify-center text-blue-700 text-sm">
+                  <LoadingIcon />
+                  {getLoadingMessage()}
+                </div>
+                
+                {/* Progress visualization */}
+                <div className="mt-2 w-full bg-blue-200 rounded-full h-1">
+                  <div 
+                    className="bg-blue-600 h-1 rounded-full transition-all duration-300"
+                    style={{ 
+                      width: loadingState.phase === 'validating' ? '33%' :
+                             loadingState.phase === 'authenticating' ? '66%' :
+                             loadingState.phase === 'redirecting' ? '100%' : '0%'
+                    }}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 🆕 MOBILE-FIRST: Botones sociales más prominentes en móvil */}
@@ -333,16 +487,14 @@ function AuthPage() {
               </div>
             </div>
 
-            {/* 🎯 MOBILE-FIRST: Botón submit más grande en móvil */}
+            {/* 🎯 MOBILE-FIRST: Enhanced submit button */}
             <Button
               type="submit"
               disabled={isFormLoading}
-              className={`w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium rounded-lg transition-colors mt-6 disabled:opacity-50 disabled:cursor-not-allowed ${styles.button}`}
+              className={`w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-medium rounded-lg transition-colors mt-6 disabled:opacity-50 disabled:cursor-not-allowed ${styles.button} flex items-center justify-center`}
             >
-              {isFormLoading 
-                ? (isLogin ? 'Iniciando sesión...' : 'Creando cuenta...') 
-                : (isLogin ? 'Iniciar Sesión' : 'Crear Cuenta')
-              }
+              <LoadingIcon />
+              {getLoadingMessage()}
             </Button>
           </form>
 
@@ -355,6 +507,12 @@ function AuthPage() {
                 onClick={() => {
                   setIsLogin(!isLogin)
                   setFormData({ email: '', password: '', name: '' })
+                  setLoadingState({
+                    isValidating: false,
+                    isAuthenticating: false,
+                    isRedirecting: false,
+                    phase: 'idle'
+                  })
                 }}
                 className={`text-[#3b82f6] font-medium hover:underline disabled:opacity-50 ${isMobile ? 'auth-touch-feedback auth-mode-switch' : ''}`}
                 disabled={isFormLoading}
