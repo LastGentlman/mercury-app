@@ -1,8 +1,13 @@
 {
   "css.validate": false,
-  "less.validate": false,
+  "less.validate": false, 
   "scss.validate": false,
+  "tailwindCSS.includeLanguages": {
+    "typescript": "typescript",
+    "typescriptreact": "typescriptreact"
+  },
   "files.associations": {
     "*.css": "tailwindcss"
-  }
+  },
+  "css.customData": ["/.vscode/css_custom_data.json"]
 }
