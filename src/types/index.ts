@@ -86,7 +86,10 @@ export interface Product {
   description?: string;
   price: number;
   cost?: number;
-  category?: string;
+  category?: string; // Legacy field - use categoryId instead
+  categoryId?: string; // New dynamic category reference
+  satCode?: string; // SAT code for Mexican tax compliance
+  taxRate?: number; // Tax rate (0.16 = 16% IVA)
   stock: number;
   image_url?: string;
   isActive: boolean;
@@ -95,13 +98,14 @@ export interface Product {
   createdAt: string;
   created_at?: string; // For API compatibility
   updatedAt: string;
-  version?: number; // Para control de versiones
   lastModifiedAt?: string; // Timestamp de última modificación para conflictos
+  clientGeneratedId?: string; // Client-generated ID for offline sync
+  version?: number; // Para control de versiones
 }
 
 export interface SyncQueueItem {
   id?: number;
-  entityType: 'order' | 'product';
+  entityType: 'order' | 'product' | 'business_category';
   entityId: string;
   action: 'create' | 'update' | 'delete';
   timestamp: string;
@@ -123,11 +127,41 @@ export interface Business {
   id: string;
   name: string;
   ownerId: string;
+  owner_id?: string; // For API compatibility
+  businessType?: string; // Type of business (restaurant, cafe, retail, etc.)
+  business_type?: string; // For API compatibility
+  taxRegimeCode?: string; // SAT tax regime code
+  tax_regime_code?: string; // For API compatibility
   address?: string;
   phone?: string;
   email?: string;
   createdAt: string;
+  created_at?: string; // For API compatibility
   updatedAt: string;
+  updated_at?: string; // For API compatibility
+}
+
+export interface BusinessCategory {
+  id?: number;
+  businessId: string;
+  business_id?: string; // For API compatibility
+  categoryId: string;
+  category_id?: string; // For API compatibility
+  categoryName: string;
+  category_name?: string; // For API compatibility
+  icon: string;
+  satCode: string;
+  sat_code?: string; // For API compatibility
+  isActive: boolean;
+  is_active?: boolean; // For API compatibility
+  clientGeneratedId?: string;
+  client_generated_id?: string; // For API compatibility
+  syncStatus: 'pending' | 'synced' | 'error';
+  sync_status?: string; // For API compatibility
+  lastModifiedAt: string;
+  last_modified_at?: string; // For API compatibility
+  createdAt: string;
+  created_at?: string; // For API compatibility
 }
 
 export interface Client {

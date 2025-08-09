@@ -1,120 +1,122 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useOfflineSync } from './useOfflineSync';
-import { useAuth } from './useAuth';
-import type { Product } from '@/types';
+import { useAuth } from './useAuth.ts';
+import { useBusinessCategories } from './useBusinessCategories.ts';
+import { db } from '../lib/offline/db.ts';
+import { v4 as uuidv4 } from 'uuid';
+import type { Product } from '../types/index.ts';
 
-
-// ===== TYPES =====
-
-
-
-// ===== API FUNCTIONS =====
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
-
-
-
-// ===== MAIN HOOK =====
-
-export function useProducts() {
-  const { user } = useAuth();
-  const { addPendingChange } = useOfflineSync();
+export function useProducts({ businessId }: { businessId: string }) {
+  const { user: _user } = useAuth();
+  const { categories } = useBusinessCategories(businessId);
   const queryClient = useQueryClient();
 
-  // Fetch products
+  // Fetch products from IndexedDB (offline-first)
   const productsQuery = useQuery({
-    queryKey: ['products', user?.businessId],
+    queryKey: ['products', businessId],
     queryFn: async () => {
-      const response = await fetch(`${BACKEND_URL}/api/products`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
-      });
-      if (!response.ok) throw new Error('Error fetching products');
-      return response.json();
+      return await db.getProductsWithCategories(businessId);
     },
-    enabled: !!user?.businessId
+    enabled: !!businessId
   });
 
-  // Create product
-  const createMutation = useMutation({
-    mutationFn: async (product: Omit<Product, 'id' | 'created_at'>) => {
-      const response = await fetch(`${BACKEND_URL}/api/products`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(product)
+  // Create product with category
+  const createProductWithCategory = useMutation({
+    mutationFn: async (productData: {
+      name: string;
+      price: number;
+      categoryId: string;
+      description?: string;
+      cost?: number;
+      stock?: number;
+    }) => {
+      // Get category information for SAT code
+      const category = categories.find(cat => cat.categoryId === productData.categoryId);
+      
+      const clientGeneratedId = uuidv4();
+      const product: Omit<Product, 'id'> = {
+        ...productData,
+        businessId,
+        satCode: category?.satCode || '50000000',
+        taxRate: 0.16,
+        stock: productData.stock || 0,
+        isActive: true,
+        clientGeneratedId,
+        syncStatus: 'pending',
+        lastModifiedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      // Save to IndexedDB
+      const id = await db.products.add(product);
+
+      // Add to sync queue
+      await db.addToSyncQueue({
+        entityType: 'product',
+        entityId: clientGeneratedId,
+        action: 'create'
       });
-      if (!response.ok) throw new Error('Error creating product');
-      return response.json();
+
+      return { ...product, id };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', businessId] });
       toast.success('Producto creado exitosamente');
     },
-    onError: (_error: Error, product: Omit<Product, 'id' | 'created_at'>) => {
-      // Add to offline sync if failed
-      addPendingChange({
-        type: 'create',
-        data: product
-      });
-      toast.error('Error al crear producto. Se guardará cuando esté en línea.');
+    onError: (error: Error) => {
+      console.error('Error al crear producto:', error);
+      toast.error('Error al crear producto');
     }
   });
 
-  // Update product
+  // Update product (offline-first)
   const updateMutation = useMutation({
-    mutationFn: async ({ id, ...product }: Partial<Product> & { id: string }) => {
-      const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(product)
+    mutationFn: async ({ id, ...updateData }: Partial<Product> & { id: number }) => {
+      await db.products.update(id, {
+        ...updateData,
+        lastModifiedAt: new Date().toISOString(),
+        syncStatus: 'pending'
       });
-      if (!response.ok) throw new Error('Error updating product');
-      return response.json();
+      
+      await db.addToSyncQueue({
+        entityType: 'product',
+        entityId: id.toString(),
+        action: 'update'
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', businessId] });
       toast.success('Producto actualizado exitosamente');
     },
-    onError: (_error: Error, variables: Partial<Product> & { id: string }) => {
-      const { id, ...productData } = variables;
-      addPendingChange({
-        type: 'update',
-        data: { id, ...productData }
-      });
-      toast.error('Error al actualizar producto. Se guardará cuando esté en línea.');
+    onError: (error: Error) => {
+      console.error('Error al actualizar producto:', error);
+      toast.error('Error al actualizar producto');
     }
   });
 
-  // Delete product
+  // Delete product (offline-first)
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`${BACKEND_URL}/api/products/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-        }
+    mutationFn: async (id: number) => {
+      await db.products.update(id, {
+        isActive: false,
+        lastModifiedAt: new Date().toISOString(),
+        syncStatus: 'pending'
       });
-      if (!response.ok) throw new Error('Error deleting product');
-      return response.json();
+      
+      await db.addToSyncQueue({
+        entityType: 'product',
+        entityId: id.toString(),
+        action: 'update'
+      });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products', businessId] });
       toast.success('Producto eliminado exitosamente');
     },
-    onError: (_error: Error, id: string) => {
-      addPendingChange({
-        type: 'delete',
-        data: { id }
-      });
-      toast.error('Error al eliminar producto. Se eliminará cuando esté en línea.');
+    onError: (error: Error) => {
+      console.error('Error al eliminar producto:', error);
+      toast.error('Error al eliminar producto');
     }
   });
 
@@ -122,10 +124,10 @@ export function useProducts() {
     products: productsQuery.data || [],
     isLoading: productsQuery.isLoading,
     error: productsQuery.error,
-    createProduct: createMutation.mutateAsync,
+    createProductWithCategory: createProductWithCategory.mutateAsync,
     updateProduct: updateMutation.mutateAsync,
     deleteProduct: deleteMutation.mutateAsync,
-    isCreating: createMutation.isPending,
+    isCreating: createProductWithCategory.isPending,
     isUpdating: updateMutation.isPending,
     isDeleting: deleteMutation.isPending
   };
