@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
+import { useState } from 'react'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
 import { Dashboard } from '../components/Dashboard'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { Button } from '../components/ui/button'
+import { BusinessSetupRequired } from '../components/BusinessSetupRequired'
+import { BusinessSetupModal } from '../components/BusinessSetupModal'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
@@ -14,35 +17,28 @@ export const Route = createFileRoute('/dashboard')({
 function DashboardPage() {
   const { user } = useAuth()
   const notifications = useNotifications()
+  const [isBusinessModalOpen, setIsBusinessModalOpen] = useState(false)
 
   // En una app real, esto vendría del contexto de autenticación
   const businessId = user?.businessId || 'demo-business-id'
   
-  // Si no hay businessId, mostrar un mensaje de configuración
+  // Si no hay businessId, mostrar la pantalla de configuración requerida
   if (!user?.businessId) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="max-w-md mx-auto text-center">
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Configuración Requerida
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Tu cuenta necesita estar asociada a un negocio para continuar.
-              </p>
-              <button 
-                onClick={() => {
-                  // Aquí podrías abrir un modal para crear/join business
-                  alert('Funcionalidad de configuración de negocio en desarrollo');
-                }}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Configurar Negocio
-              </button>
-            </div>
-          </div>
-        </div>
+        <BusinessSetupRequired 
+          onConfigureBusiness={() => setIsBusinessModalOpen(true)}
+        />
+        <BusinessSetupModal
+          isOpen={isBusinessModalOpen}
+          onClose={() => setIsBusinessModalOpen(false)}
+          onBusinessCreated={(businessId) => {
+            console.log('Business created/joined:', businessId)
+            // En una app real, aquí actualizarías el contexto de autenticación
+            // para incluir el businessId del usuario
+            setIsBusinessModalOpen(false)
+          }}
+        />
       </ProtectedRoute>
     );
   }
