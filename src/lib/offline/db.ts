@@ -107,9 +107,10 @@ export class PedidoListDB extends (Dexie as unknown as new (...args: unknown[]) 
 
   // Incrementar reintentos de un item
   async incrementRetries(itemId: number, error?: string): Promise<void> {
+    const currentItem = await this.syncQueue.get(itemId)
     await this.syncQueue.update(itemId, {
-      retries: (await this.syncQueue.get(itemId))?.retries || 0 + 1,
-      lastError: error
+      retries: (currentItem?.retries || 0) + 1,
+      ...(error !== undefined && { lastError: error })
     })
   }
 
@@ -168,11 +169,12 @@ export class PedidoListDB extends (Dexie as unknown as new (...args: unknown[]) 
     
     return products.map(product => {
       const category = categories.find(cat => cat.categoryId === product.categoryId)
-      return {
+      const result: Product & { categoryName?: string; categoryIcon?: string } = {
         ...product,
-        categoryName: category?.categoryName,
-        categoryIcon: category?.icon
+        ...(category?.categoryName && { categoryName: category.categoryName }),
+        ...(category?.icon && { categoryIcon: category.icon })
       }
+      return result
     })
   }
 }

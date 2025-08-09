@@ -64,16 +64,16 @@ export interface OrderFormData {
 export function convertFormDataToCreateOrderData(formData: OrderFormData): CreateOrderData {
   return {
     client_name: formData.clientName,
-    client_phone: formData.clientPhone,
+    ...(formData.clientPhone && { client_phone: formData.clientPhone }),
     delivery_date: formData.deliveryDate,
-    delivery_time: formData.deliveryTime,
-    notes: formData.notes,
+    ...(formData.deliveryTime && { delivery_time: formData.deliveryTime }),
+    ...(formData.notes && { notes: formData.notes }),
     items: formData.items.map(item => ({
       product_name: item.productName,
       quantity: item.quantity,
       unit_price: item.unitPrice,
       subtotal: item.quantity * item.unitPrice,
-      notes: item.notes
+      ...(item.notes && { notes: item.notes })
     }))
   };
 }
