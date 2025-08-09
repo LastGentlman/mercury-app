@@ -6,6 +6,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import { Dashboard } from '../components/Dashboard'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { Button } from '../components/ui/button'
+import { BusinessSetup } from '../components/BusinessSetup'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
@@ -22,27 +23,13 @@ function DashboardPage() {
   if (!user?.businessId) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="max-w-md mx-auto text-center">
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Configuración Requerida
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Tu cuenta necesita estar asociada a un negocio para continuar.
-              </p>
-              <button 
-                onClick={() => {
-                  // Aquí podrías abrir un modal para crear/join business
-                  alert('Funcionalidad de configuración de negocio en desarrollo');
-                }}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Configurar Negocio
-              </button>
-            </div>
-          </div>
-        </div>
+        <BusinessSetup 
+          onBusinessSetup={(businessId) => {
+            // En una implementación real, aquí actualizarías el usuario con el businessId
+            // Por ahora, simplemente recargamos la página
+            window.location.reload();
+          }}
+        />
       </ProtectedRoute>
     );
   }
