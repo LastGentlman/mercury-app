@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Bell } from 'lucide-react'
+import { Bell, Store } from 'lucide-react'
 import { ProtectedRoute } from '../components/ProtectedRoute'
 import { useAuth } from '../hooks/useAuth'
 import { useNotifications } from '../hooks/useNotifications'
@@ -22,25 +22,35 @@ function DashboardPage() {
   if (!user?.businessId) {
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="max-w-md mx-auto text-center">
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Configuración Requerida
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Tu cuenta necesita estar asociada a un negocio para continuar.
-              </p>
-              <button 
-                onClick={() => {
-                  // Aquí podrías abrir un modal para crear/join business
-                  alert('Funcionalidad de configuración de negocio en desarrollo');
-                }}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Configurar Negocio
-              </button>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+          <div className="max-w-sm w-full text-center space-y-8">
+            {/* Illustration */}
+            <div className="flex items-center justify-center w-40 h-40 mx-auto rounded-full bg-blue-100">
+              <Store className="w-24 h-24 text-blue-600" strokeWidth={1.5} />
             </div>
+
+            {/* Heading */}
+            <h2 className="text-3xl font-extrabold text-gray-900">
+              Configuración Requerida
+            </h2>
+
+            {/* Description */}
+            <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+              Aún no tienes un negocio configurado.
+              {"\n"}
+              Para comenzar a recibir pedidos y administrar clientes, primero crea o vincula tu negocio.
+            </p>
+
+            {/* Action */}
+            <button
+              onClick={() => {
+                // TODO: Reemplazar con flujo real de creación/vinculación de negocio
+                alert('Funcionalidad de configuración de negocio en desarrollo');
+              }}
+              className="w-full bg-gradient-to-br from-blue-500 to-blue-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md hover:shadow-lg hover:brightness-110 transition-all duration-200"
+            >
+              Configurar Negocio
+            </button>
           </div>
         </div>
       </ProtectedRoute>
