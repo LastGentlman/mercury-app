@@ -1,11 +1,11 @@
 import { Outlet, createRootRouteWithContext } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
 
-import Header from '../components/Header'
-import BottomNavigation from '../components/BottomNavigation'
-import { PWAInstallButton } from '../components/PWAInstallButton'
-import { ConnectionStatus } from '../components/ConnectionStatus'
-import { OAuthDebugger } from '../components/OAuthDebugger'
+import Header from '../components/Header.tsx'
+import BottomNavigation from '../components/BottomNavigation.tsx'
+import { PWAInstallButton } from '../components/PWAInstallButton.tsx'
+import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
+import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 
