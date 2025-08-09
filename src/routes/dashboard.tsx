@@ -6,6 +6,8 @@ import { useNotifications } from '../hooks/useNotifications'
 import { Dashboard } from '../components/Dashboard'
 import { ConnectionStatus } from '../components/ConnectionStatus'
 import { Button } from '../components/ui/button'
+import { useState } from 'react'
+import { BusinessSetupDialog } from '@/components/BusinessSetupDialog'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
@@ -14,6 +16,8 @@ export const Route = createFileRoute('/dashboard')({
 function DashboardPage() {
   const { user } = useAuth()
   const notifications = useNotifications()
+
+  const [setupOpen, setSetupOpen] = useState(true)
 
   // En una app real, esto vendría del contexto de autenticación
   const businessId = user?.businessId || 'demo-business-id'
@@ -31,17 +35,15 @@ function DashboardPage() {
               <p className="text-gray-600 mb-6">
                 Tu cuenta necesita estar asociada a un negocio para continuar.
               </p>
-              <button 
-                onClick={() => {
-                  // Aquí podrías abrir un modal para crear/join business
-                  alert('Funcionalidad de configuración de negocio en desarrollo');
-                }}
-                className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
+              <Button 
+                onClick={() => setSetupOpen(true)}
+                className="w-full"
               >
                 Configurar Negocio
-              </button>
+              </Button>
             </div>
           </div>
+          <BusinessSetupDialog open={setupOpen} onOpenChange={setSetupOpen} />
         </div>
       </ProtectedRoute>
     );
