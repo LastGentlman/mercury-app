@@ -96,7 +96,7 @@ export function registerPWA(): Promise<ServiceWorkerRegistration | null> {
     
     // ✅ Registrar cuando el DOM esté listo
     if (document.readyState === 'loading') {
-      window.addEventListener('load', registerSW, { once: true });
+      globalThis.addEventListener('load', registerSW, { once: true });
     } else {
       registerSW();
     }
@@ -109,13 +109,13 @@ export function registerPWA(): Promise<ServiceWorkerRegistration | null> {
 export function isPWAInstalled(): boolean {
   try {
     // Method 1: Check display-mode (most reliable)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isStandalone = globalThis.matchMedia('(display-mode: standalone)').matches;
 
     // Method 2: iOS Safari specific
-    const isIOSStandalone = (window.navigator as any).standalone === true;
+    const isIOSStandalone = (globalThis.navigator as unknown as { standalone: boolean }).standalone === true;
 
     // Method 3: Check URL parameters
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = new URLSearchParams(globalThis.location.search);
     const isLaunchedFromHomeScreen = searchParams.get('utm_source') === 'pwa';
     const hasStartUrlParam = searchParams.get('source') === 'pwa';
 
@@ -135,7 +135,7 @@ export function getPWALaunchMethod(): 'browser' | 'installed' | 'unknown' {
       return 'installed';
     }
     
-    if (window.matchMedia('(display-mode: browser)').matches) {
+    if (globalThis.matchMedia('(display-mode: browser)').matches) {
       return 'browser';
     }
     
@@ -169,12 +169,12 @@ export function wasEverInstalledAsPWA(): boolean {
 export function showInstallPrompt(): Promise<boolean> {
   return new Promise((resolve) => {
     try {
-      const installPrompt = (window as any).deferredPrompt;
+      const installPrompt = (globalThis as unknown as { deferredPrompt: unknown }).deferredPrompt;
       
       if (installPrompt) {
-        installPrompt.prompt();
-        installPrompt.userChoice
-          .then((choiceResult: any) => {
+        (installPrompt as unknown as { prompt: () => void }).prompt();
+        (installPrompt as unknown as { userChoice: Promise<{ outcome: string }> }).userChoice
+          .then((choiceResult: { outcome: string }) => {
             if (choiceResult.outcome === 'accepted') {
               console.log('✅ User accepted the install prompt');
               markAsInstalledPWA();
@@ -184,9 +184,9 @@ export function showInstallPrompt(): Promise<boolean> {
               resolve(false);
             }
             // Clean up
-            (window as any).deferredPrompt = null;
+            (globalThis as unknown as { deferredPrompt: unknown }).deferredPrompt = null;
           })
-          .catch((error: any) => {
+          .catch((error: unknown) => {
             console.error('❌ Install prompt failed:', error);
             resolve(false);
           });
@@ -209,27 +209,27 @@ export function listenForInstallPrompt() {
   try {
     // Remove existing listeners to prevent duplicates
     if (beforeInstallPromptListener) {
-      window.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
+      globalThis.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
     }
     if (appInstalledListener) {
-      window.removeEventListener('appinstalled', appInstalledListener);
+      globalThis.removeEventListener('appinstalled', appInstalledListener);
     }
 
     // Create new listeners
     beforeInstallPromptListener = (e: Event) => {
       e.preventDefault();
-      (window as any).deferredPrompt = e;
+      (globalThis as unknown as { deferredPrompt: unknown }).deferredPrompt = e;
     };
 
     appInstalledListener = () => {
       console.log('📱 PWA was installed');
       markAsInstalledPWA();
-      (window as any).deferredPrompt = null;
+      (globalThis as unknown as { deferredPrompt: unknown }).deferredPrompt = null;
     };
 
     // Add listeners
-    window.addEventListener('beforeinstallprompt', beforeInstallPromptListener);
-    window.addEventListener('appinstalled', appInstalledListener);
+    globalThis.addEventListener('beforeinstallprompt', beforeInstallPromptListener);
+    globalThis.addEventListener('appinstalled', appInstalledListener);
     
   } catch (error) {
     console.error('❌ Install prompt listener setup failed:', error);
@@ -240,11 +240,11 @@ export function listenForInstallPrompt() {
 export function cleanupPWAListeners() {
   try {
     if (beforeInstallPromptListener) {
-      window.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
+      globalThis.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
       beforeInstallPromptListener = null;
     }
     if (appInstalledListener) {
-      window.removeEventListener('appinstalled', appInstalledListener);
+      globalThis.removeEventListener('appinstalled', appInstalledListener);
       appInstalledListener = null;
     }
   } catch (error) {

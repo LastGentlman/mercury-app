@@ -1,4 +1,4 @@
-import type { Order, Product } from '../../types'
+import type { Order, Product } from '../../types/index.ts'
 
 export interface ConflictInfo {
   localVersion: Order | Product
@@ -196,10 +196,12 @@ export class ConflictResolver {
     const baseOrder = localTime > serverTime ? localOrder : serverOrder
     const otherOrder = localTime > serverTime ? serverOrder : localOrder
 
+    const mergedNotes = this.mergeNotes(baseOrder.notes, otherOrder.notes)
+
     return {
       ...baseOrder,
       // Preservar notas de ambas versiones si son diferentes
-      notes: this.mergeNotes(baseOrder.notes, otherOrder.notes),
+      ...(mergedNotes !== undefined ? { notes: mergedNotes } : {}),
       // Mantener el estado más reciente
       status: baseOrder.status,
       // Actualizar versiones
@@ -217,10 +219,12 @@ export class ConflictResolver {
     const baseProduct = localTime > serverTime ? localProduct : serverProduct
     const otherProduct = localTime > serverTime ? serverProduct : localProduct
 
+    const mergedDesc = this.mergeDescriptions(baseProduct.description, otherProduct.description)
+
     return {
       ...baseProduct,
       // Preservar descripción más completa
-      description: this.mergeDescriptions(baseProduct.description, otherProduct.description),
+      ...(mergedDesc !== undefined ? { description: mergedDesc } : {}),
       // Mantener el precio más reciente
       price: baseProduct.price,
       // Actualizar versiones

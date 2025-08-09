@@ -4,6 +4,7 @@ import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path'
 import { fileURLToPath } from 'url'
 import { tanstackRouter } from '@tanstack/router-vite-plugin'
+import process from 'node:process'
 // Remove Tailwind v4 import
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -122,8 +123,8 @@ export default defineConfig({
   // ✅ Configuración optimizada para React
   esbuild: {
     jsx: 'automatic',
-    jsxFactory: undefined,
-    jsxFragment: undefined,
+    jsxFactory: 'React.createElement',
+    jsxFragment: 'React.Fragment',
     jsxImportSource: 'react'
   },
 

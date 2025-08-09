@@ -5,12 +5,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import * as Sentry from "@sentry/react"
 import { Toaster } from 'sonner'
 
-import { routeTree } from './routeTree.gen'
+import { routeTree } from './routeTree.gen.ts'
 import './styles.css'
 
 // ✅ Error Boundary para PWA
-import { AppErrorBoundary } from './components/AppErrorBoundary'
-import { GlobalLoadingProvider } from './components/GlobalLoadingProvider'
+import { AppErrorBoundary } from './components/AppErrorBoundary.tsx'
+import { GlobalLoadingProvider } from './components/GlobalLoadingProvider.tsx'
 
 // ✅ Configuración de React Query
 const queryClient = new QueryClient({
@@ -98,7 +98,7 @@ async function initializePWA() {
       console.log('🔄 Initializing PWA...')
       
       // Importación dinámica para evitar problemas en development
-      const { registerPWA, listenForInstallPrompt } = await import('./pwa-fixed')
+      const { registerPWA, listenForInstallPrompt } = await import('./pwa-fixed.ts')
       
       // Registrar PWA con timeout
       const registration = await Promise.race([
