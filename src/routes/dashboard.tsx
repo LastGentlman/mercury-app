@@ -1,12 +1,12 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
-import { ProtectedRoute } from '../components/ProtectedRoute'
-import { useAuth } from '../hooks/useAuth'
-import { useNotifications } from '../hooks/useNotifications'
-import { Dashboard } from '../components/Dashboard'
-import { ConnectionStatus } from '../components/ConnectionStatus'
-import { Button } from '../components/ui/button'
-import { BusinessSetup } from '../components/BusinessSetup'
+import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useNotifications } from '../hooks/useNotifications.ts'
+import { Dashboard } from '../components/Dashboard.tsx'
+import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
+import { Button } from '../components/ui/button.tsx'
+import { BusinessSetup } from '../components/BusinessSetup.tsx'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
@@ -23,10 +23,20 @@ function DashboardPage() {
   if (!user?.businessId) {
     return (
       <ProtectedRoute>
-        <BusinessSetup />
+        <BusinessSetup 
+          onBusinessSetup={(_businessId: string) => {
+            // En una implementación real, aquí actualizarías el usuario con el businessId
+            // Por ahora, simplemente recargamos la página
+            notifications.success('Negocio configurado exitosamente. Redirigiendo...');
+            setTimeout(() => {
+              globalThis.location.reload();
+            }, 1000);
+          }}
+        />
       </ProtectedRoute>
     );
   }
+  
   const isOwner = user.role === 'owner' // Solo los owners reciben notificaciones
 
   const handleNotificationToggle = () => {

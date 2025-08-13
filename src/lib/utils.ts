@@ -1,8 +1,7 @@
-import { clsx } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-import type { ClassValue } from 'clsx'
+import { type ClassValue, clsx } from "clsx"
+import { twMerge } from "tailwind-merge"
 
-export function cn(...inputs: Array<ClassValue>) {
+export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
@@ -45,16 +44,16 @@ export function formatTime(timeString: string): string {
 
 // Mobile device detection
 export function isMobileDevice(): boolean {
-  if (typeof window === 'undefined') return false
+  if (typeof globalThis === 'undefined') return false
   
   // Check user agent for mobile indicators
-  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
+  const userAgent = navigator.userAgent || navigator.vendor || (globalThis as unknown as { opera: string }).opera
   
   // Check for mobile patterns
   const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i
   
   // Also check screen size as additional validation
-  const isMobileScreen = window.innerWidth <= 768
+  const isMobileScreen = globalThis.innerWidth <= 768
   
   return mobileRegex.test(userAgent) || isMobileScreen
 }
