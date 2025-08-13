@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Store, Plus, Link, ArrowRight, Building2, Users, MapPin, LayoutDashboard as _LayoutDashboardIcon, ClipboardList, User, Clock, Check, Phone, Mail } from 'lucide-react';
+import { Store, Plus, Link, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Phone, Mail } from 'lucide-react';
 import { Button } from './ui/button.tsx';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card.tsx';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog.tsx';
@@ -525,40 +525,52 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       {/* Mobile Navigation */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-40">
         <nav className="grid grid-cols-5 h-16">
-          <button type="button" className="flex flex-col items-center justify-center text-xs text-gray-400">
-            <div className="w-6 h-6 grid grid-cols-2 gap-0.5">
-              <div className="bg-gray-400 rounded-sm"></div>
-              <div className="bg-gray-400 rounded-sm"></div>
-              <div className="bg-gray-400 rounded-sm"></div>
-              <div className="bg-gray-400 rounded-sm"></div>
-            </div>
-            <span className="mt-1">Dashboard</span>
+          {/* Dashboard */}
+          <button 
+            type="button" 
+            className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <LayoutDashboard className="w-5 h-5 mb-1" />
+            <span>Dashboard</span>
           </button>
 
-          <button type="button" className="flex flex-col items-center justify-center text-xs text-gray-400">
-            <ClipboardList className="w-5 h-5" />
-            <span className="mt-1">Pedidos</span>
+          {/* Orders */}
+          <button 
+            type="button" 
+            className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <ClipboardList className="w-5 h-5 mb-1" />
+            <span>Pedidos</span>
           </button>
 
           {/* Central Add Button */}
           <div className="flex items-center justify-center">
             <button
               type="button"
-              className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-50 cursor-not-allowed"
+              className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors opacity-50 cursor-not-allowed"
               disabled
+              aria-label="Agregar nuevo elemento"
             >
               <Plus className="w-6 h-6" />
             </button>
           </div>
 
-          <button type="button" className="flex flex-col items-center justify-center text-xs text-gray-400">
-            <Users className="w-5 h-5" />
-            <span className="mt-1">Clientes</span>
+          {/* Clients */}
+          <button 
+            type="button" 
+            className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <Users className="w-5 h-5 mb-1" />
+            <span>Clientes</span>
           </button>
 
-          <button type="button" className="flex flex-col items-center justify-center text-xs text-gray-400">
-            <User className="w-5 h-5" />
-            <span className="mt-1">Perfil</span>
+          {/* Profile */}
+          <button 
+            type="button" 
+            className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <User className="w-5 h-5 mb-1" />
+            <span>Perfil</span>
           </button>
         </nav>
       </div>
