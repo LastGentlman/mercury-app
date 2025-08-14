@@ -1,13 +1,13 @@
 import React from 'react';
 import { AlertCircle, CheckCircle, Clock, Package, Plus, TrendingUp, Users } from 'lucide-react';
-import type { Order } from '@/types';
-import { useOrders } from '@/hooks/useOrders';
-import { useDashboardStats } from '@/hooks/useDashboardStats';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { CreateOrderDialog } from '@/components/CreateOrderDialog';
-import { OrderCard } from '@/components/orders/OrderCard';
-import { OrderDetails } from '@/components/orders/OrderDetails';
+import type { Order } from '../types/index.ts';
+import { useOrders } from '../hooks/useOrders.ts';
+import { useDashboardStats } from '../hooks/useDashboardStats.ts';
+import { Button } from './ui/button.tsx';
+import { Card, CardContent } from './ui/card.tsx';
+import { CreateOrderDialog } from './CreateOrderDialog.tsx';
+import { OrderCard } from './orders/OrderCard.tsx';
+import { OrderDetails } from './orders/OrderDetails.tsx';
 
 interface DashboardProps {
   businessId: string;
