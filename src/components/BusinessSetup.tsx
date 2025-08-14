@@ -107,7 +107,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
 
       // In a real app, this would create the business and return the ID
       const mockBusinessId = `business-${Date.now()}`;
-
+      
       notifications.success('¡Negocio creado exitosamente!');
       setIsOpen(false);
       onBusinessSetup?.(mockBusinessId);
@@ -175,16 +175,16 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
               </Label>
               <div className="mt-1 relative">
                 <Building2 className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
+              <Input
                   id="business-name"
                   placeholder="Mi Restaurante"
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
+                value={formData.name}
+                onChange={(e) => handleInputChange('name', e.target.value)}
                   className="pl-10"
-                />
+              />
               </div>
             </div>
-
+            
             <div>
               <Label htmlFor="business-type">
                 Tipo de Negocio <span className="text-red-500">*</span>
@@ -225,13 +225,13 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
               <Label htmlFor="business-address">Dirección <span className="text-red-500">*</span></Label>
               <div className="mt-1 relative">
                 <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
+              <Input
                   id="business-address"
                   placeholder="Calle Principal #123"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange('address', e.target.value)}
+                value={formData.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
                   className="pl-10"
-                />
+              />
               </div>
             </div>
 
@@ -239,14 +239,14 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
               <Label htmlFor="business-phone">Teléfono <span className="text-red-500">*</span></Label>
               <div className="mt-1 relative">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
+              <Input
                   id="business-phone"
                   placeholder="+1 234 567 8900"
-                  value={formData.phone}
-                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                value={formData.phone}
+                onChange={(e) => handleInputChange('phone', e.target.value)}
                   type="tel"
                   className="pl-10"
-                />
+              />
               </div>
             </div>
 
@@ -254,14 +254,14 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
               <Label htmlFor="business-email">Email de Contacto <span className="text-red-500">*</span></Label>
               <div className="mt-1 relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
+              <Input
                   id="business-email"
-                  placeholder="contacto@negocio.com"
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                placeholder="contacto@negocio.com"
+                value={formData.email}
+                onChange={(e) => handleInputChange('email', e.target.value)}
                   type="email"
                   className="pl-10"
-                />
+              />
               </div>
             </div>
           </div>
@@ -384,77 +384,77 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                     </TabsList>
 
                     <TabsContent value="create" className="space-y-4">
-                      {/* Progress Steps */}
+        {/* Progress Steps */}
                       <div className="flex items-center justify-center mb-6">
-                        {steps.map((_, index) => (
-                          <div key={index} className="flex items-center">
+          {steps.map((_, index) => (
+            <div key={index} className="flex items-center">
                             <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${
-                              index <= currentStep 
-                                ? 'bg-blue-600 border-blue-600 text-white' 
-                                : 'border-gray-300 text-gray-400'
-                            }`}>
-                              {index < currentStep ? (
+                index <= currentStep 
+                  ? 'bg-blue-600 border-blue-600 text-white' 
+                  : 'border-gray-300 text-gray-400'
+              }`}>
+                {index < currentStep ? (
                                 <Check className="w-4 h-4" />
-                              ) : (
+                ) : (
                                 <span className="text-xs font-medium">{index + 1}</span>
-                              )}
-                            </div>
-                            {index < steps.length - 1 && (
+                )}
+              </div>
+              {index < steps.length - 1 && (
                               <div className={`w-12 h-0.5 mx-2 transition-all ${
-                                index < currentStep ? 'bg-blue-600' : 'bg-gray-300'
-                              }`} />
-                            )}
-                          </div>
-                        ))}
-                      </div>
+                  index < currentStep ? 'bg-blue-600' : 'bg-gray-300'
+                }`} />
+              )}
+            </div>
+          ))}
+        </div>
 
-                      {/* Step Header */}
+          {/* Step Header */}
                       <div className="mb-4">
                         <div className="flex items-center space-x-2 mb-1">
                           {React.createElement(steps[currentStep]?.icon || Store, { className: "w-5 h-5 text-blue-600" })}
                           <h3 className="font-semibold text-gray-900">
-                            {steps[currentStep]?.title || 'Configuración'}
+                {steps[currentStep]?.title || 'Configuración'}
                           </h3>
-                        </div>
+            </div>
                         <p className="text-sm text-gray-600">{steps[currentStep]?.description || 'Configurando tu negocio'}</p>
-                      </div>
+          </div>
 
-                      {/* Step Content */}
+          {/* Step Content */}
                       <div className="space-y-4">
-                        {renderStepContent()}
-                      </div>
+            {renderStepContent()}
+          </div>
 
-                      {/* Navigation */}
+          {/* Navigation */}
                       <div className="flex justify-between pt-4">
-                        <Button
-                          variant="outline"
-                          onClick={handlePrevious}
-                          disabled={currentStep === 0}
+            <Button
+              variant="outline"
+              onClick={handlePrevious}
+              disabled={currentStep === 0}
                           size="sm"
-                        >
-                          Anterior
-                        </Button>
+            >
+              Anterior
+            </Button>
 
-                        {currentStep === steps.length - 1 ? (
-                          <Button
+            {currentStep === steps.length - 1 ? (
+              <Button
                             onClick={handleCreateBusiness}
-                            disabled={!isStepValid() || isLoading}
+                disabled={!isStepValid() || isLoading}
                             size="sm"
-                          >
+              >
                             {isLoading ? 'Creando...' : 'Crear Negocio'}
                             {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={handleNext}
-                            disabled={!isStepValid()}
+              </Button>
+            ) : (
+              <Button
+                onClick={handleNext}
+                disabled={!isStepValid()}
                             size="sm"
-                          >
-                            Siguiente
-                            <ArrowRight className="w-4 h-4 ml-2" />
-                          </Button>
-                        )}
-                      </div>
+              >
+                Siguiente
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            )}
+          </div>
                     </TabsContent>
 
                     <TabsContent value="join" className="space-y-4">
@@ -508,7 +508,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                 </DialogContent>
               </Dialog>
             </CardFooter>
-          </Card>
+        </Card>
 
           {/* Footer */}
           <div className="mt-8 text-center">
