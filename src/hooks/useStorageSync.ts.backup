@@ -59,9 +59,9 @@ export function useStorageSync(
     fallbackValue = null
   } = options
 
-  const [value, setValue] = useState<StorageValue>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [value, setValue] = useState<StorageValue>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Referencias para cleanup y debouncing
   const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -197,7 +197,7 @@ export function useStorageSync(
     setValue: setValueSafe,
     isLoading,
     error,
-    clearValue
+    clearValue,
   }
 }
 
