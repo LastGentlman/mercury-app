@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from '@tanstack/react-router'
-import { isPWAInstalled } from '../pwa-fixed'
-import { useAuth } from './useAuth'
+import { isPWAInstalled } from '../pwa-fixed.ts'
+import { useAuth } from './useAuth.ts'
 
 interface PWARouteConfig {
   enablePWARedirect: boolean
@@ -41,7 +41,7 @@ export function usePWARouteStrategy(config: PWARouteConfig = {
         
         if (isPWA) {
           launchSource = 'pwa'
-        } else if (window.matchMedia('(display-mode: browser)').matches) {
+        } else if (globalThis.matchMedia('(display-mode: browser)').matches) {
           launchSource = 'browser'
         }
         

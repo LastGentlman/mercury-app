@@ -7,8 +7,8 @@ import {
   UserCircle,
   LogOut
 } from 'lucide-react'
-import { useAuth } from '../hooks/useAuth'
-import { Button } from './ui/button'
+import { useAuth } from '../hooks/useAuth.ts'
+import { Button } from './ui/button.tsx'
 
 interface BottomNavItemProps {
   href: string
@@ -67,6 +67,7 @@ function BottomCTA({ onClick }: BottomCTAProps) {
 
   return (
     <button
+      type="button"
       onClick={handleClick}
       className="flex flex-col items-center justify-center w-14 h-14 -mt-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 active:scale-95 relative"
     >
@@ -110,7 +111,7 @@ export default function BottomNavigation() {
             href="/dashboard"
             icon={<ClipboardList className="w-6 h-6" />}
             label="Pedidos"
-            isActive={currentPath === '/dashboard' && new URLSearchParams(window.location.search).get('view') === 'orders'}
+            isActive={currentPath === '/dashboard' && new URLSearchParams(globalThis.location.search).get('view') === 'orders'}
           />
 
           {/* CTA - New Order */}
@@ -127,7 +128,7 @@ export default function BottomNavigation() {
           {/* Profile/Settings */}
           <div className="flex flex-col items-center min-w-[60px] px-1">
             <div className="relative group">
-              <button className="flex flex-col items-center py-2 text-gray-500 hover:text-blue-600 transition-colors duration-300">
+              <button type="button" className="flex flex-col items-center py-2 text-gray-500 hover:text-blue-600 transition-colors duration-300">
                 <UserCircle className="w-6 h-6 mb-1" />
                 <span className="text-xs font-medium leading-none">
                   Perfil

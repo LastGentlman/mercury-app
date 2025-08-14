@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useBackgroundSync } from '../hooks/useBackgroundSync'
-import { Card, CardContent, CardHeader } from './ui/card'
-import { Button } from './ui/button'
-import { Switch } from './ui/switch'
-import { Badge } from './ui/badge'
+import { useBackgroundSync } from '../hooks/useBackgroundSync.ts'
+import { Card, CardContent, CardHeader } from './ui/card.tsx'
+import { Button } from './ui/button.tsx'
+import { Switch } from './ui/switch.tsx'
+import { Badge } from './ui/badge.tsx'
 
 export function BackgroundSyncSettings() {
   const {

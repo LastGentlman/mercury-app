@@ -33,7 +33,7 @@ export function LoadingSuspense({
   // If error boundary is requested, wrap with AppErrorBoundary
   if (errorBoundary) {
     // We need to import this dynamically to avoid circular dependencies
-    const { AppErrorBoundary } = require('./AppErrorBoundary')
+    const { AppErrorBoundary } = require('./AppErrorBoundary.tsx')
     return <AppErrorBoundary>{content}</AppErrorBoundary>
   }
 

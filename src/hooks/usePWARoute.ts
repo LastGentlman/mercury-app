@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from '@tanstack/react-router'
-import { isPWAInstalled } from '../pwa-fixed'
-import { useAuth } from './useAuth'
+import { isPWAInstalled } from '../pwa-fixed.ts'
+import { useAuth } from './useAuth.ts'
 
 export function usePWARoute() {
   const navigate = useNavigate()

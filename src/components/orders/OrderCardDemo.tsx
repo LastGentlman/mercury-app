@@ -1,5 +1,5 @@
-import { OrderCard } from './OrderCard';
-import type { Order } from '@/types';
+import { OrderCard } from './OrderCard.tsx';
+import type { Order } from '../../types/index.ts';
 
 const mockOrders: Order[] = [
   {

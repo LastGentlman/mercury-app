@@ -1,14 +1,14 @@
 import React, { useState } from 'react'
-import { Button } from './ui/button'
-import { Input } from './ui/input'
-import { Label } from './ui/label'
-import { Textarea } from './ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select'
-import type { Product } from '@/types'
+import { Button } from './ui/button.tsx'
+import { Input } from './ui/input.tsx'
+import { Label } from './ui/label.tsx'
+import { Textarea } from './ui/textarea.tsx'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.tsx'
+import type { Product } from '../types/index.ts'
 
 interface CreateProductModalProps {
   onClose: () => void
-  onSave: (product: any) => Promise<void>
+  onSave: (product: unknown) => Promise<void>
   isLoading?: boolean
   product?: Product // For editing
 }

@@ -1,14 +1,14 @@
 import React from 'react';
 import { Copy, MessageCircle, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { useOrders } from '@/hooks/useOrders';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import type { OrderFormData } from '@/types';
+import { useOrders } from '../hooks/useOrders.ts';
+import { Button } from './ui/button.tsx';
+import { Card, CardContent } from './ui/card.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog.tsx';
+import { Input } from './ui/input.tsx';
+import { Label } from './ui/label.tsx';
+import { Textarea } from './ui/textarea.tsx';
+import type { OrderFormData } from '../types/index.ts';
 
 interface CreateOrderDialogProps {
   open: boolean;
@@ -22,7 +22,7 @@ export function CreateOrderDialog({ open, onOpenChange, businessId }: CreateOrde
   const [formData, setFormData] = React.useState<OrderFormData>({
     clientName: '',
     clientPhone: '',
-    deliveryDate: new Date().toISOString().split('T')[0],
+    deliveryDate: new Date().toISOString().split('T')[0] || '',
     deliveryTime: '',
     notes: '',
     items: [
@@ -75,7 +75,7 @@ _${new Date().toLocaleString('es-MX')}_`;
     if (lastReceipt && formData.clientPhone) {
       const cleanPhone = formData.clientPhone.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lastReceipt)}`;
-      window.open(whatsappUrl, '_blank');
+      globalThis.open(whatsappUrl, '_blank');
     } else {
       toast.error('Se requiere número de teléfono para compartir por WhatsApp');
     }
@@ -126,7 +126,7 @@ _${new Date().toLocaleString('es-MX')}_`;
       setFormData({
         clientName: '',
         clientPhone: '',
-        deliveryDate: new Date().toISOString().split('T')[0],
+        deliveryDate: new Date().toISOString().split('T')[0] || '',
         deliveryTime: '',
         notes: '',
         items: [{ productName: '', quantity: 1, unitPrice: 0, notes: '' }]
@@ -152,13 +152,13 @@ _${new Date().toLocaleString('es-MX')}_`;
     }
   };
 
-  const updateItem = (index: number, field: keyof OrderFormData['items'][0], value: any) => {
+  const updateItem = (index: number, field: keyof OrderFormData['items'][0], value: string | number) => {
     const newItems = [...formData.items];
-    newItems[index] = { ...newItems[index], [field]: value };
+    newItems[index] = { ...newItems[index], [field]: value } as OrderFormData['items'][0];
     setFormData({ ...formData, items: newItems });
   };
 
-  const updateFormData = (field: keyof OrderFormData, value: any) => {
+  const updateFormData = (field: keyof OrderFormData, value: string | number) => {
     setFormData({ ...formData, [field]: value });
   };
 

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { generateUUID } from '@/lib/utils'
+import { generateUUID } from '../lib/utils.ts'
 
 interface OfflineSyncItem {
   id: string
   type: 'create' | 'update' | 'delete'
-  data: any
+  data: unknown
   timestamp: number
   retries: number
 }
@@ -102,7 +102,7 @@ export function useOfflineSync() {
       // ✅ BEST PRACTICE: Handle results with proper error aggregation
       const results = await Promise.allSettled(syncPromises)
       const successful = results
-        .filter((result): result is PromiseFulfilledResult<{ success: true; item: OfflineSyncItem; result: any }> => 
+        .filter((result): result is PromiseFulfilledResult<{ success: true; item: OfflineSyncItem; result: unknown }> => 
           result.status === 'fulfilled' && result.value.success)
         .map(result => result.value.item)
 
@@ -180,12 +180,12 @@ export function useOfflineSync() {
       setIsOnline(false)
     }
 
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
+    globalThis.addEventListener('online', handleOnline)
+    globalThis.addEventListener('offline', handleOffline)
 
     return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
+      globalThis.removeEventListener('online', handleOnline)
+      globalThis.removeEventListener('offline', handleOffline)
     }
   }, [pendingChanges, syncPendingChanges])
 
@@ -210,6 +210,8 @@ export function useOfflineSync() {
 
       return () => clearTimeout(timer)
     }
+    
+    return undefined
   }, [isOnline, pendingChanges.length, isSyncing, syncPendingChanges])
 
   // ✅ BEST PRACTICE: Cleanup utility for failed items

@@ -16,17 +16,17 @@ import {
   X
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Order, OrderFormData } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
-import { useOrders } from '@/hooks/useOrders';
-import { useProducts } from '@/hooks/useProducts';
-import { formatCurrency } from '@/lib/utils';
+import type { Order, OrderFormData } from '../../types/index.ts';
+import { Badge } from '../ui/badge.tsx';
+import { Button } from '../ui/button.tsx';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
+import { Input } from '../ui/input.tsx';
+import { Label } from '../ui/label.tsx';
+import { Separator } from '../ui/separator.tsx';
+import { Textarea } from '../ui/textarea.tsx';
+import { useOrders } from '../../hooks/useOrders.ts';
+import { useProducts } from '../../hooks/useProducts.ts';
+import { formatCurrency } from '../../lib/utils.ts';
 
 // ✅ ACTUALIZADO: Schema de validación usando OrderFormData
 const orderSchema = z.object({
@@ -78,7 +78,7 @@ export function CreateOrder({
 
   // Hooks
   const { createOrderFromForm } = useOrders(businessId);
-  const { products, isLoading: _productsLoading } = useProducts();
+  const { products, isLoading: _productsLoading } = useProducts({ businessId: businessId });
 
   const isEditing = !!editOrder;
 
@@ -91,15 +91,15 @@ export function CreateOrder({
     watch,
     reset,
     getValues
-  } = useForm<OrderFormData>({
+  } = useForm<z.infer<typeof orderSchema>>({
     resolver: zodResolver(orderSchema),
     defaultValues: {
       items: [{ productName: '', quantity: 1, unitPrice: 0, notes: '' }],
-      deliveryDate: new Date().toISOString().split('T')[0],
-      deliveryTime: '',
+      deliveryDate: new Date().toISOString().split('T')[0] || '',
+      deliveryTime: undefined,
       clientName: '',
-      clientPhone: '',
-      notes: ''
+      clientPhone: undefined,
+      notes: undefined
     }
   });
 
@@ -113,9 +113,9 @@ export function CreateOrder({
   const items = watch('items');
 
   // Calculate total
-  const total = items.reduce((sum, item) => {
-    const quantity = Number(item.quantity) || 0;
-    const price = Number(item.unitPrice) || 0;
+  const total = items.reduce((sum: number, item: unknown) => {
+    const quantity = Number((item as { quantity: number }).quantity) || 0;
+    const price = Number((item as { unitPrice: number }).unitPrice) || 0;
     return sum + (quantity * price);
   }, 0);
 
@@ -124,15 +124,15 @@ export function CreateOrder({
     if (editOrder) {
       reset({
         clientName: editOrder.client_name,
-        clientPhone: editOrder.client_phone || '',
-        deliveryDate: editOrder.delivery_date.split('T')[0],
-        deliveryTime: editOrder.delivery_time || '',
-        notes: editOrder.notes || '',
-        items: editOrder.items?.map(item => ({
-          productName: item.product_name,
-          quantity: item.quantity,
-          unitPrice: item.unit_price,
-          notes: item.notes || ''
+        clientPhone: editOrder.client_phone || undefined,
+        deliveryDate: editOrder.delivery_date?.split('T')[0] || new Date().toISOString().split('T')[0] || '',
+        deliveryTime: editOrder.delivery_time || undefined,
+        notes: editOrder.notes || undefined,
+        items: editOrder.items?.map((item: unknown) => ({
+          productName: (item as { product_name: string }).product_name,
+          quantity: (item as { quantity: number }).quantity,
+          unitPrice: (item as { unit_price: number }).unit_price,
+          notes: (item as { notes: string }).notes || ''
         })) || []
       });
     }
@@ -148,7 +148,7 @@ export function CreateOrder({
     }
   };
 
-  const generateReceipt = (data: OrderFormData) => {
+  const generateReceipt = (data: z.infer<typeof orderSchema>) => {
     const itemsList = data.items
       .map(item => `• ${item.quantity}x ${item.productName} - ${formatCurrency(item.quantity * item.unitPrice)}`)
       .join('\n');
@@ -190,14 +190,14 @@ _${new Date().toLocaleString('es-MX')}_`;
     if (lastReceipt && formData.clientPhone) {
       const cleanPhone = formData.clientPhone.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lastReceipt)}`;
-      window.open(whatsappUrl, '_blank');
+      globalThis.open(whatsappUrl, '_blank');
     } else {
       toast.error('Se requiere número de teléfono para compartir por WhatsApp');
     }
   };
 
   // ✅ ACTUALIZADO: Usar createOrderFromForm con tipos unificados
-  const onSubmit = async (data: OrderFormData) => {
+  const onSubmit = async (data: z.infer<typeof orderSchema>) => {
     setIsCreating(true);
     
     try {
@@ -211,7 +211,7 @@ _${new Date().toLocaleString('es-MX')}_`;
       }
 
       // Generate and show receipt
-      const receipt = generateReceipt(data);
+      const receipt = generateReceipt(data as OrderFormData);
       setLastReceipt(receipt);
       setShowReceipt(true);
 
@@ -221,8 +221,8 @@ _${new Date().toLocaleString('es-MX')}_`;
         // Add order_id to items to match Order type
         const orderWithItems = {
           ...result,
-          items: result.items?.map(item => ({
-            ...item,
+          items: result.items?.map((item: unknown) => ({
+            ...(item as Record<string, unknown>),
             order_id: result.id || ''
           })) || []
         };
@@ -420,8 +420,8 @@ _${new Date().toLocaleString('es-MX')}_`;
                       
                       {/* Product suggestions datalist */}
                       <datalist id={`products-${index}`}>
-                        {products?.map((product: any) => (
-                          <option key={product.id} value={product.name} />
+                        {products?.map((product: unknown) => (
+                          <option key={(product as { id: string }).id} value={(product as { name: string }).name} />
                         ))}
                       </datalist>
                       

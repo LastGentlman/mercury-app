@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Button } from './ui/button'
-import { CreateProductModal } from './CreateProductModal'
-import { EditProductModal } from './EditProductModal'
-import type { Product } from '@/types'
+import { Button } from './ui/button.tsx'
+import { CreateProductModal } from './CreateProductModal.tsx'
+import { EditProductModal } from './EditProductModal.tsx'
+import type { Product } from '../types/index.ts'
 
 export function ProductModalDemo() {
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -22,14 +22,14 @@ export function ProductModalDemo() {
     updatedAt: new Date().toISOString()
   })
 
-  const handleCreateProduct = async (productData: any) => {
+  const handleCreateProduct = async (productData: unknown) => {
     console.log('Creating product:', productData)
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))
     console.log('Product created successfully!')
   }
 
-  const handleEditProduct = async (productData: any) => {
+  const handleEditProduct = async (productData: unknown) => {
     console.log('Updating product:', productData)
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000))

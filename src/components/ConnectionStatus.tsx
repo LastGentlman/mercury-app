@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle, Clock, RefreshCw, Wifi, WifiOff } from 'lucide-react'
-import { useOfflineSync } from '../hooks/useOfflineSync'
-import { useBackgroundSync } from '../hooks/useBackgroundSync'
-import { cn } from '../lib/utils'
+import { useOfflineSync } from '../hooks/useOfflineSync.ts'
+import { useBackgroundSync } from '../hooks/useBackgroundSync.ts'
+import { cn } from '../lib/utils.ts'
 
 export function ConnectionStatus() {
   const { isOnline, pendingCount, syncPendingChanges } = useOfflineSync()
@@ -39,6 +39,7 @@ export function ConnectionStatus() {
                 )}
                 {!bgSyncStatus.isSyncing && !bgSyncStatus.lastSyncError && pendingCount > 0 && (
                   <button
+                    type="button"
                     onClick={syncPendingChanges}
                     className="text-xs underline hover:no-underline"
                     title="Sync pending changes"
@@ -83,6 +84,7 @@ export function ConnectionStatus() {
               <AlertCircle className="h-4 w-4" />
               <span>Background sync failed</span>
               <button
+                type="button"
                 onClick={triggerBackgroundSync}
                 className="text-xs underline hover:no-underline"
                 title="Retry background sync"

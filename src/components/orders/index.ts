@@ -1,6 +1,6 @@
-export { OrderCard } from './OrderCard';
-export { OrderCardDemo } from './OrderCardDemo';
-export { OrderDetails } from './OrderDetails';
-export { OrdersList } from './OrdersList';
-export { OrdersListDemo } from './OrdersListDemo';
-export { CreateOrder } from './CreateOrder'; 
+export { OrderCard } from './OrderCard.tsx';
+export { OrderCardDemo } from './OrderCardDemo.tsx';
+export { OrderDetails } from './OrderDetails.tsx';
+export { OrdersList } from './OrdersList.tsx';
+export { OrdersListDemo } from './OrdersListDemo.tsx';
+export { CreateOrder } from './CreateOrder.tsx'; 

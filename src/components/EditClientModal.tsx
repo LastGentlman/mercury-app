@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { FileText, Mail, MapPin, Phone, User } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import type { Client } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog.tsx';
+import { Button } from './ui/button.tsx';
+import { Input } from './ui/input.tsx';
+import { Label } from './ui/label.tsx';
+import { Textarea } from './ui/textarea.tsx';
+import type { Client } from '../types/index.ts';
 
 interface EditClientModalProps {
   client: Client;
@@ -74,14 +74,17 @@ export function EditClientModal({ client, isOpen, onClose, onSave, isLoading = f
     }
 
     try {
-      await onSave({
+      const updateData: Partial<Client> & { id: string } = {
         id: client.id,
         name: formData.name.trim(),
-        email: formData.email.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
-        address: formData.address.trim() || undefined,
-        notes: formData.notes.trim() || undefined
-      });
+      };
+      
+      if (formData.email.trim()) updateData.email = formData.email.trim();
+      if (formData.phone.trim()) updateData.phone = formData.phone.trim();
+      if (formData.address.trim()) updateData.address = formData.address.trim();
+      if (formData.notes.trim()) updateData.notes = formData.notes.trim();
+      
+      await onSave(updateData);
       
       onClose();
     } catch (error) {

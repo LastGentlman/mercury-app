@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useOfflineSync } from './useOfflineSync';
-import { useCSRFRequest } from './useCSRF';
-import type { Order, CreateOrderData, OrderFormData } from '@/types';
-import { convertFormDataToCreateOrderData } from '@/types';
-import { db } from '@/lib/offline/db';
+import { useOfflineSync } from './useOfflineSync.ts';
+import { useCSRFRequest } from './useCSRF.ts';
+import type { Order, CreateOrderData, OrderFormData } from '../types/index.ts';
+import { convertFormDataToCreateOrderData } from '../types/index.ts';
+import { db } from '../lib/offline/db.ts';
 
 // ✅ ACTUALIZADO: Usar tipos unificados del archivo de tipos
 // interface CreateOrderData ya está definida en @/types
@@ -24,7 +24,7 @@ export function useOrders(businessId: string) {
         return response.json();
       } else {
         // Fallback a datos offline
-        return await db.getOrdersByBusinessAndDate(businessId, new Date().toISOString().split('T')[0]);
+        return await db.getOrdersByBusinessAndDate(businessId, new Date().toISOString().split('T')[0] || '');
       }
     },
     staleTime: 30000, // 30 segundos
@@ -54,7 +54,7 @@ export function useOrders(businessId: string) {
       };
 
       // Add to local database first
-      const localId = await db.orders.add(order as any);
+      const localId = await db.orders.add(order as unknown as Order);
       const newOrder = { ...order, id: localId.toString() };
 
       // Add to sync queue
@@ -75,7 +75,7 @@ export function useOrders(businessId: string) {
 
   // ✅ NUEVO: Función helper para crear pedido desde formulario
   const createOrderFromForm = useMutation({
-    mutationFn: async (formData: OrderFormData) => {
+    mutationFn: (formData: OrderFormData) => {
       const orderData = convertFormDataToCreateOrderData(formData);
       return createOrder.mutateAsync(orderData);
     },

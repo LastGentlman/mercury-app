@@ -64,7 +64,7 @@ export function useStorageSync(
   const [error, setError] = useState<string | null>(null)
   
   // Referencias para cleanup y debouncing
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimeoutRef = useRef<number | null>(null)
   const isMountedRef = useRef(true)
   const lastSetValueRef = useRef<string | null>(null)
 
@@ -168,7 +168,7 @@ export function useStorageSync(
 
     // Setup storage event listener for tab sync
     if (syncAcrossTabs) {
-      window.addEventListener('storage', handleStorageChange)
+      globalThis.addEventListener('storage', handleStorageChange)
     }
 
     return () => {
@@ -177,7 +177,7 @@ export function useStorageSync(
         clearTimeout(debounceTimeoutRef.current)
       }
       if (syncAcrossTabs) {
-        window.removeEventListener('storage', handleStorageChange)
+        globalThis.removeEventListener('storage', handleStorageChange)
       }
     }
   }, [key, storageType, syncAcrossTabs, handleStorageChange, readFromStorage])

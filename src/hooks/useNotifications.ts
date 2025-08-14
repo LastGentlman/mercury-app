@@ -1,20 +1,20 @@
-import { toast } from 'sonner'
+import { toast, type ExternalToast } from 'sonner'
 
 export const useNotifications = () => {
   return {
-    success: (message: string, options?: any) => 
+    success: (message: string, options?: ExternalToast) => 
       toast.success(message, options),
     
-    error: (message: string, options?: any) => 
+    error: (message: string, options?: ExternalToast) => 
       toast.error(message, options),
     
-    warning: (message: string, options?: any) => 
+    warning: (message: string, options?: ExternalToast) => 
       toast.warning(message, options),
     
-    info: (message: string, options?: any) => 
+    info: (message: string, options?: ExternalToast) => 
       toast.info(message, options),
     
-    loading: (message: string, options?: any) => 
+    loading: (message: string, options?: ExternalToast) => 
       toast.loading(message, options),
     
     dismiss: (toastId?: string | number) => 

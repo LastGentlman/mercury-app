@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useOfflineSync } from './useOfflineSync';
-import { useAuth } from './useAuth';
-import { useCSRFRequest } from './useCSRF';
-import type { Client } from '@/types';
+import { useOfflineSync } from './useOfflineSync.ts';
+import { useAuth } from './useAuth.ts';
+import { useCSRFRequest } from './useCSRF.ts';
+import type { Client } from '../types/index.ts';
 
 // ===== API FUNCTIONS =====
 

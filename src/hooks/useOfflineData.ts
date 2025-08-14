@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
-import { db } from '../lib/offline/db'
-import type { Order, Product } from '../types'
+import { db } from '../lib/offline/db.ts'
+import type { Order, Product } from '../types/index.ts'
 
 export function useOfflineData() {
   // Operaciones de pedidos
@@ -15,7 +15,7 @@ export function useOfflineData() {
       last_modified_at: now
     }
 
-    const id = await db.orders.add(newOrder as any)
+    const id = await db.orders.add(newOrder as unknown as Order)
     
     // Agregar a la cola de sincronización
     await db.addToSyncQueue({

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AuthService } from '../services/auth-service'
+import { AuthService } from '../services/auth-service.ts'
 
 interface DebugInfo {
   supabaseConfigured: boolean
@@ -8,7 +8,7 @@ interface DebugInfo {
   urlHash: string
   urlSearch: string
   sessionStatus: string
-  authUser: any
+  authUser: unknown
   lastAuthEvent: string
 }
 
@@ -32,9 +32,9 @@ export function OAuthDebugger() {
         const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
         
         // Obtener información de la URL
-        const currentUrl = window.location.href
-        const urlHash = window.location.hash
-        const urlSearch = window.location.search
+        const currentUrl = globalThis.location.href
+        const urlHash = globalThis.location.hash
+        const urlSearch = globalThis.location.search
         
         // Intentar obtener sesión
         let sessionStatus = 'No session'
@@ -43,8 +43,8 @@ export function OAuthDebugger() {
         try {
           authUser = await AuthService.getOAuthSession()
           sessionStatus = authUser ? `Active: ${authUser.email}` : 'No OAuth session'
-        } catch (error: any) {
-          sessionStatus = `Error: ${error.message}`
+        } catch (error: unknown) {
+          sessionStatus = `Error: ${error instanceof Error ? error.message : String(error)}`
         }
         
         setDebugInfo({
@@ -66,7 +66,7 @@ export function OAuthDebugger() {
     updateDebugInfo()
 
     // Escuchar cambios de auth
-    let subscription: any = null
+    let subscription: unknown = null
     try {
       const authChange = AuthService.onAuthStateChange((event, session) => {
         setDebugInfo(prev => ({
@@ -86,7 +86,9 @@ export function OAuthDebugger() {
 
     return () => {
       clearInterval(interval)
-      subscription?.unsubscribe?.()
+      if (typeof subscription === 'object' && subscription !== null && 'unsubscribe' in subscription) {
+        (subscription as { unsubscribe: () => void }).unsubscribe()
+      }
     }
   }, [])
 
@@ -135,7 +137,7 @@ export function OAuthDebugger() {
           </div>
         </div>
 
-        {debugInfo.authUser && (
+        {Boolean(debugInfo.authUser) && (
           <div>
             <strong className="text-blue-300">User:</strong>
             <pre className="text-xs bg-gray-800 p-1 rounded mt-1">
@@ -147,7 +149,8 @@ export function OAuthDebugger() {
       
       <div className="mt-2 pt-2 border-t border-gray-700">
         <button 
-          onClick={() => window.location.reload()} 
+          type="button"
+          onClick={() => globalThis.location.reload()} 
           className="text-xs bg-blue-600 px-2 py-1 rounded hover:bg-blue-700"
         >
           Reload

@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouterState } from '@tanstack/react-router'
-import { isMobileDevice } from '../lib/utils'
-import { useAuth } from './useAuth'
+import { isMobileDevice } from '../lib/utils.ts'
+import { useAuth } from './useAuth.ts'
 
 export interface MobileAuthConfig {
   hideHeaderOnAuth?: boolean
@@ -58,9 +58,11 @@ export function useMobileAuth(config: MobileAuthConfig = {}): MobileAuthReturn {
     checkMobile()
     
     if (enableMobileOptimizations) {
-      window.addEventListener('resize', checkMobile)
-      return () => window.removeEventListener('resize', checkMobile)
+      globalThis.addEventListener('resize', checkMobile)
+      return () => globalThis.removeEventListener('resize', checkMobile)
     }
+    
+    return undefined
   }, [enableMobileOptimizations])
 
   // Determine if we're on an auth page

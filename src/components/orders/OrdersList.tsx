@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react';
 import { Search, SortAsc, SortDesc } from 'lucide-react';
-import type { Order } from '@/types';
-import { OrderCard } from './OrderCard';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import type { Order } from '../../types/index.ts';
+import { OrderCard } from './OrderCard.tsx';
+import { Input } from '../ui/input.tsx';
+import { Button } from '../ui/button.tsx';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
+import { Badge } from '../ui/badge.tsx';
 
 interface OrdersListProps {
   orders: Order[];
@@ -43,7 +43,7 @@ export function OrdersList({
   // Sort orders
   const sortedOrders = useMemo(() => {
     return [...filteredOrders].sort((a, b) => {
-      let aValue: any, bValue: any;
+      let aValue: unknown, bValue: unknown;
 
       switch (sortField) {
         case 'date':
@@ -51,8 +51,8 @@ export function OrdersList({
           bValue = new Date(b.delivery_date).getTime();
           break;
         case 'folio':
-          aValue = a.client_generated_id ?? '';
-          bValue = b.client_generated_id ?? '';
+          aValue = a.client_generated_id ?? undefined;
+          bValue = b.client_generated_id ?? undefined;
           break;
         case 'client':
           aValue = a.client_name.toLowerCase();
@@ -71,9 +71,9 @@ export function OrdersList({
       }
 
       if (sortDirection === 'asc') {
-        return aValue > bValue ? 1 : -1;
+        return Number(aValue) > Number(bValue) ? 1 : -1;
       } else {
-        return aValue < bValue ? 1 : -1;
+        return Number(aValue) < Number(bValue) ? 1 : -1;
       }
     });
   }, [filteredOrders, sortField, sortDirection]);
@@ -187,10 +187,10 @@ export function OrdersList({
             <OrderCard
               key={order.id}
               order={order}
-              onStatusChange={onStatusChange}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onViewDetails={onViewDetails}
+              onStatusChange={onStatusChange || (() => {})}
+              onEdit={onEdit || (() => {})}
+              onDelete={onDelete || (() => {})}
+              onViewDetails={onViewDetails || (() => {})}
             />
           ))
         )}

@@ -10,9 +10,9 @@
 
 import { Link } from '@tanstack/react-router'
 import { Loader2, LogOut, User } from 'lucide-react'
-import { useAuth } from '../hooks/useAuth'
-import { useMobileAuth } from '../hooks/useMobileAuth'
-import { Button } from './ui/button'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useMobileAuth } from '../hooks/useMobileAuth.ts'
+import { Button } from './ui/button.tsx'
 
 export default function Header() {
   const { user, logout } = useAuth()

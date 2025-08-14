@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { useAuth } from './useAuth'
+import { useAuth } from './useAuth.ts'
 
 export interface BackgroundSyncStatus {
   isSyncing: boolean
@@ -56,14 +56,14 @@ export function useBackgroundSync() {
       }
 
       // Handle auth token requests
-      if (type === 'GET_AUTH_TOKEN' && (event.ports as any)?.[0]) {
+      if (type === 'GET_AUTH_TOKEN' && (event.ports as unknown as MessagePort[])?.[0]) {
         try {
           const token = localStorage.getItem('authToken')
-          event.ports[0].postMessage({ token })
+          event.ports[0]?.postMessage({ token })
         } catch (err) {
           console.error('Failed to get auth token:', err)
           const errorMessage = err instanceof Error ? err.message : 'Unknown error'
-          event.ports[0].postMessage({ token: null, error: errorMessage })
+          event.ports[0]?.postMessage({ token: null, error: errorMessage } as { token: string | null, error: string })
         }
         return
       }
@@ -124,7 +124,7 @@ export function useBackgroundSync() {
 
   // ✅ Service Worker message listener setup
   useEffect(() => {
-    if (!(navigator.serviceWorker as any)) {
+    if (!(navigator.serviceWorker as unknown as ServiceWorkerContainer)) {
       return undefined
     }
 
@@ -158,7 +158,7 @@ export function useBackgroundSync() {
     }
 
     try {
-      if (!('sync' in window.ServiceWorkerRegistration.prototype)) {
+      if (!('sync' in globalThis.ServiceWorkerRegistration.prototype)) {
         console.log('⚠️ Background sync not supported')
         return false
       }
@@ -166,7 +166,7 @@ export function useBackgroundSync() {
       const registration = await navigator.serviceWorker.ready
       
       // Type assertion for sync registration (experimental API)
-      await (registration as any).sync.register('background-sync')
+      await (registration as ServiceWorkerRegistration & { sync: { register: (tag: string) => Promise<void> } }).sync.register('background-sync')
       console.log('✅ Background sync triggered')
       return true
     } catch (err) {
@@ -207,7 +207,7 @@ export function useBackgroundSync() {
       }
 
       // Type assertion for periodic sync registration (experimental API)
-      await (registration as any).periodicSync.register('periodic-sync', {
+      await (registration as ServiceWorkerRegistration & { periodicSync: { register: (tag: string, options: { minInterval: number }) => Promise<void> } }).periodicSync.register('periodic-sync', {
         minInterval: 24 * 60 * 60 * 1000 // 24 hours
       })
       
@@ -228,7 +228,7 @@ export function useBackgroundSync() {
   // ✅ Get sync statistics with proper error handling
   const getSyncStats = useCallback((): SyncStats => {
     try {
-      if (!(navigator.serviceWorker as any)) {
+      if (!(navigator.serviceWorker as unknown as ServiceWorkerContainer)) {
         return {
           isEnabled: false,
           hasUser: Boolean(user),
@@ -263,7 +263,7 @@ export function useBackgroundSync() {
 
   // ✅ Feature detection
   const isSupported = Boolean(
-    'sync' in window.ServiceWorkerRegistration.prototype
+    'sync' in globalThis.ServiceWorkerRegistration.prototype
   )
 
   return {

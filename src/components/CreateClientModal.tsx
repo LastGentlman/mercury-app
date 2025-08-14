@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { FileText, Mail, MapPin, Phone, User } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Textarea } from './ui/textarea';
-import type { Client } from '@/types';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog.tsx';
+import { Button } from './ui/button.tsx';
+import { Input } from './ui/input.tsx';
+import { Label } from './ui/label.tsx';
+import { Textarea } from './ui/textarea.tsx';
+import type { Client } from '../types/index.ts';
 
 interface CreateClientModalProps {
   isOpen: boolean;
@@ -63,10 +63,10 @@ export function CreateClientModal({ isOpen, onClose, onSave, isLoading = false }
     try {
       await onSave({
         name: formData.name.trim(),
-        email: formData.email.trim() || undefined,
-        phone: formData.phone.trim() || undefined,
-        address: formData.address.trim() || undefined,
-        notes: formData.notes.trim() || undefined
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        address: formData.address.trim(),
+        notes: formData.notes.trim()
       });
       
       // Reset form

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { BACKEND_URL } from '../config';
-import { generateUUID } from '@/lib/utils';
+import { BACKEND_URL } from '../config.ts';
+import { generateUUID } from '../lib/utils.ts';
 
 interface CSRFConfig {
   sessionId: string;

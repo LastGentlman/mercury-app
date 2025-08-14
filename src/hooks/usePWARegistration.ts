@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { registerPWA } from '../pwa'
+import { registerPWA } from '../pwa-fixed.ts'
 
 export interface PWARegistrationStatus {
   isRegistered: boolean
@@ -20,7 +20,7 @@ export function usePWARegistration() {
     registration: null
   })
 
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const debounceTimeoutRef = useRef<number | null>(null)
   const isMountedRef = useRef(true)
 
   // ✅ Función de registro con debouncing adicional
@@ -90,7 +90,7 @@ export function usePWARegistration() {
   const forceRegister = useCallback(() => {
     // ✅ Limpiar cualquier debounce pendiente
     if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current)
+      clearTimeout(debounceTimeoutRef.current as unknown as number)
       debounceTimeoutRef.current = null
     }
     

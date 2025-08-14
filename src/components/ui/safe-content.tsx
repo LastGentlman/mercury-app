@@ -1,5 +1,5 @@
 import React from 'react';
-import { sanitizeHTML, sanitizeText } from '@/lib/security';
+import { sanitizeHTML, sanitizeText } from '../../lib/security.ts';
 
 interface SafeContentProps {
   content: string;
@@ -39,6 +39,6 @@ export const SafeText: React.FC<Omit<SafeContentProps, 'allowHTML'> & { allowHTM
   return <SafeContent {...props} allowHTML={false} context={props.context || 'SafeText'} />;
 };
 
-export const SafeHTML: React.FC<Omit<SafeContentProps, 'allowHTML'> & { allowHTML: true }> = (props) => {
-  return <SafeContent {...props} allowHTML={true} context={props.context || 'SafeHTML'} />;
+export const SafeHTML: React.FC<Omit<SafeContentProps, 'allowHTML'> & { allowHTML?: true }> = (props) => {
+  return <SafeContent {...props} allowHTML context={props.context || 'SafeHTML'} />;
 }; 

@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { Edit, Package, Plus, Search, Trash2 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth';
-import { useProducts } from '../hooks/useProducts';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { CreateProductModal } from './CreateProductModal';
-import { EditProductModal } from './EditProductModal';
-import type { Product } from '@/types';
+import { useAuth } from '../hooks/useAuth.ts';
+import { useProducts } from '../hooks/useProducts.ts';
+import { Button } from './ui/button.tsx';
+import { Input } from './ui/input.tsx';
+import { Card } from './ui/card.tsx';
+import { Badge } from './ui/badge.tsx';
+import { CreateProductModal } from './CreateProductModal.tsx';
+import { EditProductModal } from './EditProductModal.tsx';
+import type { Product } from '../types/index.ts';
 
 interface ProductCardProps {
   product: Product;
@@ -97,14 +97,18 @@ export function ProductsList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
+  const { user } = useAuth();
   const {
     products,
     isLoading,
-    createProduct,
+    createProductWithCategory: _createProductWithCategory,
     updateProduct,
     deleteProduct,
-    isCreating
-  } = useProducts();
+    isCreating,
+    isDeleting: _isDeleting,
+    error: _error,
+    isLoading: _isLoadingProducts
+  } = useProducts({ businessId: user?.businessId || '' });
 
   const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -161,7 +165,7 @@ export function ProductsList() {
               key={product.id}
               product={product}
               onEdit={() => setSelectedProduct(product)}
-              onDelete={() => deleteProduct(product.id?.toString() || '')}
+              onDelete={() => product.id && deleteProduct(product.id)}
             />
           ))}
         </div>
@@ -191,15 +195,14 @@ export function ProductsList() {
         <CreateProductModal
           onClose={() => setShowCreateModal(false)}
           onSave={async (productData) => {
-            const { user } = useAuth();
             const fullProductData = {
-              ...productData,
+              ...(productData as Product),
               businessId: user?.businessId || '',
               syncStatus: 'pending' as const,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString()
             };
-            await createProduct(fullProductData);
+            await _createProductWithCategory(fullProductData as Product & { categoryId: string } & { businessId: string });
           }}
           isLoading={isCreating}
         />
@@ -209,7 +212,16 @@ export function ProductsList() {
         <EditProductModal
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
-          onSave={updateProduct}
+          onSave={async (productData) => {
+            const fullProductData = {
+              ...(productData as Product),
+              businessId: user?.businessId || '',
+              syncStatus: 'pending' as const,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            };
+            await updateProduct(fullProductData as Partial<Product> & { id: number });
+          }}
           isLoading={false}
         />
       )}

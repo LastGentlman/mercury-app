@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useAuth } from './useAuth';
-import { useOfflineSync } from './useOfflineSync';
+import { useAuth } from './useAuth.ts';
+import { useOfflineSync } from './useOfflineSync.ts';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || '';
 

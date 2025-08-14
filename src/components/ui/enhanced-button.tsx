@@ -1,6 +1,6 @@
 import React from 'react'
-import { cn } from '../../lib/ui-utils'
-import { designSystem } from '../../lib/design-system'
+import { cn } from '../../lib/ui-utils.ts '
+import { designSystem } from '../../lib/design-system.ts'
 
 interface EnhancedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'ghost' | 'outline'

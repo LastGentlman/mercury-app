@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Download } from 'lucide-react'
-import { getPWALaunchMethod, isPWAInstalled, markAsInstalledPWA, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa-fixed'
-import { useWindowEventListener } from '../hooks/useEventListener'
-import { useAuth } from '../hooks/useAuth'
-import { useMobileAuth } from '../hooks/useMobileAuth'
+import { getPWALaunchMethod, isPWAInstalled, markAsInstalledPWA, showInstallPrompt, wasEverInstalledAsPWA } from '../pwa-fixed.ts'
+import { useWindowEventListener } from '../hooks/useEventListener.ts'
+import { useAuth } from '../hooks/useAuth.ts'
+import { useMobileAuth } from '../hooks/useMobileAuth.ts'
 
 export function PWAInstallButton() {
   const [canInstall, setCanInstall] = useState(false)
@@ -53,6 +53,7 @@ export function PWAInstallButton() {
 
   return (
     <button
+      type="button"
       onClick={handleInstall}
       className="fixed bottom-4 right-4 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full shadow-lg flex items-center gap-2 z-50 transition-colors"
       title={`${buttonText} - Mercury App`}

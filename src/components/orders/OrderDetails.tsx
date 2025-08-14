@@ -1,9 +1,9 @@
 import { Calendar, Clock, MessageCircle, Phone, Share2, Trash2, User } from 'lucide-react';
-import type { Order } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
+import type { Order } from '../../types/index.ts';
+import { Button } from '../ui/button.tsx';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
+import { Separator } from '../ui/separator.tsx';
+import { formatCurrency, formatDate, formatTime } from '../../lib/utils.ts';
 
 interface OrderDetailsProps {
   order: Order;
@@ -80,7 +80,7 @@ Tu pedido #${order.client_generated_id} está *${getStatusText(order.status).toU
 ¡Gracias por tu pedido! 🎉`;
 
     const whatsappUrl = `https://wa.me/${order.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    globalThis.open(whatsappUrl, '_blank');
   };
 
   const handleCopyReceipt = () => {

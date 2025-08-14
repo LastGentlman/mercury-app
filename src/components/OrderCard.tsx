@@ -7,10 +7,10 @@ import {
   Share2 
 } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Order } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import type { Order } from '../types/index.ts';
+import { Badge } from './ui/badge.tsx';
+import { Button } from './ui/button.tsx';
+import { Card, CardContent, CardHeader } from './ui/card.tsx';
 
 interface OrderCardProps {
   order: Order;
@@ -40,7 +40,7 @@ export function OrderCard({ order, onStatusChange }: OrderCardProps) {
     if (!order.client_phone) return;
     const message = generateWhatsAppMessage(order);
     const whatsappUrl = `https://wa.me/${order.client_phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    globalThis.open(whatsappUrl, '_blank');
   };
 
   const handleCopyReceipt = () => {

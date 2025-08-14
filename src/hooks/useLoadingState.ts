@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useGlobalLoading } from '../components/GlobalLoadingProvider'
+import { useGlobalLoading } from '../components/GlobalLoadingProvider.tsx'
 
 interface UseLoadingStateOptions {
   useGlobal?: boolean

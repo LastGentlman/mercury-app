@@ -1,10 +1,10 @@
 import { Calendar, Clock, MoreVertical, Phone, User } from 'lucide-react';
-import type { Order } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { StatusBadge } from '@/components/ui/status-badge';
-import { formatCurrency, formatDate, formatTime } from '@/lib/utils';
+import type { Order } from '../../types/index.ts';
+import { Badge } from '../ui/badge.tsx';
+import { Button } from '../ui/button.tsx';
+import { Card, CardContent, CardHeader } from '../ui/card.tsx';
+import { StatusBadge } from '../ui/status-badge.tsx';
+import { formatCurrency, formatDate, formatTime } from '../../lib/utils.ts';
 
 interface OrderCardProps {
   order: Order;

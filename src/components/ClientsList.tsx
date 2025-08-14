@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { DollarSign, Plus, Search, TrendingUp, User } from 'lucide-react';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Card } from './ui/card';
-import { ClientCard } from './ClientCard';
-import { CreateClientModal } from './CreateClientModal';
-import { EditClientModal } from './EditClientModal';
-import type { Client } from '@/types';
-import { useClients } from '@/hooks/useClients';
+import { Button } from './ui/button.tsx'  ;
+import { Input } from './ui/input.tsx';
+import { Card } from './ui/card.tsx';
+import { ClientCard } from './ClientCard.tsx';
+import { CreateClientModal } from './CreateClientModal.tsx';
+import { EditClientModal } from './EditClientModal.tsx';
+import type { Client } from '../types/index.ts';
+import { useClients } from '../hooks/useClients.ts';
 
 export function ClientsList() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -17,12 +17,20 @@ export function ClientsList() {
   const {
     clients,
     isLoading,
-    createClient,
-    updateClient,
+    createClient: createClientMutation,
+    updateClient: updateClientMutation,
     deleteClient,
     isCreating,
     isUpdating
   } = useClients();
+
+  const createClient = (client: unknown) => {
+    return Promise.resolve(createClientMutation(client as Client));
+  };
+
+  const updateClient = (client: unknown) => {
+    return Promise.resolve(updateClientMutation(client));
+  };
 
   const filteredClients = clients.filter((client: Client) =>
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -31,7 +39,7 @@ export function ClientsList() {
   );
 
   const handleDeleteClient = async (clientId: string) => {
-    if (window.confirm('¿Estás seguro de que quieres eliminar este cliente? Esta acción no se puede deshacer.')) {
+    if (globalThis.confirm('¿Estás seguro de que quieres eliminar este cliente? Esta acción no se puede deshacer.')) {
       try {
         await deleteClient(clientId);
       } catch (error) {

@@ -1,8 +1,8 @@
 import { Calendar, DollarSign, FileText, Mail, MapPin, Phone, ShoppingBag, User } from 'lucide-react';
-import { Card } from './ui/card';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import type { Client } from '@/types';
+import { Card } from './ui/card.tsx';
+import { Badge } from './ui/badge.tsx';
+import { Button } from './ui/button.tsx';
+import type { Client } from '../types/index.ts';
 
 interface ClientCardProps {
   client: Client;

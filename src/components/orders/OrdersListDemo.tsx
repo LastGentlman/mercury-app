@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import type { Order } from '@/types';
-import { OrdersList } from './OrdersList';
+import type { Order } from '../../types/index.ts';
+import { OrdersList } from './OrdersList.tsx';
 
 // ✅ NUEVO: Datos de ejemplo para el demo
 const mockOrders: Order[] = [

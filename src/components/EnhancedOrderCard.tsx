@@ -9,11 +9,11 @@ import {
   Trash2
 } from 'lucide-react'
 import { toast } from 'sonner'
-import type { Order } from '@/types'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { EnhancedButton } from '@/components/ui/enhanced-button'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { cn } from '@/lib/ui-utils'
+import type { Order } from '../types/index.ts'
+import { StatusBadge } from './ui/status-badge.tsx'
+import { EnhancedButton } from './ui/enhanced-button.tsx'
+import { Card, CardContent, CardHeader } from './ui/card.tsx'
+import { cn } from '../lib/ui-utils.ts'
 
 interface EnhancedOrderCardProps {
   order: Order
@@ -56,7 +56,7 @@ export function EnhancedOrderCard({
   const handleShareWhatsApp = () => {
     const message = generateWhatsAppMessage(order)
     const whatsappUrl = `https://wa.me/${order.client_phone?.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`
-    window.open(whatsappUrl, '_blank')
+    globalThis.open(whatsappUrl, '_blank')
   }
 
   const handleCopyReceipt = () => {

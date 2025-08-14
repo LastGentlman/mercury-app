@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../hooks/useAuth.ts'
 import { Loader2 } from 'lucide-react'
 
 interface ProtectedRouteProps {

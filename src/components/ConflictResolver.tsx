@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { AlertTriangle, CheckCircle, RefreshCw, XCircle } from 'lucide-react'
-import { Button } from './ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card'
-import type { ConflictInfo } from '../lib/offline/conflictResolver'
+import { Button } from './ui/button.tsx'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card.tsx'
+import type { ConflictInfo } from '../lib/offline/conflictResolver.ts'
 
 interface ConflictResolverProps {
   conflict: ConflictInfo
@@ -28,39 +28,41 @@ export function ConflictResolver({ conflict, onResolve, onDismiss }: ConflictRes
 
   const getEntityTitle = () => {
     if (conflict.entityType === 'order') {
-      const order = conflict.localVersion as any
+      const order = conflict.localVersion as unknown as { clientGeneratedId: string; clientName: string }
       return `Pedido #${order.clientGeneratedId} - ${order.clientName}`
     } else {
-      const product = conflict.localVersion as any
+      const product = conflict.localVersion as unknown as { name: string }
       return `Producto: ${product.name}`
     }
   }
 
-  const renderEntityDetails = (entity: any, title: string) => {
+  const renderEntityDetails = (entity: unknown, title: string) => {
     if (conflict.entityType === 'order') {
+      const order = entity as { clientName: string; status: string; total: number; deliveryDate: string; lastModifiedAt?: string; updatedAt?: string; notes?: string }
       return (
         <div className="space-y-2">
           <h4 className="font-medium">{title}</h4>
           <div className="text-sm space-y-1">
-            <p><strong>Cliente:</strong> {entity.clientName}</p>
-            <p><strong>Estado:</strong> {entity.status}</p>
-            <p><strong>Total:</strong> ${entity.total}</p>
-            <p><strong>Fecha:</strong> {formatTimestamp(entity.deliveryDate)}</p>
-            <p><strong>Modificado:</strong> {formatTimestamp(entity.lastModifiedAt || entity.updatedAt)}</p>
-            {entity.notes && <p><strong>Notas:</strong> {entity.notes}</p>}
+            <p><strong>Cliente:</strong> {order.clientName}</p>
+            <p><strong>Estado:</strong> {order.status}</p>
+            <p><strong>Total:</strong> ${order.total}</p>
+            <p><strong>Fecha:</strong> {formatTimestamp(order.deliveryDate)}</p>
+            <p><strong>Modificado:</strong> {formatTimestamp(order.lastModifiedAt || order.updatedAt || '')}</p>
+            {order.notes && <p><strong>Notas:</strong> {order.notes}</p>}
           </div>
         </div>
       )
     } else {
+      const product = entity as { name: string; price: number; category?: string; lastModifiedAt?: string; updatedAt?: string; description?: string }
       return (
         <div className="space-y-2">
           <h4 className="font-medium">{title}</h4>
           <div className="text-sm space-y-1">
-            <p><strong>Nombre:</strong> {entity.name}</p>
-            <p><strong>Precio:</strong> ${entity.price}</p>
-            <p><strong>Categoría:</strong> {entity.category || 'Sin categoría'}</p>
-            <p><strong>Modificado:</strong> {formatTimestamp(entity.lastModifiedAt || entity.updatedAt)}</p>
-            {entity.description && <p><strong>Descripción:</strong> {entity.description}</p>}
+            <p><strong>Nombre:</strong> {product.name}</p>
+            <p><strong>Precio:</strong> ${product.price}</p>
+            <p><strong>Categoría:</strong> {product.category || 'Sin categoría'}</p>
+            <p><strong>Modificado:</strong> {formatTimestamp(product.lastModifiedAt || product.updatedAt || '')}</p>
+            {product.description && <p><strong>Descripción:</strong> {product.description}</p>}
           </div>
         </div>
       )
