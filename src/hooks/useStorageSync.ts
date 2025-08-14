@@ -59,12 +59,12 @@ export function useStorageSync(
     fallbackValue = null
   } = options
 
-  const [value, setValue] = useState<StorageValue>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [value, setValue] = useState<StorageValue>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Referencias para cleanup y debouncing
-  const debounceTimeoutRef = useRef<number | null>(null)
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMountedRef = useRef(true)
   const lastSetValueRef = useRef<string | null>(null)
 
@@ -99,7 +99,7 @@ export function useStorageSync(
     if (!isMountedRef.current) return
 
     // Clear previous debounce
-    if (debounceTimeoutRef.current) {
+    if (debounceTimeoutRef.current !== null) {
       clearTimeout(debounceTimeoutRef.current)
     }
 
@@ -173,7 +173,7 @@ export function useStorageSync(
 
     return () => {
       isMountedRef.current = false
-      if (debounceTimeoutRef.current) {
+      if (debounceTimeoutRef.current !== null) {
         clearTimeout(debounceTimeoutRef.current)
       }
       if (syncAcrossTabs) {
