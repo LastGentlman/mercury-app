@@ -11,7 +11,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea.tsx';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useAuth } from '../hooks/useAuth.ts';
-import { LogoutButton } from './LogoutButton.tsx';
 
 interface BusinessSetupProps {
   onBusinessSetup?: (businessId: string) => void;
@@ -313,20 +312,6 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
-      {/* Header with Logout */}
-      <header className="bg-white shadow-sm border-b px-4 py-3">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <Store className="w-5 h-5 text-white" />
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">Mercury</h1>
-          </div>
-          
-          <LogoutButton />
-        </div>
-      </header>
-
       {/* Main Content */}
       <div className="flex-1 flex items-center justify-center p-4 pb-20 md:pb-4">
         <div className="w-full max-w-md">
