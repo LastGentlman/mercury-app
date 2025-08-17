@@ -25,6 +25,7 @@ interface BusinessFormData {
   email: string;
   openingHours: string;
   closingHours: string;
+  currency: string;
 }
 
 const businessTypes = [
@@ -35,6 +36,19 @@ const businessTypes = [
   { value: 'grocery', label: 'Supermercado' },
   { value: 'pharmacy', label: 'Farmacia' },
   { value: 'other', label: 'Otro' }
+];
+
+const currencies = [
+  { value: 'MXN', label: 'Peso Mexicano (MXN)', symbol: '$' },
+  { value: 'USD', label: 'Dólar Estadounidense (USD)', symbol: '$' },
+  { value: 'EUR', label: 'Euro (EUR)', symbol: '€' },
+  { value: 'CAD', label: 'Dólar Canadiense (CAD)', symbol: 'C$' },
+  { value: 'GBP', label: 'Libra Esterlina (GBP)', symbol: '£' },
+  { value: 'JPY', label: 'Yen Japonés (JPY)', symbol: '¥' },
+  { value: 'AUD', label: 'Dólar Australiano (AUD)', symbol: 'A$' },
+  { value: 'CHF', label: 'Franco Suizo (CHF)', symbol: 'CHF' },
+  { value: 'CNY', label: 'Yuan Chino (CNY)', symbol: '¥' },
+  { value: 'BRL', label: 'Real Brasileño (BRL)', symbol: 'R$' }
 ];
 
 export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
@@ -53,7 +67,8 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
     phone: '',
     email: user?.email || '',
     openingHours: '09:00',
-    closingHours: '18:00'
+    closingHours: '18:00',
+    currency: 'MXN' // Default currency
   });
 
   // Form state for joining existing business
@@ -94,7 +109,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   };
 
   const handleCreateBusiness = async () => {
-    if (!formData.name || !formData.type) {
+    if (!formData.name || !formData.type || !formData.currency) {
       notifications.error('Por favor completa todos los campos requeridos');
       return;
     }
@@ -157,7 +172,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       case 1:
         return formData.address && formData.phone && formData.email;
       case 2:
-        return formData.openingHours && formData.closingHours;
+        return formData.openingHours && formData.closingHours && formData.currency;
       default:
         return false;
     }
@@ -291,6 +306,27 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
               </div>
             </div>
 
+            <div>
+              <Label htmlFor="business-currency">
+                Moneda para Transacciones <span className="text-red-500">*</span>
+              </Label>
+              <Select value={formData.currency} onValueChange={(value) => handleInputChange('currency', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona la moneda" />
+                </SelectTrigger>
+                <SelectContent>
+                  {currencies.map((currency) => (
+                    <SelectItem key={currency.value} value={currency.value}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{currency.symbol}</span>
+                        <span>{currency.label}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <h4 className="font-medium text-blue-900 mb-2">Vista Previa de tu Negocio</h4>
               <div className="space-y-1 text-sm text-blue-800">
@@ -300,6 +336,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                 <p>{formData.address || 'Dirección'}</p>
                 <p>{formData.phone || 'Teléfono'} • {formData.email || 'Email'}</p>
                 <p>Horario: {formData.openingHours} - {formData.closingHours}</p>
+                <p>Moneda: {currencies.find(c => c.value === formData.currency)?.label || 'MXN - Peso Mexicano'}</p>
               </div>
             </div>
           </div>
