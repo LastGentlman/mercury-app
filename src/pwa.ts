@@ -1,9 +1,15 @@
 // src/pwa.ts - ENHANCED VERSION (Debounced & Race-Condition Safe)
 
+// Define BeforeInstallPromptEvent interface
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
 // ✅ MEJORADO: Variables de control para debouncing y race conditions
 let registrationPromise: Promise<ServiceWorkerRegistration | null> | null = null;
 let isRegistering = false;
-let registrationTimeout: NodeJS.Timeout | null = null;
+
 let lastRegistrationAttempt = 0;
 const REGISTRATION_DEBOUNCE_MS = 1000; // 1 segundo de debounce
 const MAX_REGISTRATION_ATTEMPTS = 3;
@@ -66,10 +72,7 @@ export function registerPWA(): Promise<ServiceWorkerRegistration | null> {
     
     const registerSW = async () => {
       try {
-        // ✅ Limpiar timeout anterior si existe
-        if (registrationTimeout) {
-          clearTimeout(registrationTimeout);
-        }
+
         
         // ✅ Intentar registro con retry automático
         const registration = await navigator.serviceWorker.register('/sw.js', {
@@ -108,7 +111,7 @@ export function registerPWA(): Promise<ServiceWorkerRegistration | null> {
     
     // ✅ Registrar cuando el DOM esté listo
     if (document.readyState === 'loading') {
-      window.addEventListener('load', registerSW, { once: true });
+      globalThis.addEventListener('load', registerSW, { once: true });
     } else {
       registerSW();
     }
@@ -120,10 +123,6 @@ export function registerPWA(): Promise<ServiceWorkerRegistration | null> {
 // ✅ MEJORADO: Función de limpieza centralizada
 function cleanupRegistrationState() {
   isRegistering = false;
-  if (registrationTimeout) {
-    clearTimeout(registrationTimeout);
-    registrationTimeout = null;
-  }
 }
 
 // ✅ MEJORADO: Configuración de funcionalidades del Service Worker
@@ -146,7 +145,7 @@ async function setupServiceWorkerFeatures(registration: ServiceWorkerRegistratio
 }
 
 // ✅ MEJORADO: Setup update handler con mejor cleanup
-function setupUpdateHandler(registration: ServiceWorkerRegistration) {
+function setupUpdateHandler(registration: ServiceWorkerRegistration): (() => void) | void {
   try {
     const updateHandler = () => {
       const newWorker = registration.installing;
@@ -170,9 +169,10 @@ function setupUpdateHandler(registration: ServiceWorkerRegistration) {
     registration.addEventListener('updatefound', updateHandler);
     
     // ✅ Cleanup cuando sea necesario
-    return () => {
+    const cleanup = () => {
       registration.removeEventListener('updatefound', updateHandler);
     };
+    return cleanup;
   } catch (error) {
     console.error('❌ Update handler setup failed:', error);
   }
@@ -202,7 +202,7 @@ function showUpdateNotification() {
     console.error('❌ Update notification failed:', error);
     // ✅ Fallback a confirm() si falla la notificación elegante
     if (confirm('Nueva versión disponible! ¿Recargar para actualizar?')) {
-      window.location.reload();
+      globalThis.location.reload();
     }
   }
 }
@@ -211,13 +211,13 @@ function showUpdateNotification() {
 export function isPWAInstalled(): boolean {
   try {
     // Method 1: Check display-mode (most reliable)
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isStandalone = globalThis.matchMedia('(display-mode: standalone)').matches;
 
     // Method 2: iOS Safari specific
-    const isIOSStandalone = (window.navigator as any).standalone === true;
+    const isIOSStandalone = (globalThis.navigator as { standalone?: boolean }).standalone === true;
 
     // Method 3: Check URL parameters
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = new URLSearchParams(globalThis.location.search);
     const isLaunchedFromHomeScreen = searchParams.get('utm_source') === 'pwa';
     const hasStartUrlParam = searchParams.get('source') === 'pwa';
 
@@ -232,7 +232,7 @@ export function isPWAInstalled(): boolean {
         hasStartUrlParam,
         isPWA,
         userAgent: navigator.userAgent.substring(0, 100), // Limit length
-        displayMode: window.matchMedia('(display-mode: standalone)').media
+        displayMode: globalThis.matchMedia('(display-mode: standalone)').media
       });
     }
 
@@ -250,7 +250,7 @@ export function getPWALaunchMethod(): 'browser' | 'installed' | 'unknown' {
       return 'installed';
     }
     
-    if (window.matchMedia('(display-mode: browser)').matches) {
+    if (globalThis.matchMedia('(display-mode: browser)').matches) {
       return 'browser';
     }
     
@@ -284,7 +284,7 @@ export function wasEverInstalledAsPWA(): boolean {
 async function registerBackgroundSync(registration: ServiceWorkerRegistration) {
   try {
     if ('sync' in registration) {
-      await (registration as any).sync.register('background-sync');
+      await (registration as { sync?: { register: (name: string) => Promise<void> } }).sync!.register('background-sync');
       console.log('✅ Background Sync registered');
     } else {
       console.log('⚠️ Background Sync not supported');
@@ -305,7 +305,7 @@ async function registerPeriodicBackgroundSync(registration: ServiceWorkerRegistr
       });
       
       if (status.state === 'granted') {
-        await (registration as any).periodicSync.register('periodic-sync', {
+        await (registration as { periodicSync?: { register: (name: string, options: { minInterval: number }) => Promise<void> } }).periodicSync!.register('periodic-sync', {
           minInterval: 24 * 60 * 60 * 1000 // 24 hours minimum
         });
         console.log('✅ Periodic Background Sync registered');
@@ -325,12 +325,12 @@ async function registerPeriodicBackgroundSync(registration: ServiceWorkerRegistr
 export function showInstallPrompt(): Promise<boolean> {
   return new Promise((resolve) => {
     try {
-      const installPrompt = (window as any).deferredPrompt;
+      const installPrompt = (globalThis as { deferredPrompt?: BeforeInstallPromptEvent | null }).deferredPrompt;
       
       if (installPrompt) {
         installPrompt.prompt();
         installPrompt.userChoice
-          .then((choiceResult: any) => {
+          .then((choiceResult: { outcome: 'accepted' | 'dismissed' }) => {
             if (choiceResult.outcome === 'accepted') {
               console.log('✅ User accepted the install prompt');
               markAsInstalledPWA();
@@ -340,9 +340,9 @@ export function showInstallPrompt(): Promise<boolean> {
               resolve(false);
             }
             // Clean up
-            (window as any).deferredPrompt = null;
+            (globalThis as { deferredPrompt?: BeforeInstallPromptEvent | null }).deferredPrompt = null;
           })
-          .catch((error: any) => {
+          .catch((error: Error) => {
             console.error('❌ Install prompt failed:', error);
             resolve(false);
           });
@@ -365,27 +365,27 @@ export function listenForInstallPrompt() {
   try {
     // Remove existing listeners to prevent duplicates
     if (beforeInstallPromptListener) {
-      window.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
+      globalThis.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
     }
     if (appInstalledListener) {
-      window.removeEventListener('appinstalled', appInstalledListener);
+      globalThis.removeEventListener('appinstalled', appInstalledListener);
     }
 
     // Create new listeners
     beforeInstallPromptListener = (e: Event) => {
       e.preventDefault();
-      (window as any).deferredPrompt = e;
+      (globalThis as { deferredPrompt?: Event }).deferredPrompt = e;
     };
 
     appInstalledListener = () => {
       console.log('📱 PWA was installed');
       markAsInstalledPWA();
-      (window as any).deferredPrompt = null;
+      (globalThis as { deferredPrompt?: BeforeInstallPromptEvent | null }).deferredPrompt = null;
     };
 
     // Add listeners
-    window.addEventListener('beforeinstallprompt', beforeInstallPromptListener);
-    window.addEventListener('appinstalled', appInstalledListener);
+    globalThis.addEventListener('beforeinstallprompt', beforeInstallPromptListener);
+    globalThis.addEventListener('appinstalled', appInstalledListener);
     
   } catch (error) {
     console.error('❌ Install prompt listener setup failed:', error);
@@ -396,11 +396,11 @@ export function listenForInstallPrompt() {
 export function cleanupPWAListeners() {
   try {
     if (beforeInstallPromptListener) {
-      window.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
+      globalThis.removeEventListener('beforeinstallprompt', beforeInstallPromptListener);
       beforeInstallPromptListener = null;
     }
     if (appInstalledListener) {
-      window.removeEventListener('appinstalled', appInstalledListener);
+      globalThis.removeEventListener('appinstalled', appInstalledListener);
       appInstalledListener = null;
     }
   } catch (error) {

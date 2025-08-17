@@ -29,7 +29,7 @@ export function ClientsList() {
   };
 
   const updateClient = (client: unknown) => {
-    return Promise.resolve(updateClientMutation(client));
+    return Promise.resolve(updateClientMutation(client as Partial<Client> & { id: string }));
   };
 
   const filteredClients = clients.filter((client: Client) =>

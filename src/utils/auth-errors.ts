@@ -2,7 +2,7 @@
  * Authentication error handling utilities
  */
 
-import type { AuthError, AuthProvider } from '../types/auth'
+import type { AuthError, AuthProvider } from '../types/auth.ts'
 
 /**
  * Error message translations from English to Spanish
@@ -59,8 +59,8 @@ export function createAuthError(
   provider?: AuthProvider
 ): AuthError {
   const error = new Error(translateErrorMessage(message)) as AuthError
-  error.code = code
-  error.provider = provider
+  error.code = code || ''
+  error.provider = provider || 'email'
   return error
 }
 

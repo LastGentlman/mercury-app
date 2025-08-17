@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card.tsx '
+import { Card, CardContent, CardHeader, CardTitle } from './ui/card.tsx'
 import { Button } from './ui/button.tsx'
 import { 
   Smartphone, 

@@ -205,9 +205,9 @@ _${new Date().toLocaleString('es-MX')}_`;
       if (isEditing) {
         // For now, we'll just create a new order since updateOrder is not implemented
         // You can implement updateOrder in useOrders hook if needed
-        result = await createOrderFromForm.mutateAsync(data);
+        result = await createOrderFromForm.mutateAsync(data as OrderFormData);
       } else {
-        result = await createOrderFromForm.mutateAsync(data);
+        result = await createOrderFromForm.mutateAsync(data as OrderFormData);
       }
 
       // Generate and show receipt

@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import { userEvent } from '@testing-library/user-event'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { CreateOrderDialog } from '../../src/components/CreateOrderDialog.tsx'
@@ -81,7 +81,6 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('CreateOrderDialog', () => {
-  const user = userEvent.default.setup()
   const mockOnOpenChange = vi.fn()
   const defaultProps = {
     open: true,
@@ -146,7 +145,7 @@ describe('CreateOrderDialog', () => {
       )
 
       const submitButton = screen.getByRole('button', { name: /crear pedido/i })
-      await user.click(submitButton)
+      await userEvent.click(submitButton)
 
       await waitFor(() => {
         expect(screen.getByText(/nombre del cliente es requerido/i)).toBeInTheDocument()
@@ -164,10 +163,10 @@ describe('CreateOrderDialog', () => {
       )
 
       const phoneInput = screen.getByLabelText(/teléfono/i)
-      await user.type(phoneInput, '123') // Invalid phone
+      await userEvent.type(phoneInput, '123') // Invalid phone
 
       const submitButton = screen.getByRole('button', { name: /crear pedido/i })
-      await user.click(submitButton)
+      await userEvent.click(submitButton)
 
       await waitFor(() => {
         expect(screen.getByText(/formato de teléfono inválido/i)).toBeInTheDocument()
@@ -184,10 +183,10 @@ describe('CreateOrderDialog', () => {
       const dateInput = screen.getByLabelText(/fecha de entrega/i)
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
-      await user.type(dateInput, yesterday.toISOString().split('T')[0]!)
+      await userEvent.type(dateInput, yesterday.toISOString().split('T')[0]!)
 
       const submitButton = screen.getByRole('button', { name: /crear pedido/i })
-      await user.click(submitButton)
+      await userEvent.click(submitButton)
 
       await waitFor(() => {
         expect(screen.getByText(/la fecha debe ser futura/i)).toBeInTheDocument()
@@ -202,15 +201,15 @@ describe('CreateOrderDialog', () => {
       )
 
       const clientInput = screen.getByLabelText(/nombre del cliente/i)
-      await user.type(clientInput, 'Test Client')
+      await userEvent.type(clientInput, 'Test Client')
 
       const dateInput = screen.getByLabelText(/fecha de entrega/i)
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
-      await user.type(dateInput, tomorrow.toISOString().split('T')[0]!)
+      await userEvent.type(dateInput, tomorrow.toISOString().split('T')[0]!)
 
       const submitButton = screen.getByRole('button', { name: /crear pedido/i })
-      await user.click(submitButton)
+      await userEvent.click(submitButton)
 
       await waitFor(() => {
         expect(screen.getByText(/debe agregar al menos un producto/i)).toBeInTheDocument()
@@ -227,13 +226,13 @@ describe('CreateOrderDialog', () => {
       )
 
       const addItemButton = screen.getByRole('button', { name: /agregar producto/i })
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
       const productSelect = screen.getByLabelText(/producto/i)
-      await user.selectOptions(productSelect, '1') // Tacos al Pastor
+      await userEvent.selectOptions(productSelect, '1') // Tacos al Pastor
 
       const quantityInput = screen.getByLabelText(/cantidad/i)
-      await user.type(quantityInput, '2')
+      await userEvent.type(quantityInput, '2')
 
       // Verify subtotal calculation
       await waitFor(() => {
@@ -250,14 +249,14 @@ describe('CreateOrderDialog', () => {
 
       // Add a product first
       const addItemButton = screen.getByRole('button', { name: /agregar producto/i })
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
       const productSelect = screen.getByLabelText(/producto/i)
-      await user.selectOptions(productSelect, '1')
+      await userEvent.selectOptions(productSelect, '1')
 
       // Remove the product
       const removeButton = screen.getByRole('button', { name: /eliminar/i })
-      await user.click(removeButton)
+      await userEvent.click(removeButton)
 
       await waitFor(() => {
         expect(screen.queryByDisplayValue('Tacos al Pastor')).not.toBeInTheDocument()
@@ -273,19 +272,19 @@ describe('CreateOrderDialog', () => {
 
       // Add first item
       const addItemButton = screen.getByRole('button', { name: /agregar producto/i })
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
       const productSelects = screen.getAllByLabelText(/producto/i)
       const quantityInputs = screen.getAllByLabelText(/cantidad/i)
 
-      await user.selectOptions(productSelects[0]!, '1') // Tacos - $45
-      await user.type(quantityInputs[0]!, '2')
+      await userEvent.selectOptions(productSelects[0]!, '1') // Tacos - $45
+      await userEvent.type(quantityInputs[0]!, '2')
 
       // Add second item
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
-      await user.selectOptions(productSelects[1]!, '2') // Coca Cola - $25
-      await user.type(quantityInputs[1]!, '3')
+      await userEvent.selectOptions(productSelects[1]!, '2') // Coca Cola - $25
+      await userEvent.type(quantityInputs[1]!, '3')
 
       // Verify total: (45 * 2) + (25 * 3) = 90 + 75 = 165
       await waitFor(() => {
@@ -301,7 +300,7 @@ describe('CreateOrderDialog', () => {
       )
 
       const addItemButton = screen.getByRole('button', { name: /agregar producto/i })
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
       const productSelect = screen.getByLabelText(/producto/i)
       
@@ -318,13 +317,13 @@ describe('CreateOrderDialog', () => {
       )
 
       const addItemButton = screen.getByRole('button', { name: /agregar producto/i })
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
       const productSelect = screen.getByLabelText(/producto/i)
-      await user.selectOptions(productSelect, '1') // Tacos (stock: 20)
+      await userEvent.selectOptions(productSelect, '1') // Tacos (stock: 20)
 
       const quantityInput = screen.getByLabelText(/cantidad/i)
-      await user.type(quantityInput, '25') // More than available stock
+      await userEvent.type(quantityInput, '25') // More than available stock
 
       await waitFor(() => {
         expect(screen.getByText(/cantidad no disponible en stock/i)).toBeInTheDocument()
@@ -344,35 +343,35 @@ describe('CreateOrderDialog', () => {
 
       // Fill required fields
       const clientInput = screen.getByLabelText(/nombre del cliente/i)
-      await user.type(clientInput, 'María González')
+      await userEvent.type(clientInput, 'María González')
 
       const phoneInput = screen.getByLabelText(/teléfono/i)
-      await user.type(phoneInput, '+52 555 123 4567')
+      await userEvent.type(phoneInput, '+52 555 123 4567')
 
       const dateInput = screen.getByLabelText(/fecha de entrega/i)
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
-      await user.type(dateInput, tomorrow.toISOString().split('T')[0]!)
+      await userEvent.type(dateInput, tomorrow.toISOString().split('T')[0]!)
 
       const timeInput = screen.getByLabelText(/hora de entrega/i)
-      await user.type(timeInput, '14:30')
+      await userEvent.type(timeInput, '14:30')
 
       const notesInput = screen.getByLabelText(/notas/i)
-      await user.type(notesInput, 'Sin cebolla')
+      await userEvent.type(notesInput, 'Sin cebolla')
 
       // Add products
       const addItemButton = screen.getByRole('button', { name: /agregar producto/i })
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
       const productSelect = screen.getByLabelText(/producto/i)
-      await user.selectOptions(productSelect, '1')
+      await userEvent.selectOptions(productSelect, '1')
 
       const quantityInput = screen.getByLabelText(/cantidad/i)
-      await user.type(quantityInput, '2')
+      await userEvent.type(quantityInput, '2')
 
       // Submit form
       const submitButton = screen.getByRole('button', { name: /crear pedido/i })
-      await user.click(submitButton)
+      await userEvent.click(submitButton)
 
       await waitFor(() => {
         expect(mockCreateOrder).toHaveBeenCalledWith({
@@ -408,26 +407,26 @@ describe('CreateOrderDialog', () => {
 
       // Fill minimal valid form
       const clientInput = screen.getByLabelText(/nombre del cliente/i)
-      await user.type(clientInput, 'Test Client')
+      await userEvent.type(clientInput, 'Test Client')
 
       const dateInput = screen.getByLabelText(/fecha de entrega/i)
       const tomorrow = new Date()
       tomorrow.setDate(tomorrow.getDate() + 1)
-      await user.type(dateInput, tomorrow.toISOString().split('T')[0]!)
+      await userEvent.type(dateInput, tomorrow.toISOString().split('T')[0]!)
 
       // Add product
       const addItemButton = screen.getByRole('button', { name: /agregar producto/i })
-      await user.click(addItemButton)
+      await userEvent.click(addItemButton)
 
       const productSelect = screen.getByLabelText(/producto/i)
-      await user.selectOptions(productSelect, '1')
+      await userEvent.selectOptions(productSelect, '1')
 
       const quantityInput = screen.getByLabelText(/cantidad/i)
-      await user.type(quantityInput, '1')
+      await userEvent.type(quantityInput, '1')
 
       // Submit form
       const submitButton = screen.getByRole('button', { name: /crear pedido/i })
-      await user.click(submitButton)
+      await userEvent.click(submitButton)
 
       await waitFor(() => {
         expect(mockToast).toHaveBeenCalledWith(errorMessage)
@@ -447,7 +446,7 @@ describe('CreateOrderDialog', () => {
       )
 
       const cancelButton = screen.getByRole('button', { name: /cancelar/i })
-      await user.click(cancelButton)
+      await userEvent.click(cancelButton)
 
       expect(mockOnOpenChange).toHaveBeenCalled()
     })
@@ -459,7 +458,7 @@ describe('CreateOrderDialog', () => {
         </TestWrapper>
       )
 
-      await user.keyboard('{Escape}')
+      await userEvent.keyboard('{Escape}')
 
       expect(mockOnOpenChange).toHaveBeenCalled()
     })
@@ -473,7 +472,7 @@ describe('CreateOrderDialog', () => {
 
       // Fill some data
       const clientInput = screen.getByLabelText(/nombre del cliente/i)
-      await user.type(clientInput, 'Test Client')
+      await userEvent.type(clientInput, 'Test Client')
 
       // Close dialog
       rerender(
@@ -552,10 +551,10 @@ describe('CreateOrderDialog', () => {
       // Tab navigation should work
       expect(clientInput).toHaveFocus()
       
-      await user.keyboard('{Tab}')
+      await userEvent.keyboard('{Tab}')
       expect(phoneInput).toHaveFocus()
       
-      await user.keyboard('{Tab}')
+      await userEvent.keyboard('{Tab}')
       expect(dateInput).toHaveFocus()
     })
 
@@ -567,7 +566,7 @@ describe('CreateOrderDialog', () => {
       )
 
       const submitButton = screen.getByRole('button', { name: /crear pedido/i })
-      await user.click(submitButton)
+      await userEvent.click(submitButton)
 
       await waitFor(() => {
         const errorMessage = screen.getByText(/nombre del cliente es requerido/i)

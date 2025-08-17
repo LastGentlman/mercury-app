@@ -20,7 +20,7 @@ export function usePWARegistration() {
     registration: null
   })
 
-  const debounceTimeoutRef = useRef<number | null>(null)
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isMountedRef = useRef(true)
 
   // ✅ Función de registro con debouncing adicional
@@ -81,7 +81,7 @@ export function usePWARegistration() {
     }
 
     // ✅ Crear nuevo timeout para debouncing
-    debounceTimeoutRef.current = setTimeout(() => {
+    debounceTimeoutRef.current = globalThis.setTimeout(() => {
       registerWithDebounce()
     }, delay)
   }, [registerWithDebounce])
@@ -90,7 +90,7 @@ export function usePWARegistration() {
   const forceRegister = useCallback(() => {
     // ✅ Limpiar cualquier debounce pendiente
     if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current as unknown as number)
+      clearTimeout(debounceTimeoutRef.current)
       debounceTimeoutRef.current = null
     }
     
