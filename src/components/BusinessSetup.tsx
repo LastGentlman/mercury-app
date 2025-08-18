@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from './ui/index.ts';
 import { Label } from './ui/index.ts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/index.ts';
-import { Alert, AlertDescription } from './ui/index.ts';
+import { Alert } from './ui/index.ts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/index.ts';
 import { Textarea } from './ui/index.ts';
 import { useNotifications } from '../hooks/useNotifications.ts';
@@ -374,10 +374,10 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
             <CardContent className="pb-6">
               <div className="space-y-4">
                 <Alert className="border-blue-200 bg-blue-50">
-                  <AlertDescription className="text-blue-800">
+                  <CardDescription className="text-blue-800">
                     <strong>¿Nuevo en Mercury?</strong> Crea tu negocio en segundos o únete 
                     a uno existente con un código de invitación.
-                  </AlertDescription>
+                  </CardDescription>
                 </Alert>
               </div>
             </CardContent>
