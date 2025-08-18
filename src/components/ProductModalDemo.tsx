@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button } from './ui/button.tsx'
+import { Button } from './ui/index.ts'
 import { CreateProductModal } from './CreateProductModal.tsx'
 import { EditProductModal } from './EditProductModal.tsx'
 import type { Product } from '../types/index.ts'

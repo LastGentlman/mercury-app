@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Store, Plus, Link, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Phone, Mail } from 'lucide-react';
-import { Button } from './ui/button.tsx';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/card.tsx';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog.tsx';
-import { Input } from './ui/input.tsx';
-import { Label } from './ui/label.tsx';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs.tsx';
-import { Alert, AlertDescription } from './ui/alert.tsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.tsx';
-import { Textarea } from './ui/textarea.tsx';
+import { Button } from './ui/index.ts';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/index.ts';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/index.ts';
+import { Input } from './ui/index.ts';
+import { Label } from './ui/index.ts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/index.ts';
+import { Alert, AlertDescription } from './ui/index.ts';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/index.ts';
+import { Textarea } from './ui/index.ts';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 

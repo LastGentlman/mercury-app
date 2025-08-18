@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
-import { Button } from './ui/button.tsx'
-import { Input } from './ui/input.tsx'
-import { Label } from './ui/label.tsx'
-import { Textarea } from './ui/textarea.tsx'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select.tsx'
+import { Button } from './ui/index.ts'
+import { Input } from './ui/index.ts'
+import { Label } from './ui/index.ts'
+import { Textarea } from './ui/index.ts'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/index.ts'
 import type { Product } from '../types/index.ts'
 
 interface CreateProductModalProps {

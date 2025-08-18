@@ -10,9 +10,9 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import type { Order } from '../types/index.ts'
-import { StatusBadge } from './ui/status-badge.tsx'
-import { EnhancedButton } from './ui/enhanced-button.tsx'
-import { Card, CardContent, CardHeader } from './ui/card.tsx'
+import { StatusBadge } from './ui/index.ts'
+import { EnhancedButton } from './ui/index.ts'
+import { Card, CardContent, CardHeader } from './ui/index.ts'
 import { cn } from '../lib/ui-utils.ts'
 
 interface EnhancedOrderCardProps {

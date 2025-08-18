@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { AlertTriangle, CheckCircle, RefreshCw, XCircle } from 'lucide-react'
-import { Button } from './ui/button.tsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card.tsx'
+import { Button } from './ui/index.ts'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/index.ts'
 import type { ConflictInfo } from '../lib/offline/conflictResolver.ts'
 
 interface ConflictResolverProps {

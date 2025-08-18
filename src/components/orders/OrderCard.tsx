@@ -1,9 +1,9 @@
 import { Calendar, Clock, MoreVertical, Phone, User } from 'lucide-react';
 import type { Order } from '../../types/index.ts';
-import { Badge } from '../ui/badge.tsx';
-import { Button } from '../ui/button.tsx';
-import { Card, CardContent, CardHeader } from '../ui/card.tsx';
-import { StatusBadge } from '../ui/status-badge.tsx';
+import { Badge } from '../ui/index.ts';
+import { Button } from '../ui/index.ts';
+import { Card, CardContent, CardHeader } from '../ui/index.ts';
+import { StatusBadge } from '../ui/index.ts';
 import { formatCurrency, formatDate, formatTime } from '../../lib/utils.ts';
 
 interface OrderCardProps {

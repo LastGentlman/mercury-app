@@ -1,8 +1,8 @@
 import { Calendar, Clock, MessageCircle, Phone, Share2, Trash2, User } from 'lucide-react';
 import type { Order } from '../../types/index.ts';
-import { Button } from '../ui/button.tsx';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
-import { Separator } from '../ui/separator.tsx';
+import { Button } from '../ui/index.ts';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/index.ts';
+import { Separator } from '../ui/index.ts';
 import { formatCurrency, formatDate, formatTime } from '../../lib/utils.ts';
 
 interface OrderDetailsProps {

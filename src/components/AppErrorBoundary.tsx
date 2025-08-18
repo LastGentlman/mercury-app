@@ -1,7 +1,7 @@
 import { ErrorBoundary } from '@sentry/react'
 import { useNavigate } from '@tanstack/react-router'
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react'
-import { Button } from './ui/button.tsx'
+import { Button } from './ui/index.ts'
 
 interface ErrorFallbackProps {
   error: unknown

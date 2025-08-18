@@ -21,7 +21,7 @@ import {
   TrendingUp,
   User
 } from 'lucide-react'
-import { Alert, Badge, Button, Card, Input, Spinner } from '../components/ui/design-system-components'
+import { Alert, Badge, Button, Card, Input, Skeleton } from '../components/ui/index.ts'
 
 // Status Badge Component for order states
 const StatusBadge = ({ status, size = 'md' }: { status: string; size?: 'sm' | 'md' }) => {
@@ -88,6 +88,7 @@ const ComponentShowcase = ({
           </div>
           <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={copyCode}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
               title="Copiar código"
@@ -95,6 +96,7 @@ const ComponentShowcase = ({
               <Copy className="h-4 w-4" />
             </button>
             <button
+              type="button"
               onClick={() => setShowCode(!showCode)}
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded-lg transition-colors"
               title="Ver código"
@@ -173,28 +175,30 @@ function DesignSystemPage() {
           <ComponentShowcase
             title="Variantes de Botones"
             description="Diferentes estilos para diferentes acciones"
-            code={`<Button variant="primary">Primario</Button>
-<Button variant="secondary">Secundario</Button>
-<Button variant="danger">Peligro</Button>
-<Button variant="success">Éxito</Button>
-<Button variant="outline">Outline</Button>`}
+            code={`<Button variant="default">Primario</Button>
+                   <Button variant="outline">Secundario</Button>
+                   <Button variant="destructive">Peligro</Button>
+                   <Button variant="default">Éxito</Button>
+                   <Button variant="ghost">Outline</Button>`
+                 }
           >
-            <Button variant="primary">Primario</Button>
-            <Button variant="secondary">Secundario</Button>
-            <Button variant="danger">Peligro</Button>
-            <Button variant="success">Éxito</Button>
-            <Button variant="outline">Outline</Button>
+            <Button variant="default">Primario</Button>
+            <Button variant="outline">Secundario</Button>
+            <Button variant="destructive">Peligro</Button>
+            <Button variant="default">Éxito</Button>
+            <Button variant="ghost">Outline</Button>
           </ComponentShowcase>
           
           <ComponentShowcase
             title="Tamaños de Botones"
             description="Diferentes tamaños para diferentes contextos"
             code={`<Button size="sm">Pequeño</Button>
-<Button size="md">Mediano</Button>
-<Button size="lg">Grande</Button>`}
+                   <Button size="default">Mediano</Button>
+                   <Button size="lg">Grande</Button>`
+                 }
           >
             <Button size="sm">Pequeño</Button>
-            <Button size="md">Mediano</Button>
+            <Button size="default">Mediano</Button>
             <Button size="lg">Grande</Button>
           </ComponentShowcase>
         </div>
@@ -207,13 +211,14 @@ function DesignSystemPage() {
           <ComponentShowcase
             title="Estados de Input"
             description="Diferentes estados para validación"
-            code={`<Input label="Email" placeholder="tu@email.com" />
-<Input label="Contraseña" type="password" error="Campo requerido" />
-<Input label="Nombre" success={true} helperText="Válido" />`}
+            code={`<Input placeholder="tu@email.com" />
+                   <Input type="password" placeholder="Contraseña" />
+                   <Input placeholder="Nombre" />`
+                 }
           >
-            <Input label="Email" placeholder="tu@email.com" />
-            <Input label="Contraseña" type="password" error="Campo requerido" />
-            <Input label="Nombre" success={true} helperText="Válido" />
+            <Input placeholder="tu@email.com" />
+            <Input type="password" placeholder="Contraseña" />
+            <Input placeholder="Nombre" />
           </ComponentShowcase>
         </div>
       </section>
@@ -225,13 +230,13 @@ function DesignSystemPage() {
           <ComponentShowcase
             title="Variantes de Tarjetas"
             description="Diferentes niveles de elevación"
-            code={`<Card variant="base">Contenido base</Card>
-<Card variant="elevated">Contenido elevado</Card>
-<Card variant="flat">Contenido plano</Card>`}
+            code={`<Card className="p-4 w-48">Contenido base</Card>
+                   <Card className="p-4 w-48">Contenido elevado</Card>
+                   <Card className="p-4 w-48">Contenido plano</Card>`}
           >
-            <Card variant="base" className="p-4 w-48">Contenido base</Card>
-            <Card variant="elevated" className="p-4 w-48">Contenido elevado</Card>
-            <Card variant="flat" className="p-4 w-48">Contenido plano</Card>
+            <Card className="p-4 w-48">Contenido base</Card>
+            <Card className="p-4 w-48">Contenido elevado</Card>
+            <Card className="p-4 w-48">Contenido plano</Card>
           </ComponentShowcase>
         </div>
       </section>
@@ -243,17 +248,18 @@ function DesignSystemPage() {
           <ComponentShowcase
             title="Badges del Sistema"
             description="Indicadores semánticos"
-            code={`<Badge variant="primary">Nuevo</Badge>
-<Badge variant="success">Completado</Badge>
-<Badge variant="warning">Pendiente</Badge>
-<Badge variant="error">Error</Badge>
-<Badge variant="neutral">Neutral</Badge>`}
+            code={`<Badge variant="default">Nuevo</Badge>
+                   <Badge variant="default">Completado</Badge>
+                   <Badge variant="default">Pendiente</Badge>
+                   <Badge variant="default">Error</Badge>
+                   <Badge variant="default">Neutral</Badge>`
+                  }
           >
-            <Badge variant="primary">Nuevo</Badge>
-            <Badge variant="success">Completado</Badge>
-            <Badge variant="warning">Pendiente</Badge>
-            <Badge variant="error">Error</Badge>
-            <Badge variant="neutral">Neutral</Badge>
+            <Badge variant="default">Nuevo</Badge>
+            <Badge variant="default">Completado</Badge>
+            <Badge variant="default">Pendiente</Badge>
+            <Badge variant="default">Error</Badge>
+            <Badge variant="default">Neutral</Badge>
           </ComponentShowcase>
         </div>
       </section>
@@ -265,9 +271,10 @@ function DesignSystemPage() {
           title="Badges de Estado"
           description="Indicadores visuales para el estado de los pedidos"
           code={`<StatusBadge status="pending" />
-<StatusBadge status="preparing" />
-<StatusBadge status="ready" />
-<StatusBadge status="delivered" />`}
+                 <StatusBadge status="preparing" />
+                 <StatusBadge status="ready" />
+                 <StatusBadge status="delivered" />`
+               }
         >
           <StatusBadge status="pending" />
           <StatusBadge status="preparing" />
@@ -283,16 +290,17 @@ function DesignSystemPage() {
           <ComponentShowcase
             title="Tipos de Alertas"
             description="Mensajes informativos y de estado"
-            code={`<Alert variant="success" title="Éxito">Operación completada</Alert>
-<Alert variant="warning" title="Advertencia">Revisa los datos</Alert>
-<Alert variant="error" title="Error">Algo salió mal</Alert>
-<Alert variant="info" title="Información">Información importante</Alert>`}
+            code={`<Alert variant="default" title="Éxito">Operación completada</Alert>
+                   <Alert variant="default" title="Advertencia">Revisa los datos</Alert>
+                   <Alert variant="default" title="Error">Algo salió mal</Alert>
+                   <Alert variant="default" title="Información">Información importante</Alert>`
+                 }
           >
             <div className="space-y-4 w-full">
-              <Alert variant="success" title="Éxito">Operación completada correctamente.</Alert>
-              <Alert variant="warning" title="Advertencia">Revisa los datos ingresados.</Alert>
-              <Alert variant="error" title="Error">Algo salió mal, intenta de nuevo.</Alert>
-              <Alert variant="info" title="Información">Información importante para el usuario.</Alert>
+              <Alert variant="default" title="Éxito">Operación completada correctamente.</Alert>
+              <Alert variant="default" title="Advertencia">Revisa los datos ingresados.</Alert>
+              <Alert variant="default" title="Error">Algo salió mal, intenta de nuevo.</Alert>
+              <Alert variant="default" title="Información">Información importante para el usuario.</Alert>
             </div>
           </ComponentShowcase>
         </div>
@@ -304,13 +312,14 @@ function DesignSystemPage() {
         <ComponentShowcase
           title="Spinners"
           description="Indicadores de carga"
-          code={`<Spinner size="sm" />
-<Spinner size="md" />
-<Spinner size="lg" />`}
+          code={`<Skeleton className="w-16 h-16" />
+                 <Skeleton className="w-24 h-24" />
+                 <Skeleton className="w-32 h-32" />`
+               }
         >
-          <Spinner size="sm" />
-          <Spinner size="md" />
-          <Spinner size="lg" />
+          <Skeleton className="w-16 h-16" />
+          <Skeleton className="w-24 h-24" />
+          <Skeleton className="w-32 h-32" />
         </ComponentShowcase>
       </section>
       

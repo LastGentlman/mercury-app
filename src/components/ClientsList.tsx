@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { DollarSign, Plus, Search, TrendingUp, User } from 'lucide-react';
-import { Button } from './ui/button.tsx'  ;
-import { Input } from './ui/input.tsx';
-import { Card } from './ui/card.tsx';
+import { Button } from './ui/index.ts'  ;
+import { Input } from './ui/index.ts';
+import { Card } from './ui/index.ts';
 import { ClientCard } from './ClientCard.tsx';
 import { CreateClientModal } from './CreateClientModal.tsx';
 import { EditClientModal } from './EditClientModal.tsx';

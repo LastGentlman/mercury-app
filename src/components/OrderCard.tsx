@@ -8,9 +8,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Order } from '../types/index.ts';
-import { Badge } from './ui/badge.tsx';
-import { Button } from './ui/button.tsx';
-import { Card, CardContent, CardHeader } from './ui/card.tsx';
+import { Badge } from './ui/index.ts';
+import { Button } from './ui/index.ts';
+import { Card, CardContent, CardHeader } from './ui/index.ts';
 
 interface OrderCardProps {
   order: Order;

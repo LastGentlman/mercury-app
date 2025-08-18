@@ -1,8 +1,8 @@
 import { AlertTriangle, Loader2, Play } from 'lucide-react'
 import { useLoadingState } from '../hooks/useLoadingState.ts'
 import { useNotifications } from '../hooks/useNotifications.ts'
-import { Button } from './ui/button.tsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card.tsx'
+import { Button } from './ui/index.ts'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/index.ts'
 import { ComponentLoadingSuspense, LoadingSuspense } from './LoadingSuspense.tsx'
 
 // Demo component that throws an error

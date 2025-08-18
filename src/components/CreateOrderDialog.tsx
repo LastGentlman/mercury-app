@@ -2,12 +2,12 @@ import React from 'react';
 import { Copy, MessageCircle, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useOrders } from '../hooks/useOrders.ts';
-import { Button } from './ui/button.tsx';
-import { Card, CardContent } from './ui/card.tsx';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog.tsx';
-import { Input } from './ui/input.tsx';
-import { Label } from './ui/label.tsx';
-import { Textarea } from './ui/textarea.tsx';
+import { Button } from './ui/index.ts';
+import { Card, CardContent } from './ui/index.ts';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/index.ts';
+import { Input } from './ui/index.ts';
+import { Label } from './ui/index.ts';
+import { Textarea } from './ui/index.ts';
 import type { OrderFormData } from '../types/index.ts';
 
 interface CreateOrderDialogProps {

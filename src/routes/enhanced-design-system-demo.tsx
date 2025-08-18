@@ -8,13 +8,9 @@ import {
   TrendingUp,
   Users
 } from 'lucide-react'
-import type { Order } from '@/types'
-import { EnhancedButton } from '@/components/ui/enhanced-button'
-import { StatusBadge } from '@/components/ui/status-badge'
-import { StatsCard } from '@/components/ui/stats-card'
-import { EmptyState } from '@/components/ui/empty-state'
-import { Skeleton } from '@/components/ui/skeleton'
-import { EnhancedOrderCard } from '@/components/EnhancedOrderCard'
+import type { Order } from '../types/index.ts'
+import { EnhancedButton, StatusBadge, StatsCard, EmptyState, Skeleton } from '../components/ui/index.ts'
+import { EnhancedOrderCard } from '../components/EnhancedOrderCard.tsx'
 
 // ✅ CORRECCIÓN: Crear y exportar la ruta correctamente
 export const Route = createFileRoute('/enhanced-design-system-demo')({
@@ -182,7 +178,7 @@ export default function EnhancedDesignSystemPage() {
                   </EnhancedButton>
                   <EnhancedButton 
                     variant="success" 
-                    loading={true}
+                    loading
                     disabled
                   >
                     Guardando...

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useBusinessCategories } from '../hooks/useBusinessCategories.ts';
 import { AlertCircle, Save, Package, Plus, Tag } from 'lucide-react';
-import { Button } from './ui/button.tsx';
-import { Input } from './ui/input.tsx';
-import { Label } from './ui/label.tsx';
+import { Button } from './ui/index.ts';
+import { Input } from './ui/index.ts';
+import { Label } from './ui/index.ts';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../lib/offline/db.ts';

@@ -1,5 +1,5 @@
 import { useAuth } from '../hooks/useAuth.ts'
-import { Button } from './ui/button.tsx'
+import { Button } from './ui/index.ts'
 
 interface SocialLoginButtonsProps {
   className?: string

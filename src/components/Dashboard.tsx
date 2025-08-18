@@ -3,8 +3,8 @@ import { AlertCircle, CheckCircle, Clock, Package, Plus, TrendingUp, Users } fro
 import type { Order } from '../types/index.ts';
 import { useOrders } from '../hooks/useOrders.ts';
 import { useDashboardStats } from '../hooks/useDashboardStats.ts';
-import { Button } from './ui/button.tsx';
-import { Card, CardContent } from './ui/card.tsx';
+import { Button } from './ui/index.ts';
+import { Card, CardContent } from './ui/index.ts';
 import { CreateOrderDialog } from './CreateOrderDialog.tsx';
 import { OrderCard } from './orders/OrderCard.tsx';
 import { OrderDetails } from './orders/OrderDetails.tsx';

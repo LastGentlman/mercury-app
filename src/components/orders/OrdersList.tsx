@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react';
 import { Search, SortAsc, SortDesc } from 'lucide-react';
 import type { Order } from '../../types/index.ts';
 import { OrderCard } from './OrderCard.tsx';
-import { Input } from '../ui/input.tsx';
-import { Button } from '../ui/button.tsx';
-import { Card, CardContent, CardHeader, CardTitle } from '../ui/card.tsx';
-import { Badge } from '../ui/badge.tsx';
+import { Input } from '../ui/index.ts';
+import { Button } from '../ui/index.ts';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/index.ts';
+import { Badge } from '../ui/index.ts';
 
 interface OrdersListProps {
   orders: Order[];

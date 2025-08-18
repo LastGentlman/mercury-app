@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { FileText, Mail, MapPin, Phone, User } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog.tsx';
-import { Button } from './ui/button.tsx';
-import { Input } from './ui/input.tsx';
-import { Label } from './ui/label.tsx';
-import { Textarea } from './ui/textarea.tsx';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/index.ts';
+import { Button } from './ui/index.ts';
+import { Input } from './ui/index.ts';
+import { Label } from './ui/index.ts';
+import { Textarea } from './ui/index.ts';
 import type { Client } from '../types/index.ts';
 
 interface EditClientModalProps {

@@ -8,7 +8,7 @@ import {
   LogOut
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
-import { Button } from './ui/button.tsx'
+import { Button } from './ui/index.ts'
 
 interface BottomNavItemProps {
   href: string
