@@ -19,6 +19,7 @@ function RouteComponent() {
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [showEmailForm, setShowEmailForm] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -140,26 +141,55 @@ function RouteComponent() {
           </CardHeader>
           
           <CardContent className="space-y-6">
-            {/* Social Login */}
-            <div className="space-y-4">
-              <SocialLoginButtons disabled={login.isPending || register.isPending} />
-              
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t border-gray-300" />
+            {!showEmailForm ? (
+              <>
+                {/* Social Login */}
+                <div className="space-y-4">
+                  <SocialLoginButtons disabled={login.isPending || register.isPending} />
+                  
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t border-gray-300" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="bg-white px-2 text-gray-500">O CONTINÚA CON EMAIL</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="bg-white px-2 text-gray-500">O continúa con</span>
-                </div>
-              </div>
-            </div>
 
-            {/* Auth Tabs */}
-            <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(value) => setIsLogin(value === 'login')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
-                <TabsTrigger value="register">Registrarse</TabsTrigger>
-              </TabsList>
+                {/* Email Access Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full flex items-center justify-center space-x-2 py-3"
+                  onClick={() => setShowEmailForm(true)}
+                  disabled={login.isPending || register.isPending}
+                >
+                  <Mail className="h-5 w-5" />
+                  <span>Continuar con Email</span>
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* Back Button */}
+                <div className="flex justify-start">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowEmailForm(false)}
+                    className="text-gray-600 hover:text-gray-800"
+                  >
+                    ← Volver
+                  </Button>
+                </div>
+
+                {/* Auth Tabs */}
+                <Tabs value={isLogin ? 'login' : 'register'} onValueChange={(value) => setIsLogin(value === 'login')}>
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Iniciar Sesión</TabsTrigger>
+                    <TabsTrigger value="register">Registrarse</TabsTrigger>
+                  </TabsList>
 
               {/* Login Form */}
               <TabsContent value="login" className="space-y-4">
@@ -345,6 +375,8 @@ function RouteComponent() {
                 </p>
               )}
             </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
