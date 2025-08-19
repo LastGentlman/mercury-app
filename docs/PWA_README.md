@@ -1,4 +1,4 @@
-# PWA Setup for Mercury App
+# PWA Setup for PedidoList App
 
 This app has been configured as a Progressive Web App (PWA) with the following features:
 
@@ -20,8 +20,8 @@ This app has been configured as a Progressive Web App (PWA) with the following f
 
 ### Manifest.json
 
-- App name: "Mercury App"
-- Short name: "Mercury"
+- App name: "PedidoList App"
+- Short name: "PedidoList"
 - Theme color: #000000
 - Background color: #ffffff
 - Display mode: standalone

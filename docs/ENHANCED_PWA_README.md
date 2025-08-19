@@ -1,6 +1,6 @@
 # Enhanced PWA Features
 
-This document describes the enhanced Progressive Web App (PWA) features implemented in the Mercury App.
+This document describes the enhanced Progressive Web App (PWA) features implemented in the PedidoList App.
 
 ## 🚀 Enhanced PWA Detection
 

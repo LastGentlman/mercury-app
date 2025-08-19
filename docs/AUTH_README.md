@@ -129,7 +129,7 @@ The backend will start on `http://localhost:3030`
 ### 2. Starting the Frontend
 
 ```bash
-cd mercury-app
+cd pedidolist-app
 npm run dev
 ```
 
@@ -158,7 +158,7 @@ The frontend will start on `http://localhost:3000`
 ## File Structure
 
 ```bash
-mercury-app/src/
+pedidolist-app/src/
 ├── hooks/
 │   └── useAuth.ts              # Authentication hook
 ├── components/

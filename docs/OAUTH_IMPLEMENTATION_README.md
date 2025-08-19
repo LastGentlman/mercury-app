@@ -1,6 +1,6 @@
 # OAuth Implementation with Supabase
 
-This document explains how to set up and use the new OAuth functionality that has been added to the Mercury App.
+This document explains how to set up and use the new OAuth functionality that has been added to the PedidoList App.
 
 ## ✨ Features Added
 
@@ -14,14 +14,14 @@ This document explains how to set up and use the new OAuth functionality that ha
 
 ### 1. Environment Variables
 
-Create a `.env.local` file in the `mercury-app` directory with the following variables:
+Create a `.env.local` file in the `pedidolist-app` directory with the following variables:
 
 ```env
 # API Configuration
 VITE_API_URL=http://localhost:3000
 
 # App Configuration  
-VITE_APP_TITLE=Mercury App
+VITE_APP_TITLE=PedidoList App
 
 # Supabase Configuration for OAuth
 VITE_SUPABASE_URL=https://your-project-ref.supabase.co

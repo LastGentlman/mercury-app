@@ -49,7 +49,7 @@
 2. **Run Emergency Disable Script**
 
    ```bash
-   cd mercury-app
+   cd pedidolist-app
    ./emergency-pwa-disable.sh
    ```
 

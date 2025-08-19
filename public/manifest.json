@@ -1,6 +1,6 @@
 {
-  "name": "Mercury App",
-  "short_name": "Mercury",
+  "name": "PedidoList App",
+  "short_name": "PedidoList",
   "description": "Una Progressive Web App moderna para gestión de órdenes",
   "start_url": "/?source=pwa",
   "display": "standalone",
@@ -56,7 +56,7 @@
   ],
   "protocol_handlers": [
     {
-      "protocol": "web+mercury",
+      "protocol": "web+pedidolist",
       "url": "/?handler=%s"
     }
   ],

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚨 EMERGENCY PWA FIX - Mercury App"
+echo "🚨 EMERGENCY PWA FIX - PedidoList App"
 echo "=================================="
 
 # 1. Limpiar completamente

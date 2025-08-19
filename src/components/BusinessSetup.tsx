@@ -357,7 +357,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
             <div className="inline-flex items-center justify-center w-32 h-32 bg-blue-100 rounded-full mb-6">
               <Store className="w-16 h-16 text-blue-600" strokeWidth={1.5} />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Mercury</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">PedidoList</h1>
             <p className="text-gray-600">Sistema de Gestión de Pedidos</p>
           </div>
 
@@ -375,7 +375,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
               <div className="space-y-4">
                 <Alert className="border-blue-200 bg-blue-50">
                   <CardDescription className="text-blue-800">
-                    <strong>¿Nuevo en Mercury?</strong> Crea tu negocio en segundos o únete 
+                    <strong>¿Nuevo en PedidoList?</strong> Crea tu negocio en segundos o únete 
                     a uno existente con un código de invitación.
                   </CardDescription>
                 </Alert>
@@ -395,7 +395,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                   <DialogHeader>
                     <DialogTitle>Configurar tu Negocio</DialogTitle>
                     <DialogDescription>
-                      Elige cómo quieres comenzar con Mercury
+                      Elige cómo quieres comenzar con PedidoList
                     </DialogDescription>
                   </DialogHeader>
 

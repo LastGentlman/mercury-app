@@ -13,8 +13,8 @@ export const BACKGROUND_SYNC_CONFIG = {
   MIN_INTERVAL: 24 * 60 * 60 * 1000, // 24 hours minimum
   
   // Cache settings
-  CACHE_NAME: 'mercury-app-v1',
-  OFFLINE_CACHE: 'mercury-offline-v1',
+  CACHE_NAME: 'pedidolist-app-v1',
+  OFFLINE_CACHE: 'pedidolist-offline-v1',
   
   // Database settings
   DB_NAME: 'PedidoListDB',

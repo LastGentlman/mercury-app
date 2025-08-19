@@ -2,7 +2,7 @@
 
 ## 🎯 OAuth Authentication Refactor
 
-This document summarizes the best practices applied to the Mercury App authentication system.
+This document summarizes the best practices applied to the PedidoList App authentication system.
 
 ## ✅ Best Practices Implemented
 

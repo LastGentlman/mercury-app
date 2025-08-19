@@ -1,4 +1,4 @@
-# 🎉 Guía de Uso de Sonner en Mercury App
+# 🎉 Guía de Uso de Sonner en PedidoList App
 
 ## ¿Qué es Sonner?
 

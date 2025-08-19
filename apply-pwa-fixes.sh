@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🔧 APPLYING PWA FIXES - Mercury App"
+echo "🔧 APPLYING PWA FIXES - PedidoList App"
 echo "=================================="
 
 # 1. Clean all caches

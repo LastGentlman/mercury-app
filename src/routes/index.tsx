@@ -33,7 +33,7 @@ function Index() {
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
           <div className="text-center">
             <p className="text-lg font-medium text-gray-900">
-              Cargando Mercury App...
+              Cargando PedidoList App...
             </p>
             <p className="text-sm text-gray-600 mt-1">
               {isPWA ? '📱 Modo PWA detectado' : '🌐 Versión web'}
@@ -64,7 +64,7 @@ function Index() {
             </div>
 
             <p className="text-xl text-gray-600 mb-8">
-              Tu aplicación Mercury está lista para usar
+              Tu aplicación PedidoList está lista para usar
               {isPWA && (
                 <span className="block text-sm text-blue-600 mt-2 font-medium">
                   ✨ Ejecutándose como aplicación nativa
@@ -132,7 +132,7 @@ function Index() {
           {/* Hero Section */}
           <div className="mb-16">
             <h1 className="text-6xl font-bold text-gray-900 mb-6">
-              Mercury App
+              PedidoList
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
               Una Progressive Web App moderna construida con React, TanStack Router, 

@@ -1,6 +1,6 @@
 // public/sw.js - OPTIMIZED VERSION WITH AUTH PERFORMANCE IMPROVEMENTS
-const CACHE_NAME = 'mercury-app-v1';
-const OFFLINE_CACHE = 'mercury-offline-v1';
+const CACHE_NAME = 'pedidolist-app-v1';
+const OFFLINE_CACHE = 'pedidolist-offline-v1';
 
 // ✅ Assets estáticos a cachear
 const STATIC_ASSETS = [

@@ -33,7 +33,7 @@ export default function Header() {
               to="/" 
               className="text-slate-800 hover:text-blue-600 transition-colors duration-300"
             >
-              Mercury
+              PedidoList
             </Link>
           </div>
 

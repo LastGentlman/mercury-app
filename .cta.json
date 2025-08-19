@@ -1,5 +1,5 @@
 {
-  "projectName": "mercury-app",
+  "projectName": "pedidolist-app",
   "mode": "file-router",
   "typescript": true,
   "tailwind": true,
