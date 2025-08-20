@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.
 import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordRequirements } from '../components/PasswordRequirements.tsx'
-import { Loader2, Eye, EyeOff, Mail, Lock, User, AlertCircle as _AlertCircle } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { toast } from 'sonner'
 
 export const Route = createFileRoute('/auth')({
@@ -248,7 +248,7 @@ function RouteComponent() {
                       <Input
                         id="login-password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
+                        placeholder="••••••••••••"
                         value={formData.password}
                         onChange={(e) => handleInputChange('password', e.target.value)}
                         className="pl-10 pr-10"
@@ -354,7 +354,7 @@ function RouteComponent() {
                       <Input
                         id="register-confirm-password"
                         type={showConfirmPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
+                        placeholder="••••••••••••"
                         value={formData.confirmPassword}
                         onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                         className="pl-10 pr-10"
