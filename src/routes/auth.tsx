@@ -153,7 +153,10 @@ function RouteComponent() {
                   type="button"
                   variant="outline"
                   className="w-full flex items-center justify-center space-x-2 py-3"
-                  onClick={() => setShowEmailForm(true)}
+                  onClick={() => {
+                    setShowEmailForm(true)
+                    setIsLogin(true) // Ensure login tab is selected by default
+                  }}
                   disabled={login.isPending || register.isPending}
                 >
                   <Mail className="h-5 w-5" />
