@@ -88,32 +88,91 @@ function RouteComponent() {
       return
     }
 
-    // Validación de contraseña mejorada
-    const passwordValidation = {
-      length: formData.password.length >= 12,
-      lowercase: /[a-z]/.test(formData.password),
-      uppercase: /[A-Z]/.test(formData.password),
-      number: /\d/.test(formData.password),
-      symbol: /[@$!%*?&]/.test(formData.password),
-      noRepetition: !/(.)\1{3,}/.test(formData.password)
-    }
+    // Validación de contraseña mejorada - coincidente con el backend
+    const password = formData.password;
+    
+    // Validaciones básicas
+    const basicValidation = {
+      length: password.length >= 12 && password.length <= 128,
+      lowercase: /[a-z]/.test(password),
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      symbol: /[@$!%*?&]/.test(password),
+      noRepetition: !/(.)\1{3,}/.test(password),
+      noPatterns: !/^(.{1,3})\1+$/.test(password)
+    };
 
-    const unmetRequirements = Object.entries(passwordValidation)
+    // Verificar contraseñas comunes
+    const commonPasswords = [
+      "123456789012", "password123!", "qwerty123456", 
+      "admin123456!", "welcome123456", "Password123!", "password123"
+    ];
+    const isCommonPassword = commonPasswords.some(common => 
+      password.toLowerCase() === common.toLowerCase()
+    );
+
+    // Calcular fortaleza de contraseña
+    let strengthScore = 0;
+    const feedback: string[] = [];
+
+    // Longitud (0-25 puntos)
+    if (password.length >= 12) strengthScore += 25;
+    else feedback.push("Aumenta la longitud a al menos 12 caracteres");
+
+    // Complejidad (0-40 puntos)
+    if (/[a-z]/.test(password)) strengthScore += 10;
+    else feedback.push("Incluye al menos una letra minúscula");
+    
+    if (/[A-Z]/.test(password)) strengthScore += 10;
+    else feedback.push("Incluye al menos una letra mayúscula");
+    
+    if (/\d/.test(password)) strengthScore += 10;
+    else feedback.push("Incluye al menos un número");
+    
+    if (/[@$!%*?&]/.test(password)) strengthScore += 10;
+    else feedback.push("Incluye al menos un símbolo especial (@$!%*?&)");
+
+    // Diversidad (0-20 puntos)
+    const uniqueChars = new Set(password).size;
+    if (uniqueChars >= 10) strengthScore += 20;
+    else if (uniqueChars >= 8) strengthScore += 15;
+    else if (uniqueChars >= 6) strengthScore += 10;
+    else feedback.push("Usa una mayor variedad de caracteres");
+
+    // Patrones (0-15 puntos)
+    if (!/(.)\1{2,}/.test(password)) strengthScore += 15;
+    else feedback.push("Evita repetir caracteres consecutivamente");
+
+    const isStrongEnough = strengthScore >= 70;
+
+    // Verificar todas las validaciones
+    const unmetRequirements = Object.entries(basicValidation)
       .filter(([_, met]) => !met)
       .map(([key, _]) => {
         const labels = {
-          length: 'al menos 12 caracteres',
+          length: 'entre 12 y 128 caracteres',
           lowercase: 'al menos una minúscula',
           uppercase: 'al menos una mayúscula',
           number: 'al menos un número',
           symbol: 'al menos un símbolo especial (@$!%*?&)',
-          noRepetition: 'sin caracteres repetidos consecutivos'
+          noRepetition: 'sin caracteres repetidos consecutivos',
+          noPatterns: 'sin patrones repetitivos'
         }
         return labels[key as keyof typeof labels]
-      })
+      });
+
+    if (isCommonPassword) {
+      toast.error('No se permite el uso de contraseñas comunes')
+      return
+    }
 
     if (unmetRequirements.length > 0) {
       toast.error(`La contraseña debe tener: ${unmetRequirements.join(', ')}`)
+      return
+    }
+
+    if (!isStrongEnough) {
+      toast.error(`Contraseña muy débil. ${feedback.join('. ')}`)
       return
     }
 

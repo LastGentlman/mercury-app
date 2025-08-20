@@ -15,8 +15,8 @@ interface PasswordRequirementsProps {
 const passwordRequirements: PasswordRequirement[] = [
   {
     id: 'length',
-    label: 'Al menos 12 caracteres',
-    test: (password: string) => password.length >= 12,
+    label: 'Entre 12 y 128 caracteres',
+    test: (password: string) => password.length >= 12 && password.length <= 128,
     required: true
   },
   {
@@ -47,6 +47,54 @@ const passwordRequirements: PasswordRequirement[] = [
     id: 'no-repetition',
     label: 'Sin caracteres repetidos consecutivos',
     test: (password: string) => !/(.)\1{3,}/.test(password),
+    required: true
+  },
+  {
+    id: 'no-patterns',
+    label: 'Sin patrones repetitivos',
+    test: (password: string) => !/^(.{1,3})\1+$/.test(password),
+    required: true
+  },
+  {
+    id: 'not-common',
+    label: 'No es una contraseña común',
+    test: (password: string) => {
+      const commonPasswords = [
+        "123456789012", "password123!", "qwerty123456", 
+        "admin123456!", "welcome123456", "Password123!", "password123"
+      ];
+      return !commonPasswords.some(common => 
+        password.toLowerCase() === common.toLowerCase()
+      );
+    },
+    required: true
+  },
+  {
+    id: 'strength',
+    label: 'Fortaleza mínima (70/100 puntos)',
+    test: (password: string) => {
+      let score = 0;
+      
+      // Longitud (0-25 puntos)
+      if (password.length >= 12) score += 25;
+      
+      // Complejidad (0-40 puntos)
+      if (/[a-z]/.test(password)) score += 10;
+      if (/[A-Z]/.test(password)) score += 10;
+      if (/\d/.test(password)) score += 10;
+      if (/[@$!%*?&]/.test(password)) score += 10;
+      
+      // Diversidad (0-20 puntos)
+      const uniqueChars = new Set(password).size;
+      if (uniqueChars >= 10) score += 20;
+      else if (uniqueChars >= 8) score += 15;
+      else if (uniqueChars >= 6) score += 10;
+      
+      // Patrones (0-15 puntos)
+      if (!/(.)\1{2,}/.test(password)) score += 15;
+      
+      return score >= 70;
+    },
     required: true
   }
 ]
