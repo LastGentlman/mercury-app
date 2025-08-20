@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.tsx'
 import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
+import { PasswordRequirements } from '../components/PasswordRequirements.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User, AlertCircle as _AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -32,6 +33,7 @@ function RouteComponent() {
 
   // Redirect if already authenticated
   if (isAuthenticated) {
+    console.log('✅ Usuario ya autenticado, redirigiendo a dashboard...')
     globalThis.location.href = '/dashboard'
     return null
   }
@@ -55,7 +57,18 @@ function RouteComponent() {
       })
       
       toast.success('¡Inicio de sesión exitoso!')
-      globalThis.location.href = '/dashboard'
+      
+      // Esperar un poco para que el estado se actualice
+      setTimeout(() => {
+        // Verificar si el usuario está autenticado antes de redirigir
+        if (login.isSuccess) {
+          console.log('✅ Login exitoso, redirigiendo a dashboard...')
+          globalThis.location.href = '/dashboard'
+        } else {
+          console.log('⚠️ Login exitoso pero estado no actualizado, redirigiendo de todas formas...')
+          globalThis.location.href = '/dashboard'
+        }
+      }, 500)
     } catch (error) {
       console.error('Login error:', error)
       toast.error('Error en el inicio de sesión. Verifica tus credenciales.')
@@ -75,8 +88,32 @@ function RouteComponent() {
       return
     }
 
-    if (formData.password.length < 8) {
-      toast.error('La contraseña debe tener al menos 8 caracteres')
+    // Validación de contraseña mejorada
+    const passwordValidation = {
+      length: formData.password.length >= 12,
+      lowercase: /[a-z]/.test(formData.password),
+      uppercase: /[A-Z]/.test(formData.password),
+      number: /\d/.test(formData.password),
+      symbol: /[@$!%*?&]/.test(formData.password),
+      noRepetition: !/(.)\1{3,}/.test(formData.password)
+    }
+
+    const unmetRequirements = Object.entries(passwordValidation)
+      .filter(([_, met]) => !met)
+      .map(([key, _]) => {
+        const labels = {
+          length: 'al menos 12 caracteres',
+          lowercase: 'al menos una minúscula',
+          uppercase: 'al menos una mayúscula',
+          number: 'al menos un número',
+          symbol: 'al menos un símbolo especial (@$!%*?&)',
+          noRepetition: 'sin caracteres repetidos consecutivos'
+        }
+        return labels[key as keyof typeof labels]
+      })
+
+    if (unmetRequirements.length > 0) {
+      toast.error(`La contraseña debe tener: ${unmetRequirements.join(', ')}`)
       return
     }
 
@@ -286,7 +323,7 @@ function RouteComponent() {
                       <Input
                         id="register-password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
+                        placeholder="••••••••••••"
                         value={formData.password}
                         onChange={(e) => handleInputChange('password', e.target.value)}
                         className="pl-10 pr-10"
@@ -300,6 +337,14 @@ function RouteComponent() {
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
                     </div>
+                    
+                    {/* Requisitos de contraseña */}
+                    {formData.password && (
+                      <PasswordRequirements 
+                        password={formData.password} 
+                        className="mt-3"
+                      />
+                    )}
                   </div>
 
                   <div className="space-y-2">
