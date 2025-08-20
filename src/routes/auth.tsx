@@ -28,8 +28,10 @@ function RouteComponent() {
     name: ''
   })
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [showResendEmail, setShowResendEmail] = useState(false)
+  const [lastRegisteredEmail, setLastRegisteredEmail] = useState<string>('')
 
-  const { login, register, isAuthenticated, isLoading } = useAuth()
+  const { login, register, resendConfirmationEmail, isAuthenticated, isLoading } = useAuth()
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -69,9 +71,38 @@ function RouteComponent() {
           globalThis.location.href = '/dashboard'
         }
       }, 500)
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login error:', error)
-      toast.error('Error en el inicio de sesión. Verifica tus credenciales.')
+      
+      // Manejar errores específicos de Supabase
+      if (error.message?.includes('Email not confirmed') || error.message?.includes('Email not confirmed')) {
+        toast.error(
+          'Email no verificado. Por favor revisa tu bandeja de entrada y haz clic en el enlace de confirmación antes de iniciar sesión.',
+          { duration: 6000 }
+        )
+      } else if (error.message?.includes('Invalid login credentials') || error.message?.includes('Invalid email or password')) {
+        toast.error('Email o contraseña incorrectos. Verifica tus credenciales.')
+      } else if (error.message?.includes('For security purposes')) {
+        toast.error('Demasiados intentos. Por favor espera un momento antes de intentar de nuevo.')
+      } else {
+        toast.error('Error en el inicio de sesión. Verifica tus credenciales.')
+      }
+    }
+  }
+
+  const handleResendEmail = async () => {
+    if (!lastRegisteredEmail) return
+    
+    try {
+      await resendConfirmationEmail.mutateAsync(lastRegisteredEmail)
+      toast.success('Email de confirmación reenviado. Revisa tu bandeja de entrada.')
+    } catch (error: any) {
+      console.error('Resend email error:', error)
+      if (error.message?.includes('For security purposes')) {
+        toast.error('Demasiados intentos. Por favor espera un momento antes de intentar de nuevo.')
+      } else {
+        toast.error('Error al reenviar el email. Por favor intenta de nuevo.')
+      }
     }
   }
 
@@ -177,17 +208,42 @@ function RouteComponent() {
     }
 
     try {
-      await register.mutateAsync({
+      const result = await register.mutateAsync({
         email: formData.email,
         password: formData.password,
         name: formData.name
       })
       
-      setSuccessMessage(`¡Registro exitoso! Hemos enviado un email de confirmación a ${formData.email}`)
-      setFormData({ email: '', password: '', confirmPassword: '', name: '' })
-    } catch (error) {
+      // Verificar si se requiere confirmación de email
+      if (result.emailConfirmationRequired || result.message.includes('check your email')) {
+        setSuccessMessage(
+          `¡Cuenta creada exitosamente! 🎉\n\nHemos enviado un email de confirmación a ${formData.email}.\n\nPor favor, revisa tu bandeja de entrada y haz clic en el enlace de confirmación para activar tu cuenta.`
+        )
+        setLastRegisteredEmail(formData.email)
+        setShowResendEmail(true)
+        setFormData({ email: '', password: '', confirmPassword: '', name: '' })
+      } else {
+        // Si no requiere confirmación, mostrar mensaje de éxito y redirigir
+        toast.success('¡Cuenta creada exitosamente!')
+        setTimeout(() => {
+          globalThis.location.href = '/dashboard'
+        }, 1000)
+      }
+    } catch (error: any) {
       console.error('Register error:', error)
-      toast.error('Error en el registro. Por favor intenta de nuevo.')
+      
+      // Manejar errores específicos de Supabase
+      if (error.message?.includes('Email not confirmed')) {
+        toast.error('Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
+      } else if (error.message?.includes('already registered')) {
+        toast.error('Ya existe una cuenta con este email. Intenta iniciar sesión en su lugar.')
+      } else if (error.message?.includes('For security purposes') || error.message?.includes('rate limit')) {
+        toast.error('Demasiados intentos. Por favor espera un momento antes de intentar de nuevo.')
+      } else if (error.message?.includes('email rate limit exceeded')) {
+        toast.error('Límite de emails excedido. Por favor espera unos minutos antes de intentar de nuevo.')
+      } else {
+        toast.error('Error en el registro. Por favor intenta de nuevo.')
+      }
     }
   }
 
@@ -219,6 +275,32 @@ function RouteComponent() {
               title="¡Registro exitoso!"
               message={successMessage}
             />
+            
+            {/* Botón de reenvío de email */}
+            {showResendEmail && (
+              <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700 mb-3">
+                  ¿No recibiste el email? Puedes solicitar que te lo reenviemos.
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResendEmail}
+                  disabled={resendConfirmationEmail.isPending}
+                  className="w-full"
+                >
+                  {resendConfirmationEmail.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Reenviando...
+                    </>
+                  ) : (
+                    'Reenviar email de confirmación'
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         )}
 

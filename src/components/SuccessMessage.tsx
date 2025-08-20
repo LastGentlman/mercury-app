@@ -48,7 +48,13 @@ export function SuccessMessage({ type, title, message, details, email }: Success
         {getIcon()}
         <div className="flex-1">
           <h3 className="font-medium text-gray-900 mb-1">{title}</h3>
-          <p className={`text-sm ${getTextClasses()} mb-2`}>{message}</p>
+          <div className={`text-sm ${getTextClasses()} mb-2`}>
+            {message.split('\n').map((line, index) => (
+              <p key={index} className={index > 0 ? 'mt-2' : ''}>
+                {line}
+              </p>
+            ))}
+          </div>
           {details && (
             <p className="text-sm text-gray-600 mb-2">{details}</p>
           )}
