@@ -50,17 +50,26 @@ export class ProfileService {
    */
   static async validateStorageBucket(): Promise<boolean> {
     if (!supabase) {
+      console.error('❌ Supabase client not configured')
       return false
     }
 
     try {
+      console.log('🔍 Validating storage bucket...')
+      
       const { data, error } = await supabase.storage.listBuckets()
       
       if (error) {
         console.error('❌ Error checking storage buckets:', error)
+        console.error('Error details:', {
+          message: error.message,
+          name: error.name
+        })
         return false
       }
 
+      console.log('📦 All buckets:', data?.map(b => ({ name: b.name, public: b.public })) || [])
+      
       const avatarsBucket = data?.find(bucket => bucket.name === 'avatars')
       
       if (!avatarsBucket) {
@@ -68,7 +77,12 @@ export class ProfileService {
         return false
       }
 
-      console.log('✅ Avatars bucket found:', avatarsBucket)
+      console.log('✅ Avatars bucket found:', {
+        name: avatarsBucket.name,
+        public: avatarsBucket.public,
+        file_size_limit: avatarsBucket.file_size_limit,
+        allowed_mime_types: avatarsBucket.allowed_mime_types
+      })
       return true
     } catch (error) {
       console.error('❌ Error validating storage bucket:', error)

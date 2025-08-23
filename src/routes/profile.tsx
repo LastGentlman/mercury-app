@@ -434,6 +434,8 @@ function ProfilePage() {
             </div>
             <div className="text-gray-400">›</div>
           </div>
+          
+
         </div>
 
         {/* Action Buttons */}

@@ -27,4 +27,57 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
 
 if (!supabase) {
   console.warn('⚠️ Supabase no está configurado. Algunas funciones no funcionarán.')
+} else {
+  // Add global debug function for development
+  if (import.meta.env.DEV) {
+    (globalThis as unknown as { debugSupabaseStorage: () => Promise<boolean> }).debugSupabaseStorage = async () => {
+      try {
+        console.log('🔍 Debugging Supabase Storage...')
+        console.log('🔧 Supabase configured:', !!supabase)
+        
+        const { data: buckets, error } = await supabase.storage.listBuckets()
+        
+        if (error) {
+          console.error('❌ Error listing buckets:', error)
+          return false
+        }
+        
+        console.log('📦 Available buckets:', buckets?.map(b => b.name) || [])
+        
+        const avatarsBucket = buckets?.find(bucket => bucket.name === 'avatars')
+        
+        if (avatarsBucket) {
+          console.log('✅ Avatars bucket found:', avatarsBucket)
+          
+          // Test upload
+          const testBlob = new Blob(['test'], { type: 'text/plain' })
+          const testFile = new File([testBlob], 'test.txt', { type: 'text/plain' })
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(`test-${Date.now()}.txt`, testFile, { upsert: true })
+          
+          if (uploadError) {
+            console.error('❌ Upload test failed:', uploadError)
+            return false
+          } else {
+            console.log('✅ Upload test successful')
+            
+            // Clean up
+            await supabase.storage.from('avatars').remove([uploadData.path])
+            console.log('🧹 Test file cleaned up')
+            return true
+          }
+        } else {
+          console.log('❌ Avatars bucket not found')
+          return false
+        }
+      } catch (error) {
+        console.error('❌ Debug failed:', error)
+        return false
+      }
+    }
+    
+    console.log('🔧 Debug function available: debugSupabaseStorage()')
+  }
 } 
