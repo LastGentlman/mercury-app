@@ -208,7 +208,7 @@ export class ProfileService {
       .from('profiles')
       .update({
         ...updates,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('id', user.id)
       .select()
@@ -329,7 +329,7 @@ export class ProfileService {
       .from('profiles')
       .update({
         settings,
-        updatedAt: new Date().toISOString()
+        updated_at: new Date().toISOString()
       })
       .eq('id', user.id)
 
