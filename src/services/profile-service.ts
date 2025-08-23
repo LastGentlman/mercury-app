@@ -57,6 +57,20 @@ export class ProfileService {
     try {
       console.log('🔍 Validating storage bucket...')
       
+      // Check authentication first
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      console.log('👤 Current user:', user ? { id: user.id, email: user.email } : 'Not authenticated')
+      
+      if (authError) {
+        console.error('❌ Auth error:', authError)
+        return false
+      }
+      
+      if (!user) {
+        console.error('❌ No authenticated user')
+        return false
+      }
+      
       const { data, error } = await supabase.storage.listBuckets()
       
       if (error) {
