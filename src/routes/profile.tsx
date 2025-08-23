@@ -66,7 +66,8 @@ function ProfilePage() {
     stats, 
     updateProfile, 
     uploadAvatar, 
-    isUpdating
+    isUpdating,
+    isProfileLoading
   } = useProfile()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
@@ -74,6 +75,7 @@ function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData>({
     fullName: profile?.fullName || user?.name || '',
     phone: profile?.phone || '',
+    avatar: profile?.avatar_url || user?.avatar_url || '',
     isDirty: false
   })
   
@@ -97,16 +99,17 @@ function ProfilePage() {
     privacyMode: false
   })
 
-  // Initialize profile data when user loads
+  // Initialize profile data when user or profile loads
   useEffect(() => {
-    if (user) {
+    if (user || profile) {
       setProfileData(prev => ({
         ...prev,
-        fullName: user.name || '',
-        phone: prev.phone || ''
+        fullName: profile?.fullName || user?.name || '',
+        phone: profile?.phone || prev.phone || '',
+        avatar: profile?.avatar_url || user?.avatar_url || prev.avatar || ''
       }))
     }
-  }, [user])
+  }, [user, profile])
 
   // Handle form changes
   const handleInputChange = (field: keyof ProfileData, value: string) => {
@@ -139,9 +142,23 @@ function ProfilePage() {
     }
 
     try {
-      await uploadAvatar.mutateAsync(file)
-      setProfileData(prev => ({ ...prev, isDirty: true }))
+      const updatedProfile = await uploadAvatar.mutateAsync(file)
+      
+      // Update local state with new avatar URL
+      if (updatedProfile?.avatar_url) {
+        setProfileData(prev => ({ 
+          ...prev, 
+          avatar: updatedProfile.avatar_url || '',
+          isDirty: false 
+        }))
+      }
+      
       showAlert('Avatar actualizado correctamente', 'success')
+      
+      // Clear the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
       showAlert(`Error al subir la imagen: ${errorMessage}`, 'error')
@@ -198,7 +215,7 @@ function ProfilePage() {
   }, [profileData.isDirty])
 
   // Loading state
-  if (!user) {
+  if (!user || isProfileLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -260,18 +277,37 @@ function ProfilePage() {
           <div className="relative inline-block mb-4">
             <div className="w-20 h-20 rounded-full border-3 border-gray-200 overflow-hidden">
               <img
-                src={profileData.avatar || user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=80&background=2563eb&color=fff`}
+                src={profileData.avatar || profile?.avatar_url || user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=80&background=2563eb&color=fff`}
                 alt="Foto de perfil"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  // Fallback to generated avatar if image fails to load
+                  const target = e.target as HTMLImageElement
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=80&background=2563eb&color=fff`
+                }}
               />
             </div>
             <Button
               size="sm"
               onClick={handleAvatarUpload}
               className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full p-0 bg-blue-600 hover:bg-blue-700"
+              disabled={uploadAvatar.isPending}
             >
-              <Camera className="h-3 w-3" />
+              {uploadAvatar.isPending ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Camera className="h-3 w-3" />
+              )}
             </Button>
+            
+            {/* Show OAuth provider badge if avatar is from OAuth */}
+            {(user.avatar_url && !profileData.avatar && !profile?.avatar_url) && (
+              <div className="absolute -top-1 -right-1">
+                <Badge variant="secondary" className="text-xs px-1 py-0.5 bg-green-100 text-green-700 border-green-200">
+                  {user.provider === 'google' ? 'G' : user.provider === 'facebook' ? 'F' : 'OAuth'}
+                </Badge>
+              </div>
+            )}
           </div>
           
           <input
@@ -290,6 +326,17 @@ function ProfilePage() {
           <Badge variant="default" className="bg-blue-600">
             {user.role === 'owner' ? 'Administrador' : 'Empleado'}
           </Badge>
+          
+          {/* Avatar source info */}
+          <div className="mt-2 text-xs text-gray-500">
+            {user.avatar_url && !profileData.avatar && !profile?.avatar_url ? (
+              <span>Avatar de {user.provider === 'google' ? 'Google' : user.provider === 'facebook' ? 'Facebook' : 'OAuth'}</span>
+            ) : profileData.avatar || profile?.avatar_url ? (
+              <span>Avatar personalizado</span>
+            ) : (
+              <span>Avatar generado</span>
+            )}
+          </div>
         </div>
 
         {/* Quick Stats */}
