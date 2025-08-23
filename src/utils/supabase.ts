@@ -28,8 +28,8 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
 if (!supabase) {
   console.warn('⚠️ Supabase no está configurado. Algunas funciones no funcionarán.')
 } else {
-  // Add global debug function for development
-  if (import.meta.env.DEV) {
+  // Add global debug functions for testing
+  {
     (globalThis as unknown as { debugSupabaseStorage: () => Promise<boolean> }).debugSupabaseStorage = async () => {
       try {
         console.log('🔍 Debugging Supabase Storage...')

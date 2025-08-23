@@ -71,6 +71,7 @@ export class ProfileService {
         return false
       }
       
+      // Try to list buckets first
       const { data, error } = await supabase.storage.listBuckets()
       
       if (error) {
@@ -79,7 +80,10 @@ export class ProfileService {
           message: error.message,
           name: error.name
         })
-        return false
+        
+        // If we can't list buckets, try direct access
+        console.log('🔄 Trying direct bucket access...')
+        return await this.testDirectBucketAccess()
       }
 
       console.log('📦 All buckets:', data?.map(b => ({ name: b.name, public: b.public })) || [])
@@ -88,7 +92,10 @@ export class ProfileService {
       
       if (!avatarsBucket) {
         console.warn('⚠️ User avatars bucket not found. Available buckets:', data?.map(b => b.name))
-        return false
+        
+        // Try direct access even if bucket is not in the list
+        console.log('🔄 Trying direct bucket access...')
+        return await this.testDirectBucketAccess()
       }
 
       console.log('✅ User avatars bucket found:', {
@@ -100,6 +107,43 @@ export class ProfileService {
       return true
     } catch (error) {
       console.error('❌ Error validating storage bucket:', error)
+      return false
+    }
+  }
+
+  /**
+   * Test direct access to the bucket without listing
+   */
+  static async testDirectBucketAccess(): Promise<boolean> {
+    if (!supabase) {
+      console.error('❌ Supabase client not configured')
+      return false
+    }
+
+    try {
+      console.log('🔍 Testing direct bucket access...')
+      
+      // Try to access the bucket directly without listing
+      const testBlob = new Blob(['test'], { type: 'text/plain' })
+      const testFile = new File([testBlob], 'test.txt', { type: 'text/plain' })
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('user_avatars')
+        .upload(`test-${Date.now()}.txt`, testFile, { upsert: true })
+      
+      if (uploadError) {
+        console.error('❌ Direct upload failed:', uploadError)
+        return false
+      } else {
+        console.log('✅ Direct upload successful:', uploadData)
+        
+        // Clean up
+        await supabase.storage.from('user_avatars').remove([uploadData.path])
+        console.log('🧹 Test file cleaned up')
+        return true
+      }
+    } catch (error) {
+      console.error('❌ Direct test failed:', error)
       return false
     }
   }
