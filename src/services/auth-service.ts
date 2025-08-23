@@ -11,9 +11,9 @@ import type {
   LoginResponse, 
   RegistrationResponse,
   SocialLoginOptions 
-} from '../types/auth'
-import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors'
-import { env } from '../env'
+} from '../types/auth.ts'
+import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors.ts'
+import { env } from '../env.ts'
 
 /**
  * Supabase client configuration with debugging
@@ -85,6 +85,20 @@ export class AuthService {
         metadata: user.user_metadata
       })
       
+      // 🔍 DEBUG - Raw user metadata para troubleshooting
+      console.log('🔍 DEBUG - Raw user metadata:', {
+        user_metadata: user.user_metadata,
+        app_metadata: user.app_metadata,
+        identities: user.identities?.[0]?.identity_data
+      });
+
+      console.log('🖼️ DEBUG - Avatar URLs disponibles:', {
+        avatar_url: user.user_metadata?.avatar_url,
+        picture: user.user_metadata?.picture,
+        identity_picture: user.identities?.[0]?.identity_data?.picture,
+        identity_avatar_url: user.identities?.[0]?.identity_data?.avatar_url
+      });
+
       // Mapear datos de usuario OAuth a nuestro formato
       const authUser: AuthUser = {
         id: user.id,
@@ -94,8 +108,10 @@ export class AuthService {
               user.user_metadata?.display_name ||
               user.email?.split('@')[0] || 
               'Usuario',
-        avatar_url: user.user_metadata?.avatar_url || 
-                   user.user_metadata?.picture,
+        avatar_url: user.user_metadata?.picture || 
+                   user.user_metadata?.avatar_url ||
+                   user.identities?.[0]?.identity_data?.picture ||
+                   user.identities?.[0]?.identity_data?.avatar_url,
         provider: (user.app_metadata?.provider || 'email') as 'email' | 'google' | 'facebook',
         businessId: user.user_metadata?.businessId,
         role: user.user_metadata?.role || 'owner'
@@ -104,7 +120,8 @@ export class AuthService {
       console.log('✅ Usuario OAuth mapeado:', {
         email: authUser.email,
         provider: authUser.provider,
-        name: authUser.name
+        name: authUser.name,
+        avatar_url: authUser.avatar_url
       })
 
       return authUser
@@ -198,7 +215,7 @@ export class AuthService {
     }
 
     try {
-      const callbackUrl = redirectTo || `${window.location.origin}/auth/callback`
+      const callbackUrl = redirectTo || `${globalThis.location.origin}/auth/callback`
       console.log(`🚀 Iniciando login con ${provider}...`)
       console.log('📍 Redirect URL:', callbackUrl)
       
@@ -211,7 +228,7 @@ export class AuthService {
             prompt: 'consent',
           } : {},
           scopes: provider === 'google' 
-            ? 'openid email profile'
+            ? 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
             : 'email'
         },
       })
@@ -353,7 +370,7 @@ export class AuthService {
   /**
    * Escuchar cambios de estado - Versión mejorada
    */
-  static onAuthStateChange(callback: (event: string, session: any) => void) {
+  static onAuthStateChange(callback: (event: string, session: unknown) => void) {
     if (!supabase) {
       console.log('⚠️ Supabase no configurado, auth state change no disponible')
       return {
