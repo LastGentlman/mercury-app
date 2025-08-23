@@ -160,7 +160,21 @@ function ProfilePage() {
         fileInputRef.current.value = ''
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error desconocido'
+      console.error('❌ Avatar upload error:', error)
+      
+      let errorMessage = 'Error desconocido'
+      if (error instanceof Error) {
+        errorMessage = error.message
+        // Provide more user-friendly error messages
+        if (errorMessage.includes('Storage bucket not available')) {
+          errorMessage = 'Error de configuración del servidor. Contacta al administrador.'
+        } else if (errorMessage.includes('Upload failed')) {
+          errorMessage = 'Error al subir la imagen. Verifica tu conexión e intenta de nuevo.'
+        } else if (errorMessage.includes('No authenticated user')) {
+          errorMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.'
+        }
+      }
+      
       showAlert(`Error al subir la imagen: ${errorMessage}`, 'error')
     }
   }

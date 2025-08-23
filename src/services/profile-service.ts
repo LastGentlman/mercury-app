@@ -46,6 +46,37 @@ export interface UpdateProfileRequest {
 
 export class ProfileService {
   /**
+   * Check if storage bucket exists and is accessible
+   */
+  static async validateStorageBucket(): Promise<boolean> {
+    if (!supabase) {
+      return false
+    }
+
+    try {
+      const { data, error } = await supabase.storage.listBuckets()
+      
+      if (error) {
+        console.error('❌ Error checking storage buckets:', error)
+        return false
+      }
+
+      const avatarsBucket = data?.find(bucket => bucket.name === 'avatars')
+      
+      if (!avatarsBucket) {
+        console.warn('⚠️ Avatars bucket not found. Available buckets:', data?.map(b => b.name))
+        return false
+      }
+
+      console.log('✅ Avatars bucket found:', avatarsBucket)
+      return true
+    } catch (error) {
+      console.error('❌ Error validating storage bucket:', error)
+      return false
+    }
+  }
+
+  /**
    * Get current user's profile data
    */
   static async getProfile(): Promise<ProfileData | null> {
@@ -161,31 +192,50 @@ export class ProfileService {
       throw new Error('Supabase client not configured')
     }
 
+    // Validate storage bucket first
+    const isBucketValid = await this.validateStorageBucket()
+    if (!isBucketValid) {
+      throw new Error('Storage bucket not available. Please check your Supabase configuration.')
+    }
+
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       throw new Error('No authenticated user')
     }
 
-    const fileExt = file.name.split('.').pop()
+    // Generate unique filename
+    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const fileName = `${user.id}-${Date.now()}.${fileExt}`
-    const filePath = `avatars/${fileName}`
-
-    const { error: uploadError } = await supabase.storage
+    
+    // Upload directly to root of avatars bucket (no subfolder)
+    const { data: uploadData, error: uploadError } = await supabase.storage
       .from('avatars')
-      .upload(filePath, file, {
+      .upload(fileName, file, {
         cacheControl: '3600',
-        upsert: false
+        upsert: true // Allow overwriting
       })
 
     if (uploadError) {
-      throw uploadError
+      console.error('❌ Upload error details:', uploadError)
+      throw new Error(`Upload failed: ${uploadError.message}`)
+    }
+
+    if (!uploadData?.path) {
+      throw new Error('Upload succeeded but no path returned')
     }
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
       .from('avatars')
-      .getPublicUrl(filePath)
+      .getPublicUrl(uploadData.path)
+
+    console.log('✅ Avatar uploaded successfully:', {
+      path: uploadData.path,
+      publicUrl,
+      fileSize: file.size,
+      fileType: file.type
+    })
 
     return publicUrl
   }
