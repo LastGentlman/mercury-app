@@ -12,8 +12,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate, createFileRoute } from '@tanstack/react-router'
-import { 
-  ArrowLeft, 
+import {
   Settings, 
   Camera, 
   User, 
@@ -269,30 +268,6 @@ function ProfilePage() {
       )}
 
       <div className="max-w-md mx-auto bg-white min-h-screen">
-        {/* Header */}
-        <header className="sticky top-0 bg-white border-b border-gray-200 z-10">
-          <div className="flex items-center justify-between p-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate({ to: '/dashboard' })}
-              className="h-10 w-10 p-0"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            
-            <h1 className="text-lg font-semibold text-gray-900">Perfil</h1>
-            
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowSettingsDialog(true)}
-              className="h-10 w-10 p-0"
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
-          </div>
-        </header>
 
         {/* Profile Section */}
         <div className="p-6 text-center border-b border-gray-100">
