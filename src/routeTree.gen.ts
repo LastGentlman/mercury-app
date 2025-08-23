@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-design-system-demo'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
@@ -19,6 +20,11 @@ import { Route as ApiTestRouteImport } from './routes/api-test'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/products': typeof ProductsRoute
+  '/profile': typeof ProfileRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/products': typeof ProductsRoute
+  '/profile': typeof ProfileRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/products': typeof ProductsRoute
+  '/profile': typeof ProfileRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/enhanced-design-system-demo'
     | '/products'
+    | '/profile'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/enhanced-design-system-demo'
     | '/products'
+    | '/profile'
     | '/auth/callback'
   id:
     | '__root__'
@@ -133,6 +144,7 @@ export interface FileRouteTypes {
     | '/design-system'
     | '/enhanced-design-system-demo'
     | '/products'
+    | '/profile'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -145,10 +157,18 @@ export interface RootRouteChildren {
   DesignSystemRoute: typeof DesignSystemRoute
   EnhancedDesignSystemDemoRoute: typeof EnhancedDesignSystemDemoRoute
   ProductsRoute: typeof ProductsRoute
+  ProfileRoute: typeof ProfileRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/products': {
       id: '/products'
       path: '/products'
@@ -234,6 +254,7 @@ const rootRouteChildren: RootRouteChildren = {
   DesignSystemRoute: DesignSystemRoute,
   EnhancedDesignSystemDemoRoute: EnhancedDesignSystemDemoRoute,
   ProductsRoute: ProductsRoute,
+  ProfileRoute: ProfileRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

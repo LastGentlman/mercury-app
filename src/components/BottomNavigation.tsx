@@ -4,11 +4,9 @@ import {
   ClipboardList, 
   Plus, 
   Users, 
-  UserCircle,
-  LogOut
+  UserCircle
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
-import { Button } from './ui/index.ts'
 
 interface BottomNavItemProps {
   href: string
@@ -80,7 +78,7 @@ function BottomCTA({ onClick }: BottomCTAProps) {
 }
 
 export default function BottomNavigation() {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated } = useAuth()
   const location = useLocation()
 
   // Don't show bottom navigation if not authenticated
@@ -125,36 +123,13 @@ export default function BottomNavigation() {
             isActive={currentPath === '/clients'}
           />
 
-          {/* Profile/Settings */}
-          <div className="flex flex-col items-center min-w-[60px] px-1">
-            <div className="relative group">
-              <button type="button" className="flex flex-col items-center py-2 text-gray-500 hover:text-blue-600 transition-colors duration-300">
-                <UserCircle className="w-6 h-6 mb-1" />
-                <span className="text-xs font-medium leading-none">
-                  Perfil
-                </span>
-              </button>
-              
-              {/* Dropdown menu */}
-              <div className="absolute bottom-full right-0 mb-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 bg-white rounded-lg shadow-xl border border-gray-200 py-2 min-w-[120px]">
-                <Link
-                  to="/dashboard"
-                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Configuración
-                </Link>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => logout.mutate()}
-                  className="w-full justify-start px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Logout
-                </Button>
-              </div>
-            </div>
-          </div>
+          {/* Profile */}
+          <BottomNavItem
+            href="/profile"
+            icon={<UserCircle className="w-6 h-6" />}
+            label="Perfil"
+            isActive={currentPath === '/profile'}
+          />
         </div>
       </nav>
 
