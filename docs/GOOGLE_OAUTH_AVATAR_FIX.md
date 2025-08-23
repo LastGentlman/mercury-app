@@ -130,11 +130,34 @@ En la consola del navegador deberías ver:
 🔍 DEBUG - Raw user metadata: {...}
 🖼️ DEBUG - Avatar URLs disponibles: {...}
 ✅ Usuario OAuth mapeado: {avatar_url: "https://..."}
+🔍 DEBUG - Profile Avatar Values: {...}
 ```
 
 ### 4. **Verificar Avatar en UI**
-- El avatar debería aparecer en el header
 - El avatar debería aparecer en el perfil del usuario
+- Si sigue mostrando iniciales, verifica los logs de debugging
+
+### 5. **Diagnóstico si Persiste el Problema**
+
+Si el avatar sigue mostrando iniciales, ejecuta el script de diagnóstico:
+
+```bash
+./scripts/test-avatar-fix.sh
+```
+
+Y verifica en la consola del navegador:
+
+1. **Busca logs de debugging** que empiecen con `🔍 DEBUG`
+2. **Verifica que `user.avatar_url` tiene valor** en los logs
+3. **Confirma que no hay errores** de JavaScript o CORS
+4. **Prueba abrir la URL del avatar** directamente en el navegador
+
+### 6. **Posibles Causas si el Fix No Funciona**
+
+1. **Google no envía datos de avatar**: Verificar configuración de OAuth en Supabase
+2. **Problemas de CORS**: La imagen de Google no es accesible
+3. **Timing issues**: El avatar se renderiza antes de que los datos estén disponibles
+4. **Configuración incorrecta**: Scopes de Google OAuth mal configurados
 
 ## 📊 Monitoreo
 

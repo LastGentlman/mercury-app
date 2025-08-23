@@ -101,6 +101,15 @@ function ProfilePage() {
   // Initialize profile data when user or profile loads
   useEffect(() => {
     if (user || profile) {
+      // 🔍 DEBUG - Avatar values para troubleshooting
+      console.log('🔍 DEBUG - Profile Avatar Values:', {
+        user_avatar_url: user?.avatar_url,
+        profile_avatar_url: profile?.avatar_url,
+        prev_avatar: profileData.avatar,
+        user_provider: user?.provider,
+        user_metadata: user
+      });
+
       setProfileData(prev => ({
         ...prev,
         fullName: profile?.fullName || user?.name || '',
@@ -274,7 +283,7 @@ function ProfilePage() {
           <div className="relative inline-block mb-4">
             <div className="w-20 h-20 rounded-full border-3 border-gray-200 overflow-hidden">
               <img
-                src={profileData.avatar || profile?.avatar_url || user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=80&background=2563eb&color=fff`}
+                src={user.avatar_url || profileData.avatar || profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=80&background=2563eb&color=fff`}
                 alt="Foto de perfil"
                 className="w-full h-full object-cover"
                 onError={(e) => {
