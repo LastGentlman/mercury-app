@@ -241,6 +241,34 @@ export class ProfileService {
       throw new Error('No authenticated user')
     }
 
+    // Get current profile to find existing avatar
+    const currentProfile = await this.getProfile()
+    const existingAvatarUrl = currentProfile?.avatar_url
+
+    // Delete previous avatar if it exists and is from our bucket
+    if (existingAvatarUrl && existingAvatarUrl.includes('user_avatars')) {
+      try {
+        // Extract the file path from the URL
+        const urlParts = existingAvatarUrl.split('/')
+        const fileName = urlParts[urlParts.length - 1]
+        
+        if (fileName && fileName.includes(user.id)) {
+          const { error: deleteError } = await supabase.storage
+            .from('user_avatars')
+            .remove([fileName])
+          
+          if (deleteError) {
+            console.warn('⚠️ Failed to delete previous avatar:', deleteError)
+          } else {
+            console.log('🗑️ Previous avatar deleted:', fileName)
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ Error deleting previous avatar:', error)
+        // Don't throw error - continue with upload even if deletion fails
+      }
+    }
+
     // Generate unique filename
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const fileName = `${user.id}-${Date.now()}.${fileExt}`
@@ -352,6 +380,9 @@ export class ProfileService {
       throw new Error('No authenticated user')
     }
 
+    // Delete user's avatar files
+    await this.deleteUserAvatars(user.id)
+
     // Delete profile data
     const { error: profileError } = await supabase
       .from('profiles')
@@ -367,6 +398,48 @@ export class ProfileService {
     
     if (userError) {
       throw userError
+    }
+  }
+
+  /**
+   * Delete all avatar files for a specific user
+   */
+  static async deleteUserAvatars(userId: string): Promise<void> {
+    if (!supabase) {
+      throw new Error('Supabase client not configured')
+    }
+
+    try {
+      // List all files in the user_avatars bucket
+      const { data: files, error } = await supabase.storage
+        .from('user_avatars')
+        .list('', {
+          limit: 1000,
+          offset: 0
+        })
+
+      if (error) {
+        console.warn('⚠️ Error listing avatar files:', error)
+        return
+      }
+
+      // Find files that belong to this user
+      const userFiles = files?.filter(file => file.name.startsWith(userId)) || []
+      
+      if (userFiles.length > 0) {
+        const fileNames = userFiles.map(file => file.name)
+        const { error: deleteError } = await supabase.storage
+          .from('user_avatars')
+          .remove(fileNames)
+        
+        if (deleteError) {
+          console.warn('⚠️ Error deleting user avatars:', deleteError)
+        } else {
+          console.log(`🗑️ Deleted ${userFiles.length} avatar files for user ${userId}`)
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ Error in deleteUserAvatars:', error)
     }
   }
 } 
