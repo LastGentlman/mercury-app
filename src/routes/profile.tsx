@@ -129,9 +129,9 @@ function ProfilePage() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    // Validate file size (2MB limit)
-    if (file.size > 2 * 1024 * 1024) {
-      showAlert('La imagen debe ser menor a 2MB', 'error')
+    // Validate file size (500KB limit)
+    if (file.size > 500 * 1024) {
+      showAlert('La imagen debe ser menor a 500KB', 'error')
       return
     }
 
@@ -331,6 +331,12 @@ function ProfilePage() {
             onChange={handleFileChange}
             className="hidden"
           />
+          
+          {/* File upload requirements */}
+          <div className="mt-3 text-xs text-gray-500">
+            <p>Máximo 500KB • Formatos: JPG, PNG, GIF, WebP</p>
+            <p className="text-gray-400">Haz clic en la cámara para cambiar tu foto</p>
+          </div>
           
           <h2 className="text-xl font-semibold text-gray-900 mb-1">
             {user.name}
