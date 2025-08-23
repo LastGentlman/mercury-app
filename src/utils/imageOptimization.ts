@@ -42,7 +42,7 @@ export const DEFAULT_AVATAR_OPTIONS: ImageOptimizationOptions = {
 /**
  * Optimize image for avatar upload
  */
-export async function optimizeImage(
+export function optimizeImage(
   file: File,
   options: ImageOptimizationOptions = DEFAULT_AVATAR_OPTIONS
 ): Promise<OptimizedImage> {
@@ -77,7 +77,7 @@ export async function optimizeImage(
     img.onload = () => {
       try {
         // Calculate new dimensions
-        let { width, height } = calculateDimensions(
+        const { width, height } = calculateDimensions(
           img.width,
           img.height,
           maxWidth,

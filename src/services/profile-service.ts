@@ -225,7 +225,7 @@ export class ProfileService {
   /**
    * Upload avatar image with optimization
    */
-  static async uploadAvatar(file: File): Promise<string> {
+  static async uploadAvatar(file: File): Promise<{ avatarUrl: string; optimizationStats?: { originalSize: number; optimizedSize: number; compressionRatio: number } }> {
     if (!supabase) {
       throw new Error('Supabase client not configured')
     }
@@ -338,7 +338,10 @@ export class ProfileService {
       } : 'No optimization applied'
     })
 
-    return publicUrl
+    return {
+      avatarUrl: publicUrl,
+      ...(optimizationStats.compressionRatio > 0 && { optimizationStats })
+    }
   }
 
   /**

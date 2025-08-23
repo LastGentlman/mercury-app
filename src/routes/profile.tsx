@@ -142,18 +142,24 @@ function ProfilePage() {
     }
 
     try {
-      const updatedProfile = await uploadAvatar.mutateAsync(file)
+      const result = await uploadAvatar.mutateAsync(file)
       
       // Update local state with new avatar URL
-      if (updatedProfile?.avatar_url) {
+      if (result.profile?.avatar_url) {
         setProfileData(prev => ({ 
           ...prev, 
-          avatar: updatedProfile.avatar_url || '',
+          avatar: result.profile.avatar_url || '',
           isDirty: false 
         }))
       }
       
-      showAlert('Avatar optimizado y actualizado correctamente', 'success')
+      // Show optimization info if available
+      if (result.optimizationStats) {
+        const compressionRatio = result.optimizationStats.compressionRatio.toFixed(1)
+        showAlert(`Avatar optimizado y actualizado correctamente (${compressionRatio}% más pequeño)`, 'success')
+      } else {
+        showAlert('Avatar actualizado correctamente', 'success')
+      }
       
       // Clear the file input
       if (fileInputRef.current) {

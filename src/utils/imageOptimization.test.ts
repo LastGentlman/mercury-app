@@ -115,6 +115,6 @@ export async function testOptimizationOptions() {
 
 // Add to global scope for easy testing in browser console
 if (typeof globalThis !== 'undefined') {
-  (globalThis as any).testImageOptimization = testImageOptimization
-  ;(globalThis as any).testOptimizationOptions = testOptimizationOptions
+  (globalThis as Record<string, unknown>).testImageOptimization = testImageOptimization
+  ;(globalThis as Record<string, unknown>).testOptimizationOptions = testOptimizationOptions
 } 

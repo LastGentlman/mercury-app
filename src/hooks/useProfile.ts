@@ -63,12 +63,15 @@ export function useProfile() {
   // Upload avatar mutation
   const uploadAvatar = useMutation({
     mutationFn: async (file: File) => {
-      const avatarUrl = await ProfileService.uploadAvatar(file)
-      return await ProfileService.updateProfile({ avatar_url: avatarUrl })
+      const result = await ProfileService.uploadAvatar(file)
+      return {
+        profile: await ProfileService.updateProfile({ avatar_url: result.avatarUrl }),
+        optimizationStats: result.optimizationStats
+      }
     },
-    onSuccess: (updatedProfile) => {
+    onSuccess: (result) => {
       // Update cache
-      queryClient.setQueryData(['profile'], updatedProfile)
+      queryClient.setQueryData(['profile'], result.profile)
       queryClient.invalidateQueries({ queryKey: ['auth-user'] })
       
       console.log('✅ Avatar uploaded successfully')
