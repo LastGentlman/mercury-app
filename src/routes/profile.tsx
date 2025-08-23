@@ -129,16 +129,15 @@ function ProfilePage() {
     const file = event.target.files?.[0]
     if (!file) return
 
-    // Validate file size (500KB limit)
-    if (file.size > 500 * 1024) {
-      showAlert('La imagen debe ser menor a 500KB', 'error')
-      return
-    }
-
-    // Validate file type
+    // Validate file type first
     if (!file.type.startsWith('image/')) {
       showAlert('Por favor selecciona una imagen válida', 'error')
       return
+    }
+
+    // Show loading message for large files
+    if (file.size > 500 * 1024) {
+      showAlert('Optimizando imagen grande...', 'info')
     }
 
     try {
@@ -178,6 +177,9 @@ function ProfilePage() {
           errorMessage = 'Error al subir la imagen. Verifica tu conexión e intenta de nuevo.'
         } else if (errorMessage.includes('No authenticated user')) {
           errorMessage = 'Sesión expirada. Por favor, inicia sesión de nuevo.'
+        } else if (errorMessage.includes('demasiado grande')) {
+          // Keep the detailed size information for file size errors
+          // No need to reassign, errorMessage already contains the correct message
         }
       }
       
@@ -340,8 +342,8 @@ function ProfilePage() {
           
           {/* File upload requirements */}
           <div className="mt-3 text-xs text-gray-500">
-            <p>Máximo 500KB • Formatos: JPG, PNG, GIF, WebP</p>
-            <p className="text-gray-400">Las imágenes se optimizan automáticamente</p>
+            <p>Máximo 500KB después de optimización • Formatos: JPG, PNG, GIF, WebP</p>
+            <p className="text-gray-400">Las imágenes grandes se optimizan automáticamente</p>
             <p className="text-gray-400">Haz clic en la cámara para cambiar tu foto</p>
           </div>
           

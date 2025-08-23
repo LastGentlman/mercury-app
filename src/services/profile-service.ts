@@ -272,6 +272,13 @@ export class ProfileService {
       }
     }
 
+    // Validate file size after optimization (500KB limit)
+    if (optimizedFile.size > 500 * 1024) {
+      const originalSizeMB = (optimizationStats.originalSize / (1024 * 1024)).toFixed(1)
+      const optimizedSizeMB = (optimizedFile.size / (1024 * 1024)).toFixed(1)
+      throw new Error(`La imagen es demasiado grande. Original: ${originalSizeMB}MB, Optimizada: ${optimizedSizeMB}MB. Intenta con una imagen más pequeña.`)
+    }
+
     // Get current profile to find existing avatar
     const currentProfile = await this.getProfile()
     const existingAvatarUrl = currentProfile?.avatar_url
