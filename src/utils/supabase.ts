@@ -129,5 +129,18 @@ if (!supabase) {
     }
     
     console.log('🔧 Debug functions available: debugSupabaseStorage() and testDirectBucketAccess()')
+    
+    // Add image optimization test functions
+    ;(globalThis as any).testImageOptimization = async () => {
+      const { testImageOptimization } = await import('./imageOptimization.test.ts')
+      return testImageOptimization()
+    }
+    
+    ;(globalThis as any).testOptimizationOptions = async () => {
+      const { testOptimizationOptions } = await import('./imageOptimization.test.ts')
+      return testOptimizationOptions()
+    }
+    
+    console.log('🔧 Image optimization test functions available: testImageOptimization() and testOptimizationOptions()')
   }
 } 

@@ -153,7 +153,7 @@ function ProfilePage() {
         }))
       }
       
-      showAlert('Avatar actualizado correctamente', 'success')
+      showAlert('Avatar optimizado y actualizado correctamente', 'success')
       
       // Clear the file input
       if (fileInputRef.current) {
@@ -335,6 +335,7 @@ function ProfilePage() {
           {/* File upload requirements */}
           <div className="mt-3 text-xs text-gray-500">
             <p>Máximo 500KB • Formatos: JPG, PNG, GIF, WebP</p>
+            <p className="text-gray-400">Las imágenes se optimizan automáticamente</p>
             <p className="text-gray-400">Haz clic en la cámara para cambiar tu foto</p>
           </div>
           

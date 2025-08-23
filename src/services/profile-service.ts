@@ -10,6 +10,7 @@
 
 import { supabase } from '../utils/supabase.ts'
 import type { AuthUser, AuthProvider } from '../types/auth.ts'
+import { optimizeImage, DEFAULT_AVATAR_OPTIONS, formatFileSize } from '../utils/imageOptimization.ts'
 
 export interface ProfileData {
   id: string
@@ -222,7 +223,7 @@ export class ProfileService {
   }
 
   /**
-   * Upload avatar image
+   * Upload avatar image with optimization
    */
   static async uploadAvatar(file: File): Promise<string> {
     if (!supabase) {
@@ -239,6 +240,36 @@ export class ProfileService {
     
     if (!user) {
       throw new Error('No authenticated user')
+    }
+
+    // Optimize image before upload
+    let optimizedFile: File
+    let optimizationStats: { originalSize: number; optimizedSize: number; compressionRatio: number }
+    
+    try {
+      console.log('🔄 Optimizing image...')
+      const optimizedImage = await optimizeImage(file, DEFAULT_AVATAR_OPTIONS)
+      optimizedFile = optimizedImage.file
+      optimizationStats = {
+        originalSize: optimizedImage.originalSize,
+        optimizedSize: optimizedImage.optimizedSize,
+        compressionRatio: optimizedImage.compressionRatio
+      }
+      
+      console.log('✅ Image optimization completed:', {
+        originalSize: formatFileSize(optimizationStats.originalSize),
+        optimizedSize: formatFileSize(optimizationStats.optimizedSize),
+        compressionRatio: `${optimizationStats.compressionRatio.toFixed(1)}%`,
+        dimensions: `${optimizedImage.dimensions.width}x${optimizedImage.dimensions.height}px`
+      })
+    } catch (error) {
+      console.warn('⚠️ Image optimization failed, using original file:', error)
+      optimizedFile = file
+      optimizationStats = {
+        originalSize: file.size,
+        optimizedSize: file.size,
+        compressionRatio: 0
+      }
     }
 
     // Get current profile to find existing avatar
@@ -269,14 +300,14 @@ export class ProfileService {
       }
     }
 
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+    // Generate unique filename with optimized extension
+    const fileExt = optimizedFile.name.split('.').pop()?.toLowerCase() || 'webp'
     const fileName = `${user.id}-${Date.now()}.${fileExt}`
     
-    // Upload directly to root of user_avatars bucket (no subfolder)
+    // Upload optimized file to user_avatars bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from('user_avatars')
-      .upload(fileName, file, {
+      .upload(fileName, optimizedFile, {
         cacheControl: '3600',
         upsert: true // Allow overwriting
       })
@@ -298,8 +329,13 @@ export class ProfileService {
     console.log('✅ Avatar uploaded successfully:', {
       path: uploadData.path,
       publicUrl,
-      fileSize: file.size,
-      fileType: file.type
+      fileSize: formatFileSize(optimizedFile.size),
+      fileType: optimizedFile.type,
+      optimization: optimizationStats.compressionRatio > 0 ? {
+        originalSize: formatFileSize(optimizationStats.originalSize),
+        optimizedSize: formatFileSize(optimizationStats.optimizedSize),
+        compressionRatio: `${optimizationStats.compressionRatio.toFixed(1)}%`
+      } : 'No optimization applied'
     })
 
     return publicUrl
