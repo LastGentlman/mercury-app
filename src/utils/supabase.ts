@@ -44,17 +44,17 @@ if (!supabase) {
         
         console.log('📦 Available buckets:', buckets?.map(b => b.name) || [])
         
-        const avatarsBucket = buckets?.find(bucket => bucket.name === 'avatars')
+        const avatarsBucket = buckets?.find(bucket => bucket.name === 'user_avatars')
         
         if (avatarsBucket) {
-          console.log('✅ Avatars bucket found:', avatarsBucket)
+          console.log('✅ User avatars bucket found:', avatarsBucket)
           
           // Test upload
           const testBlob = new Blob(['test'], { type: 'text/plain' })
           const testFile = new File([testBlob], 'test.txt', { type: 'text/plain' })
           
           const { data: uploadData, error: uploadError } = await supabase.storage
-            .from('avatars')
+            .from('user_avatars')
             .upload(`test-${Date.now()}.txt`, testFile, { upsert: true })
           
           if (uploadError) {
@@ -64,12 +64,12 @@ if (!supabase) {
             console.log('✅ Upload test successful')
             
             // Clean up
-            await supabase.storage.from('avatars').remove([uploadData.path])
+            await supabase.storage.from('user_avatars').remove([uploadData.path])
             console.log('🧹 Test file cleaned up')
             return true
           }
         } else {
-          console.log('❌ Avatars bucket not found')
+          console.log('❌ User avatars bucket not found')
           return false
         }
       } catch (error) {

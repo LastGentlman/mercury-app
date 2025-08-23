@@ -70,14 +70,14 @@ export class ProfileService {
 
       console.log('📦 All buckets:', data?.map(b => ({ name: b.name, public: b.public })) || [])
       
-      const avatarsBucket = data?.find(bucket => bucket.name === 'avatars')
+      const avatarsBucket = data?.find(bucket => bucket.name === 'user_avatars')
       
       if (!avatarsBucket) {
-        console.warn('⚠️ Avatars bucket not found. Available buckets:', data?.map(b => b.name))
+        console.warn('⚠️ User avatars bucket not found. Available buckets:', data?.map(b => b.name))
         return false
       }
 
-      console.log('✅ Avatars bucket found:', {
+      console.log('✅ User avatars bucket found:', {
         name: avatarsBucket.name,
         public: avatarsBucket.public,
         file_size_limit: avatarsBucket.file_size_limit,
@@ -222,9 +222,9 @@ export class ProfileService {
     const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const fileName = `${user.id}-${Date.now()}.${fileExt}`
     
-    // Upload directly to root of avatars bucket (no subfolder)
+    // Upload directly to root of user_avatars bucket (no subfolder)
     const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('avatars')
+      .from('user_avatars')
       .upload(fileName, file, {
         cacheControl: '3600',
         upsert: true // Allow overwriting
@@ -241,7 +241,7 @@ export class ProfileService {
 
     // Get public URL
     const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
+      .from('user_avatars')
       .getPublicUrl(uploadData.path)
 
     console.log('✅ Avatar uploaded successfully:', {
