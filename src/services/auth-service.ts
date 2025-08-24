@@ -99,6 +99,9 @@ export class AuthService {
         identity_avatar_url: user.identities?.[0]?.identity_data?.avatar_url
       });
 
+      // 🔍 DEBUG - Complete user object for deep inspection
+      console.log('🔍 DEBUG - Complete user object:', JSON.stringify(user, null, 2));
+
       // Mapear datos de usuario OAuth a nuestro formato
       const authUser: AuthUser = {
         id: user.id,
@@ -228,7 +231,7 @@ export class AuthService {
             prompt: 'consent',
           } : {},
           scopes: provider === 'google' 
-            ? 'https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'
+            ? 'openid email profile'
             : 'email'
         },
       })
