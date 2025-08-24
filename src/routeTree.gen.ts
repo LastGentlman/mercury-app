@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SweetalertDemoRouteImport } from './routes/sweetalert-demo'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-design-system-demo'
@@ -20,6 +21,11 @@ import { Route as ApiTestRouteImport } from './routes/api-test'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
+const SweetalertDemoRoute = SweetalertDemoRouteImport.update({
+  id: '/sweetalert-demo',
+  path: '/sweetalert-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
+  '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
+  '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
+  '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/enhanced-design-system-demo'
     | '/products'
     | '/profile'
+    | '/sweetalert-demo'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/enhanced-design-system-demo'
     | '/products'
     | '/profile'
+    | '/sweetalert-demo'
     | '/auth/callback'
   id:
     | '__root__'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/enhanced-design-system-demo'
     | '/products'
     | '/profile'
+    | '/sweetalert-demo'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
@@ -158,10 +170,18 @@ export interface RootRouteChildren {
   EnhancedDesignSystemDemoRoute: typeof EnhancedDesignSystemDemoRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
+  SweetalertDemoRoute: typeof SweetalertDemoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sweetalert-demo': {
+      id: '/sweetalert-demo'
+      path: '/sweetalert-demo'
+      fullPath: '/sweetalert-demo'
+      preLoaderRoute: typeof SweetalertDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -255,6 +275,7 @@ const rootRouteChildren: RootRouteChildren = {
   EnhancedDesignSystemDemoRoute: EnhancedDesignSystemDemoRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
+  SweetalertDemoRoute: SweetalertDemoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

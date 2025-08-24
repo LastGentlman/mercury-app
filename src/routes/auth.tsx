@@ -10,7 +10,7 @@ import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordRequirements } from '../components/PasswordRequirements.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
-import { toast } from 'sonner'
+import { showSuccess, showError, showWarning } from '../utils/sweetalert.ts'
 
 export const Route = createFileRoute('/auth')({
   component: RouteComponent,
@@ -48,7 +48,7 @@ function RouteComponent() {
     e.preventDefault()
     
     if (!formData.email || !formData.password) {
-      toast.error('Por favor completa todos los campos')
+      showError('Campos requeridos', 'Por favor completa todos los campos')
       return
     }
 
@@ -58,7 +58,7 @@ function RouteComponent() {
         password: formData.password
       })
       
-      toast.success('¡Inicio de sesión exitoso!')
+      showSuccess('¡Éxito!', '¡Inicio de sesión exitoso!')
       
       // Esperar un poco para que el estado se actualice
       setTimeout(() => {
@@ -76,18 +76,18 @@ function RouteComponent() {
       
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       
-      // Manejar errores específicos de Supabase
-      if (errorMessage.includes('Email not confirmed')) {
-        toast.error(
-          'Email no verificado. Por favor revisa tu bandeja de entrada y haz clic en el enlace de confirmación antes de iniciar sesión.',
-          { duration: 6000 }
+      // Manejar errores específicos (ya traducidos por handleApiError)
+      if (errorMessage.includes('Email no confirmado')) {
+        showError(
+          'Email no verificado',
+          'Por favor revisa tu bandeja de entrada y haz clic en el enlace de confirmación antes de iniciar sesión.'
         )
-      } else if (errorMessage.includes('Invalid login credentials') || errorMessage.includes('Invalid email or password')) {
-        toast.error('Email o contraseña incorrectos. Verifica tus credenciales.')
-      } else if (errorMessage.includes('For security purposes')) {
-        toast.error('Demasiados intentos. Por favor espera un momento antes de intentar de nuevo.')
+      } else if (errorMessage.includes('Email o contraseña incorrectos') || errorMessage.includes('Credenciales inválidas')) {
+        showError('Error de credenciales', 'Email o contraseña incorrectos. Verifica tus credenciales.')
+      } else if (errorMessage.includes('Demasiados intentos')) {
+        showWarning('Demasiados intentos', 'Por favor espera un momento antes de intentar de nuevo.')
       } else {
-        toast.error('Error en el inicio de sesión. Verifica tus credenciales.')
+        showError('Error de inicio de sesión', 'Error en el inicio de sesión. Verifica tus credenciales.')
       }
     }
   }
@@ -97,15 +97,15 @@ function RouteComponent() {
     
     try {
       await resendConfirmationEmail.mutateAsync(lastRegisteredEmail)
-      toast.success('Email de confirmación reenviado. Revisa tu bandeja de entrada.')
+      showSuccess('Email enviado', 'Email de confirmación reenviado. Revisa tu bandeja de entrada.')
     } catch (error) {
       console.error('Resend email error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       
-      if (errorMessage.includes('For security purposes')) {
-        toast.error('Demasiados intentos. Por favor espera un momento antes de intentar de nuevo.')
+      if (errorMessage.includes('Demasiados intentos')) {
+        showWarning('Demasiados intentos', 'Por favor espera un momento antes de intentar de nuevo.')
       } else {
-        toast.error('Error al reenviar el email. Por favor intenta de nuevo.')
+        showError('Error al reenviar', 'Error al reenviar el email. Por favor intenta de nuevo.')
       }
     }
   }
@@ -114,12 +114,12 @@ function RouteComponent() {
     e.preventDefault()
     
     if (!formData.email || !formData.password || !formData.name) {
-      toast.error('Por favor completa todos los campos')
+      showError('Campos requeridos', 'Por favor completa todos los campos')
       return
     }
 
     if (formData.password !== formData.confirmPassword) {
-      toast.error('Las contraseñas no coinciden')
+      showError('Contraseñas no coinciden', 'Las contraseñas no coinciden')
       return
     }
 
@@ -197,17 +197,17 @@ function RouteComponent() {
       });
 
     if (isCommonPassword) {
-      toast.error('No se permite el uso de contraseñas comunes')
+      showError('Contraseña común', 'No se permite el uso de contraseñas comunes')
       return
     }
 
     if (unmetRequirements.length > 0) {
-      toast.error(`La contraseña debe tener: ${unmetRequirements.join(', ')}`)
+      showError('Contraseña inválida', `La contraseña debe tener: ${unmetRequirements.join(', ')}`)
       return
     }
 
     if (!isStrongEnough) {
-      toast.error(`Contraseña muy débil. ${feedback.join('. ')}`)
+      showError('Contraseña débil', `Contraseña muy débil. ${feedback.join('. ')}`)
       return
     }
 
@@ -228,7 +228,7 @@ function RouteComponent() {
         setFormData({ email: '', password: '', confirmPassword: '', name: '' })
       } else {
         // Si no requiere confirmación, mostrar mensaje de éxito y redirigir
-        toast.success('¡Cuenta creada exitosamente!')
+        showSuccess('¡Éxito!', '¡Cuenta creada exitosamente!')
         setTimeout(() => {
           globalThis.location.href = '/dashboard'
         }, 1000)
@@ -240,15 +240,15 @@ function RouteComponent() {
       
       // Manejar errores específicos de Supabase
       if (errorMessage.includes('Email not confirmed')) {
-        toast.error('Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
+        showError('Email no verificado', 'Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
       } else if (errorMessage.includes('already registered')) {
-        toast.error('Ya existe una cuenta con este email. Intenta iniciar sesión en su lugar.')
+        showError('Cuenta existente', 'Ya existe una cuenta con este email. Intenta iniciar sesión en su lugar.')
       } else if (errorMessage.includes('For security purposes') || errorMessage.includes('rate limit')) {
-        toast.error('Demasiados intentos. Por favor espera un momento antes de intentar de nuevo.')
+        showWarning('Demasiados intentos', 'Por favor espera un momento antes de intentar de nuevo.')
       } else if (errorMessage.includes('email rate limit exceeded')) {
-        toast.error('Límite de emails excedido. Por favor espera unos minutos antes de intentar de nuevo.')
+        showWarning('Límite excedido', 'Límite de emails excedido. Por favor espera unos minutos antes de intentar de nuevo.')
       } else {
-        toast.error('Error en el registro. Por favor intenta de nuevo.')
+        showError('Error de registro', 'Error en el registro. Por favor intenta de nuevo.')
       }
     }
   }

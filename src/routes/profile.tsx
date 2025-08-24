@@ -19,8 +19,6 @@ import {
   Save, 
   LogOut, 
   HelpCircle,
-  AlertTriangle,
-  CheckCircle,
   Loader2,
   Shield,
   Bell,
@@ -33,7 +31,6 @@ import { UserAvatar } from '../components/UserAvatar.tsx'
 import { 
   Button, 
   Input, 
-  Alert,
   Dialog,
   DialogContent,
   DialogHeader,
@@ -44,6 +41,7 @@ import {
   Badge,
   Separator
 } from '../components/ui/index.ts'
+import { showSuccess, showError, showInfo } from '../utils/sweetalert.ts'
 
 interface ProfileData {
   fullName: string
@@ -82,11 +80,7 @@ function ProfilePage() {
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
-  const [alert, setAlert] = useState<{
-    message: string
-    type: 'success' | 'error' | 'info'
-    show: boolean
-  } | null>(null)
+
   
   // Use profile stats from hook
   const profileStats = stats || { ordersToday: 0, satisfaction: 0 }
@@ -133,13 +127,13 @@ function ProfilePage() {
 
     // Validate file type first
     if (!file.type.startsWith('image/')) {
-      showAlert('Por favor selecciona una imagen válida', 'error')
+      showError('Imagen inválida', 'Por favor selecciona una imagen válida')
       return
     }
 
     // Show loading message for large files
     if (file.size > 500 * 1024) {
-      showAlert('Optimizando imagen grande...', 'info')
+              showInfo('Optimizando imagen', 'Optimizando imagen grande...')
     }
 
     try {
@@ -157,9 +151,9 @@ function ProfilePage() {
       // Show optimization info if available
       if (result.optimizationStats) {
         const compressionRatio = result.optimizationStats.compressionRatio.toFixed(1)
-        showAlert(`Avatar optimizado y actualizado correctamente (${compressionRatio}% más pequeño)`, 'success')
+        showSuccess('Avatar actualizado', `Avatar optimizado y actualizado correctamente (${compressionRatio}% más pequeño)`)
       } else {
-        showAlert('Avatar actualizado correctamente', 'success')
+        showSuccess('Avatar actualizado', 'Avatar actualizado correctamente')
       }
       
       // Clear the file input
@@ -185,7 +179,7 @@ function ProfilePage() {
         }
       }
       
-      showAlert(`Error al subir la imagen: ${errorMessage}`, 'error')
+      showError('Error al subir imagen', `Error al subir la imagen: ${errorMessage}`)
     }
   }
 
@@ -198,11 +192,11 @@ function ProfilePage() {
       })
       
       setProfileData(prev => ({ ...prev, isDirty: false }))
-      showAlert('Perfil actualizado correctamente', 'success')
+      showSuccess('Perfil actualizado', 'Perfil actualizado correctamente')
       
     } catch (error) {
       console.error('Error saving profile:', error)
-      showAlert('Error al guardar. Inténtalo de nuevo', 'error')
+      showError('Error al guardar', 'Error al guardar. Inténtalo de nuevo')
     }
   }
 
@@ -219,11 +213,7 @@ function ProfilePage() {
     navigate({ to: '/auth' })
   }
 
-  // Show alert
-  const showAlert = (message: string, type: 'success' | 'error' | 'info') => {
-    setAlert({ message, type, show: true })
-    setTimeout(() => setAlert(null), 3000)
-  }
+
 
   // Prevent navigation if there are unsaved changes
   useEffect(() => {
@@ -260,22 +250,7 @@ function ProfilePage() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-gray-50">
-      {/* Alert */}
-      {alert && (
-        <div className="fixed top-4 left-4 right-4 z-50">
-          <Alert className={`${
-            alert.type === 'success' ? 'border-green-200 bg-green-50' :
-            alert.type === 'error' ? 'border-red-200 bg-red-50' :
-            'border-blue-200 bg-blue-50'
-          }`}>
-            <div className="flex items-center gap-2">
-              {alert.type === 'success' && <CheckCircle className="h-4 w-4 text-green-600" />}
-              {alert.type === 'error' && <AlertTriangle className="h-4 w-4 text-red-600" />}
-              <span className="text-sm font-medium">{alert.message}</span>
-            </div>
-          </Alert>
-        </div>
-      )}
+
 
       <div className="max-w-md mx-auto bg-white min-h-screen">
 
