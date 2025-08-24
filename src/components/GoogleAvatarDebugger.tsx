@@ -127,10 +127,10 @@ export function GoogleAvatarDebugger() {
         <div className="bg-green-50 p-3 rounded">
           <h4 className="font-semibold text-green-800 mb-2">🖼️ Cadena de Avatar</h4>
           <div className="space-y-1 text-green-700">
-            <div><strong>Avatar URL:</strong> <span className="font-mono break-all">{(debugInfo.avatarChain as Record<string, unknown>).user_avatar_url as string || 'null'}</span></div>
-            <div><strong>Auth Service Avatar:</strong> <span className="font-mono break-all">{(debugInfo.avatarChain as Record<string, unknown>).auth_service_avatar as string || 'null'}</span></div>
+            <div><strong>Avatar URL:</strong> <span className="font-mono break-all">{String((debugInfo.avatarChain as Record<string, unknown>).user_avatar_url || 'null')}</span></div>
+            <div><strong>Auth Service Avatar:</strong> <span className="font-mono break-all">{String((debugInfo.avatarChain as Record<string, unknown>).auth_service_avatar || 'null')}</span></div>
             <div><strong>Fallback Activo:</strong> <span className="font-mono">{String(Boolean((debugInfo.avatarChain as Record<string, unknown>).fallback_should_activate)) === 'true' ? '✅ SÍ' : '❌ NO'}</span></div>
-            <div><strong>Avatar Final:</strong> <span className="font-mono">{(debugInfo.avatarChain as Record<string, unknown>).final_avatar_url as string}</span></div>
+            <div><strong>Avatar Final:</strong> <span className="font-mono">{String((debugInfo.avatarChain as Record<string, unknown>).final_avatar_url)}</span></div>
           </div>
         </div>
 
