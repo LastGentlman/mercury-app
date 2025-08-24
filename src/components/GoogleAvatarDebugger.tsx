@@ -157,6 +157,17 @@ export function GoogleAvatarDebugger() {
           </div>
         )}
 
+        {/* Re-authentication Warning */}
+        {localStorage.getItem('google_avatar_reauth_needed') === 'true' && (
+          <div className="bg-orange-50 p-3 rounded">
+            <h4 className="font-semibold text-orange-800 mb-2">⚠️ Re-autenticación Requerida</h4>
+            <div className="space-y-1 text-orange-700">
+              <div className="text-xs">El token actual no tiene permisos para acceder a la foto de perfil.</div>
+              <div className="text-xs">Haz clic en "Forzar Re-autenticación Google" para solucionarlo.</div>
+            </div>
+          </div>
+        )}
+
         {/* Acciones */}
         <div className="bg-gray-50 p-3 rounded">
           <h4 className="font-semibold text-gray-800 mb-2">🔧 Acciones</h4>
@@ -181,6 +192,50 @@ export function GoogleAvatarDebugger() {
               className="w-full bg-red-600 text-white px-3 py-1 rounded text-xs"
             >
               🗑️ Limpiar Storage
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                localStorage.setItem('google_avatar_reauth_needed', 'true')
+                alert('Flag de re-autenticación activado. Recarga la página para ver el botón de re-autenticación.')
+              }}
+              className="w-full bg-yellow-600 text-white px-3 py-1 rounded text-xs"
+            >
+              🚩 Activar Re-autenticación
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await AuthService.forceGoogleReauth()
+                } catch (error) {
+                  console.error('Error forcing re-auth:', error)
+                  alert('Error al forzar re-autenticación. Intenta manualmente.')
+                }
+              }}
+              className="w-full bg-orange-600 text-white px-3 py-1 rounded text-xs"
+            >
+              🔄 Forzar Re-autenticación Google
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const googleUserId = '116297281796239835293'
+                try {
+                  const workingFormat = await AuthService.testGoogleAvatarFormats(googleUserId)
+                  if (workingFormat) {
+                    alert(`✅ Working format found: ${workingFormat}`)
+                  } else {
+                    alert('❌ No working format found')
+                  }
+                } catch (error) {
+                  console.error('Error testing formats:', error)
+                  alert('Error testing avatar formats')
+                }
+              }}
+              className="w-full bg-purple-600 text-white px-3 py-1 rounded text-xs"
+            >
+              🧪 Test Avatar URLs
             </button>
           </div>
         </div>

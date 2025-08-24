@@ -102,6 +102,84 @@ export class AuthService {
       // 🔍 DEBUG - Complete user object for deep inspection
       console.log('🔍 DEBUG - Complete user object:', JSON.stringify(user, null, 2));
 
+      // Try to get avatar URL from OAuth data first
+      let avatarUrl = user.user_metadata?.picture || 
+                     user.user_metadata?.avatar_url ||
+                     user.identities?.[0]?.identity_data?.picture ||
+                     user.identities?.[0]?.identity_data?.avatar_url
+
+      // If no avatar URL and it's Google OAuth, try to fetch from Google People API
+      if (!avatarUrl && user.app_metadata?.provider === 'google' && session.access_token) {
+        console.log('🔄 No avatar URL found in OAuth data, trying Google People API...')
+        try {
+          avatarUrl = await this.fetchGoogleProfilePicture(session.access_token)
+        } catch (error) {
+          console.error('❌ Error fetching Google profile picture:', error)
+          
+          // If we get 401, it means the access token doesn't have People API scope
+          // We need to force a re-authentication with the correct scopes
+          if (error instanceof Error && error.message.includes('401')) {
+            console.log('🔄 401 error detected - access token missing People API scope')
+            console.log('🔄 User needs to re-authenticate with updated scopes')
+            
+            // Store a flag to indicate re-authentication is needed
+            localStorage.setItem('google_avatar_reauth_needed', 'true')
+          } else if (error instanceof Response && error.status === 401) {
+            console.log('🔄 401 error detected - access token missing People API scope')
+            console.log('🔄 User needs to re-authenticate with updated scopes')
+            
+            // Store a flag to indicate re-authentication is needed
+            localStorage.setItem('google_avatar_reauth_needed', 'true')
+          } else {
+            // For any other error, also set the flag as a precaution
+            console.log('🔄 Error detected - setting re-authentication flag')
+            localStorage.setItem('google_avatar_reauth_needed', 'true')
+          }
+        }
+      }
+
+      // Fallback: Construct Google avatar URL directly using user ID
+      if (!avatarUrl && user.app_metadata?.provider === 'google') {
+        const googleUserId = user.user_metadata?.provider_id || user.identities?.[0]?.id
+        if (googleUserId) {
+          console.log('🔄 Constructing Google avatar URL directly using user ID:', googleUserId)
+          
+          // Test different formats to find one that works
+          try {
+            const workingFormat = await this.testGoogleAvatarFormats(googleUserId)
+            if (workingFormat) {
+              avatarUrl = workingFormat
+              console.log('✅ Using working Google avatar URL:', avatarUrl)
+            } else {
+              // Fallback to Gravatar using email
+              const email = user.email || user.user_metadata?.email
+              if (email) {
+                const gravatarHash = await this.generateMD5Hash(email.toLowerCase().trim())
+                avatarUrl = `https://www.gravatar.com/avatar/${gravatarHash}?s=150&d=identicon`
+                console.log('⚠️ Using Gravatar fallback:', avatarUrl)
+              } else {
+                // Final fallback to default Google format
+                avatarUrl = `https://lh3.googleusercontent.com/-${googleUserId}/photo?sz=150`
+                console.log('⚠️ Using fallback Google avatar URL:', avatarUrl)
+              }
+            }
+          } catch (error) {
+            console.error('❌ Error testing avatar formats:', error)
+            // Fallback to Gravatar using email
+            const email = user.email || user.user_metadata?.email
+            if (email) {
+              const gravatarHash = await this.generateMD5Hash(email.toLowerCase().trim())
+              avatarUrl = `https://www.gravatar.com/avatar/${gravatarHash}?s=150&d=identicon`
+              console.log('⚠️ Using Gravatar fallback:', avatarUrl)
+            } else {
+              // Final fallback to default Google format
+              avatarUrl = `https://lh3.googleusercontent.com/-${googleUserId}/photo?sz=150`
+              console.log('⚠️ Using fallback Google avatar URL:', avatarUrl)
+            }
+          }
+        }
+      }
+
       // Mapear datos de usuario OAuth a nuestro formato
       const authUser: AuthUser = {
         id: user.id,
@@ -111,10 +189,7 @@ export class AuthService {
               user.user_metadata?.display_name ||
               user.email?.split('@')[0] || 
               'Usuario',
-        avatar_url: user.user_metadata?.picture || 
-                   user.user_metadata?.avatar_url ||
-                   user.identities?.[0]?.identity_data?.picture ||
-                   user.identities?.[0]?.identity_data?.avatar_url,
+        avatar_url: avatarUrl,
         provider: (user.app_metadata?.provider || 'email') as 'email' | 'google' | 'facebook',
         businessId: user.user_metadata?.businessId,
         role: user.user_metadata?.role || 'owner'
@@ -229,9 +304,11 @@ export class AuthService {
           queryParams: provider === 'google' ? {
             access_type: 'offline',
             prompt: 'consent',
+            include_granted_scopes: 'true',
+            scope: 'openid email profile https://www.googleapis.com/auth/userinfo.profile'
           } : {},
           scopes: provider === 'google' 
-            ? 'openid email profile'
+            ? 'openid email profile https://www.googleapis.com/auth/userinfo.profile'
             : 'email'
         },
       })
@@ -396,6 +473,114 @@ export class AuthService {
       })
       callback(event, session)
     })
+  }
+
+  /**
+   * Force Google OAuth re-authentication with updated scopes
+   * This is needed when the current session doesn't have People API access
+   */
+  static async forceGoogleReauth(): Promise<void> {
+    console.log('🔄 Forcing Google OAuth re-authentication...')
+    
+    // Clear the re-auth flag
+    localStorage.removeItem('google_avatar_reauth_needed')
+    
+    // Sign out current session
+    if (supabase) {
+      await supabase.auth.signOut()
+    }
+    
+    // Clear local storage
+    localStorage.removeItem('authToken')
+    
+    // Redirect to Google OAuth with updated scopes
+    await this.socialLogin({
+      provider: 'google',
+      redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback`
+    })
+  }
+
+  /**
+   * Fetch Google profile picture using Google People API as fallback
+   * This is used when OAuth doesn't provide the picture directly
+   */
+  static async fetchGoogleProfilePicture(accessToken: string): Promise<string | null> {
+    try {
+      console.log('🔄 Fetching Google profile picture via People API...')
+      
+      const response = await fetch(
+        'https://people.googleapis.com/v1/people/me?personFields=photos',
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
+
+      if (!response.ok) {
+        console.error('❌ Google People API error:', response.status, response.statusText)
+        return null
+      }
+
+      const data = await response.json()
+      console.log('📊 Google People API response:', data)
+
+      // Get the first profile photo
+      const photos = data.photos?.[0]
+      if (photos?.url) {
+        console.log('✅ Google profile picture found:', photos.url)
+        return photos.url
+      }
+
+      console.log('⚠️ No profile picture found in Google People API')
+      return null
+    } catch (error) {
+      console.error('❌ Error fetching Google profile picture:', error)
+      return null
+    }
+  }
+
+  /**
+   * Test different Google avatar URL formats to find one that works
+   */
+  static async testGoogleAvatarFormats(googleUserId: string): Promise<string | null> {
+    const formats = [
+      `https://lh3.googleusercontent.com/-${googleUserId}/photo?sz=150`,
+      `https://lh3.googleusercontent.com/-${googleUserId}/photo?sz=96`,
+      `https://lh3.googleusercontent.com/-${googleUserId}/photo`,
+      `https://lh3.googleusercontent.com/a/${googleUserId}?sz=150`,
+      `https://lh3.googleusercontent.com/a/${googleUserId}?sz=96`
+    ]
+
+    console.log('🧪 Testing Google avatar URL formats...')
+
+    for (const format of formats) {
+      try {
+        const response = await fetch(format, { method: 'HEAD' })
+        if (response.ok) {
+          console.log('✅ Working format found:', format)
+          return format
+        }
+      } catch (error) {
+        console.log('❌ Format failed:', format)
+      }
+    }
+
+    console.log('❌ No working format found')
+    return null
+  }
+
+  /**
+   * Generate MD5 hash for Gravatar
+   */
+  static async generateMD5Hash(str: string): Promise<string> {
+    const encoder = new TextEncoder()
+    const data = encoder.encode(str)
+    const hashBuffer = await crypto.subtle.digest('MD5', data)
+    const hashArray = Array.from(new Uint8Array(hashBuffer))
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+    return hashHex
   }
 }
 
