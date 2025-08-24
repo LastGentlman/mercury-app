@@ -30,7 +30,6 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
 import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
 import { UserAvatar } from '../components/UserAvatar.tsx'
-import { GoogleAvatarDebugger } from '../components/GoogleAvatarDebugger.tsx'
 import { 
   Button, 
   Input, 
@@ -103,14 +102,7 @@ function ProfilePage() {
   // Initialize profile data when user or profile loads
   useEffect(() => {
     if (user || profile) {
-      // 🔍 DEBUG - Avatar values para troubleshooting
-      console.log('🔍 DEBUG - Profile Avatar Values:', {
-        user_avatar_url: user?.avatar_url,
-        profile_avatar_url: profile?.avatar_url,
-        prev_avatar: profileData.avatar,
-        user_provider: user?.provider,
-        user_metadata: user
-      });
+      // Avatar system working correctly - debug logs removed
 
       setProfileData(prev => ({
         ...prev,
@@ -550,8 +542,6 @@ function ProfilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* 🚨 TEMPORAL: Google Avatar Debugger */}
-      <GoogleAvatarDebugger />
       </div>
     </ProtectedRoute>
   )

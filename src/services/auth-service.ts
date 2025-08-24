@@ -85,22 +85,7 @@ export class AuthService {
         metadata: user.user_metadata
       })
       
-      // 🔍 DEBUG - Raw user metadata para troubleshooting
-      console.log('🔍 DEBUG - Raw user metadata:', {
-        user_metadata: user.user_metadata,
-        app_metadata: user.app_metadata,
-        identities: user.identities?.[0]?.identity_data
-      });
-
-      console.log('🖼️ DEBUG - Avatar URLs disponibles:', {
-        avatar_url: user.user_metadata?.avatar_url,
-        picture: user.user_metadata?.picture,
-        identity_picture: user.identities?.[0]?.identity_data?.picture,
-        identity_avatar_url: user.identities?.[0]?.identity_data?.avatar_url
-      });
-
-      // 🔍 DEBUG - Complete user object for deep inspection
-      console.log('🔍 DEBUG - Complete user object:', JSON.stringify(user, null, 2));
+      // Debugging logs removed - avatar system working correctly
 
       // Try to get avatar URL from OAuth data first
       let avatarUrl = user.user_metadata?.picture || 
