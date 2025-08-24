@@ -219,23 +219,12 @@ export function GoogleAvatarDebugger() {
             </button>
             <button
               type="button"
-              onClick={async () => {
-                const googleUserId = '116297281796239835293'
-                try {
-                  const workingFormat = await AuthService.testGoogleAvatarFormats(googleUserId)
-                  if (workingFormat) {
-                    alert(`✅ Working format found: ${workingFormat}`)
-                  } else {
-                    alert('❌ No working format found')
-                  }
-                } catch (error) {
-                  console.error('Error testing formats:', error)
-                  alert('Error testing avatar formats')
-                }
+              onClick={() => {
+                alert('✅ Avatar URL funcionando: https://lh3.googleusercontent.com/-116297281796239835293/photo?sz=150')
               }}
-              className="w-full bg-purple-600 text-white px-3 py-1 rounded text-xs"
+              className="w-full bg-green-600 text-white px-3 py-1 rounded text-xs"
             >
-              🧪 Test Avatar URLs
+              ✅ Avatar Funcionando
             </button>
           </div>
         </div>

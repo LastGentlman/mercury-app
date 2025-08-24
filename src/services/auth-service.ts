@@ -108,35 +108,7 @@ export class AuthService {
                      user.identities?.[0]?.identity_data?.picture ||
                      user.identities?.[0]?.identity_data?.avatar_url
 
-      // If no avatar URL and it's Google OAuth, try to fetch from Google People API
-      if (!avatarUrl && user.app_metadata?.provider === 'google' && session.access_token) {
-        console.log('🔄 No avatar URL found in OAuth data, trying Google People API...')
-        try {
-          avatarUrl = await this.fetchGoogleProfilePicture(session.access_token)
-        } catch (error) {
-          console.error('❌ Error fetching Google profile picture:', error)
-          
-          // If we get 401, it means the access token doesn't have People API scope
-          // We need to force a re-authentication with the correct scopes
-          if (error instanceof Error && error.message.includes('401')) {
-            console.log('🔄 401 error detected - access token missing People API scope')
-            console.log('🔄 User needs to re-authenticate with updated scopes')
-            
-            // Store a flag to indicate re-authentication is needed
-            localStorage.setItem('google_avatar_reauth_needed', 'true')
-          } else if (error instanceof Response && error.status === 401) {
-            console.log('🔄 401 error detected - access token missing People API scope')
-            console.log('🔄 User needs to re-authenticate with updated scopes')
-            
-            // Store a flag to indicate re-authentication is needed
-            localStorage.setItem('google_avatar_reauth_needed', 'true')
-          } else {
-            // For any other error, also set the flag as a precaution
-            console.log('🔄 Error detected - setting re-authentication flag')
-            localStorage.setItem('google_avatar_reauth_needed', 'true')
-          }
-        }
-      }
+      // Google People API removed - using direct Google avatar URL instead
 
       // Fallback: Use Google's public avatar service
       if (!avatarUrl && user.app_metadata?.provider === 'google') {
@@ -470,44 +442,8 @@ export class AuthService {
 
   /**
    * Fetch Google profile picture using Google People API as fallback
-   * This is used when OAuth doesn't provide the picture directly
+   * REMOVED - Using direct Google avatar URL instead
    */
-  static async fetchGoogleProfilePicture(accessToken: string): Promise<string | null> {
-    try {
-      console.log('🔄 Fetching Google profile picture via People API...')
-      
-      const response = await fetch(
-        'https://people.googleapis.com/v1/people/me?personFields=photos',
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      )
-
-      if (!response.ok) {
-        console.error('❌ Google People API error:', response.status, response.statusText)
-        return null
-      }
-
-      const data = await response.json()
-      console.log('📊 Google People API response:', data)
-
-      // Get the first profile photo
-      const photos = data.photos?.[0]
-      if (photos?.url) {
-        console.log('✅ Google profile picture found:', photos.url)
-        return photos.url
-      }
-
-      console.log('⚠️ No profile picture found in Google People API')
-      return null
-    } catch (error) {
-      console.error('❌ Error fetching Google profile picture:', error)
-      return null
-    }
-  }
 
   /**
    * Test different Google avatar URL formats to find one that works
