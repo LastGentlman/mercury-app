@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Loader2 } from 'lucide-react'
 
@@ -9,13 +8,13 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth()
-  const navigate = useNavigate()
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      navigate({ to: '/auth' })
+      // 🔒 SECURITY: Use window.location for immediate redirect
+      globalThis.location.href = '/auth'
     }
-  }, [isAuthenticated, isLoading, navigate])
+  }, [isAuthenticated, isLoading])
 
   if (isLoading) {
     return (

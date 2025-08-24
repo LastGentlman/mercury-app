@@ -246,8 +246,15 @@ function ProfilePage() {
     return () => globalThis.removeEventListener('beforeunload', handleBeforeUnload)
   }, [profileData.isDirty])
 
+  // 🔒 SECURITY: Immediate redirect if not authenticated
+  if (!user) {
+    // Use window.location for immediate redirect
+    globalThis.location.href = '/auth'
+    return null
+  }
+
   // Loading state
-  if (!user || isProfileLoading) {
+  if (isProfileLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

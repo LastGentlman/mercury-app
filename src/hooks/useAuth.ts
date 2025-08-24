@@ -135,7 +135,10 @@ export function useAuth(): AuthHookReturn {
       // Also clear localStorage directly for immediate effect
       localStorage.removeItem('authToken')
       
-      console.log('✅ Logout successful')
+      // 🔒 SECURITY: Redirect to auth page immediately
+      globalThis.location.href = '/auth'
+      
+      console.log('✅ Logout successful, redirected to auth page')
     },
     onError: (error) => {
       console.error('❌ Logout failed:', error)
@@ -143,6 +146,9 @@ export function useAuth(): AuthHookReturn {
       setAuthToken(null)
       queryClient.setQueryData(['auth-user'], null)
       localStorage.removeItem('authToken')
+      
+      // 🔒 SECURITY: Redirect to auth page even on error
+      globalThis.location.href = '/auth'
     }
   })
 
