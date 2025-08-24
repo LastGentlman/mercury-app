@@ -30,6 +30,7 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
 import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
 import { UserAvatar } from '../components/UserAvatar.tsx'
+import { GoogleAvatarDebugger } from '../components/GoogleAvatarDebugger.tsx'
 import { 
   Button, 
   Input, 
@@ -541,6 +542,9 @@ function ProfilePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* 🚨 TEMPORAL: Google Avatar Debugger */}
+      <GoogleAvatarDebugger />
       </div>
     </ProtectedRoute>
   )
