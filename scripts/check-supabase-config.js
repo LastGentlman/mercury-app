@@ -1,112 +1,59 @@
+#!/usr/bin/env node
+
+import process from "node:process";
+
 /**
- * 🔧 Script para verificar configuración de Supabase y Google OAuth
- * 
- * Este script ayuda a verificar que la configuración esté correcta
+ * 🔍 Supabase Configuration Check for Google OAuth
  */
 
-console.log('🔧 Verificando configuración de Supabase y Google OAuth');
-console.log('=====================================================');
+console.log('🔍 Supabase Configuration Check for Google OAuth')
+console.log('================================================\n')
 
-// Verificar variables de entorno
-console.log('\n1️⃣ Variables de Entorno:');
-console.log('-------------------------');
+console.log('📋 Environment Variables:')
+console.log('- VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? '✅ Set' : '❌ Missing')
+console.log('- VITE_SUPABASE_ANON_KEY:', process.env.VITE_SUPABASE_ANON_KEY ? '✅ Set' : '❌ Missing')
 
-const envVars = [
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY'
-];
+console.log('\n🔧 Supabase Dashboard Configuration:')
+console.log('1. Go to Supabase Dashboard → Authentication → Providers')
+console.log('2. Click on Google provider')
+console.log('3. Verify these settings:')
+console.log('   ✅ Enabled: true')
+console.log('   ✅ Client ID: [your-google-client-id]')
+console.log('   ✅ Client Secret: [your-google-client-secret]')
+console.log('   ✅ Redirect URL: https://your-project.supabase.co/auth/v1/callback')
 
-envVars.forEach(varName => {
-  const value = import.meta.env[varName];
-  if (value) {
-    console.log(`✅ ${varName}: ${value.substring(0, 20)}...`);
-  } else {
-    console.log(`❌ ${varName}: NO ENCONTRADA`);
-  }
-});
+console.log('\n🔧 Google Cloud Console Configuration:')
+console.log('1. Go to Google Cloud Console → APIs & Services → Credentials')
+console.log('2. Find your OAuth 2.0 Client ID')
+console.log('3. Add Authorized Redirect URIs:')
+console.log('   - https://your-project.supabase.co/auth/v1/callback')
+console.log('   - http://localhost:3000/auth/callback (for development)')
 
-// Verificar configuración de Google OAuth
-console.log('\n2️⃣ Configuración de Google OAuth:');
-console.log('----------------------------------');
+console.log('\n🔧 OAuth Consent Screen:')
+console.log('1. Go to Google Cloud Console → APIs & Services → OAuth consent screen')
+console.log('2. Add these scopes:')
+console.log('   - openid')
+console.log('   - email')
+console.log('   - profile')
+console.log('   - https://www.googleapis.com/auth/userinfo.profile')
+console.log('   - https://www.googleapis.com/auth/userinfo.email')
 
-console.log('📋 Pasos para verificar en Supabase Dashboard:');
-console.log('');
-console.log('1. Ve a https://supabase.com/dashboard');
-console.log('2. Selecciona tu proyecto');
-console.log('3. Ve a Authentication > Providers');
-console.log('4. Haz clic en Google');
-console.log('5. Verifica que esté habilitado');
-console.log('6. Verifica que Client ID y Client Secret estén configurados');
-console.log('7. En Scopes, debe tener: openid email profile');
-console.log('');
+console.log('\n🔧 Enable Required APIs:')
+console.log('1. Go to Google Cloud Console → APIs & Services → Library')
+console.log('2. Search and enable:')
+console.log('   - Google+ API')
+console.log('   - Google People API')
 
-// Verificar configuración de Google Console
-console.log('3️⃣ Configuración de Google Console:');
-console.log('-----------------------------------');
+console.log('\n🔧 Test the Configuration:')
+console.log('1. Clear browser storage: localStorage.clear()')
+console.log('2. Logout completely')
+console.log('3. Login with Google again')
+console.log('4. Check if avatar appears')
 
-console.log('📋 Pasos para verificar en Google Cloud Console:');
-console.log('');
-console.log('1. Ve a https://console.cloud.google.com');
-console.log('2. Selecciona tu proyecto');
-console.log('3. Ve a APIs & Services > Credentials');
-console.log('4. Encuentra tu OAuth 2.0 Client ID');
-console.log('5. Verifica que Authorized JavaScript origins incluya:');
-console.log('   - https://tu-proyecto.supabase.co');
-console.log('   - http://localhost:5173 (para desarrollo)');
-console.log('6. Verifica que Authorized redirect URIs incluya:');
-console.log('   - https://tu-proyecto.supabase.co/auth/v1/callback');
-console.log('');
+console.log('\n🔧 If Still Not Working:')
+console.log('1. Check Supabase logs in dashboard')
+console.log('2. Verify Google OAuth consent screen')
+console.log('3. Test with a different Google account')
+console.log('4. Check if Google account has profile picture')
 
-// Verificar scopes
-console.log('4️⃣ Scopes de Google OAuth:');
-console.log('----------------------------');
-
-const requiredScopes = [
-  'openid',
-  'email', 
-  'profile'
-];
-
-console.log('✅ Scopes requeridos:');
-requiredScopes.forEach(scope => {
-  console.log(`   - ${scope}`);
-});
-
-console.log('');
-console.log('⚠️ IMPORTANTE: Los scopes deben estar separados por espacios, no por comas');
-console.log('   Ejemplo correcto: "openid email profile"');
-console.log('   Ejemplo incorrecto: "openid,email,profile"');
-console.log('');
-
-// Checklist de verificación
-console.log('5️⃣ Checklist de Verificación:');
-console.log('-----------------------------');
-
-const checklist = [
-  '✅ Supabase project creado y configurado',
-  '✅ Google OAuth provider habilitado en Supabase',
-  '✅ Client ID y Client Secret configurados',
-  '✅ Scopes configurados correctamente',
-  '✅ Redirect URI configurado en Google Console',
-  '✅ JavaScript origins configurados en Google Console',
-  '✅ Variables de entorno configuradas en el frontend'
-];
-
-checklist.forEach(item => {
-  console.log(item);
-});
-
-console.log('');
-console.log('🎯 Próximos Pasos:');
-console.log('==================');
-console.log('1. Verifica todos los puntos del checklist');
-console.log('2. Haz logout completo del navegador');
-console.log('3. Haz login de nuevo con Google');
-console.log('4. Revisa el debugger en la página de perfil');
-console.log('5. Comparte los logs de la consola');
-console.log('');
-console.log('💡 Si todo está configurado correctamente pero sigue sin funcionar:');
-console.log('   - Verifica que el usuario dio permisos durante el login');
-console.log('   - Revisa los logs de Supabase en el dashboard');
-console.log('   - Verifica que no hay bloqueos de CORS');
-console.log('   - Prueba con una cuenta de Google diferente'); 
+console.log('\n✅ Configuration check completed!') 

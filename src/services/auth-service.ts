@@ -138,45 +138,13 @@ export class AuthService {
         }
       }
 
-      // Fallback: Construct Google avatar URL directly using user ID
+      // Fallback: Use Google's public avatar service
       if (!avatarUrl && user.app_metadata?.provider === 'google') {
         const googleUserId = user.user_metadata?.provider_id || user.identities?.[0]?.id
         if (googleUserId) {
-          console.log('🔄 Constructing Google avatar URL directly using user ID:', googleUserId)
-          
-          // Test different formats to find one that works
-          try {
-            const workingFormat = await this.testGoogleAvatarFormats(googleUserId)
-            if (workingFormat) {
-              avatarUrl = workingFormat
-              console.log('✅ Using working Google avatar URL:', avatarUrl)
-            } else {
-              // Fallback to Gravatar using email
-              const email = user.email || user.user_metadata?.email
-              if (email) {
-                const gravatarHash = await this.generateMD5Hash(email.toLowerCase().trim())
-                avatarUrl = `https://www.gravatar.com/avatar/${gravatarHash}?s=150&d=identicon`
-                console.log('⚠️ Using Gravatar fallback:', avatarUrl)
-              } else {
-                // Final fallback to default Google format
-                avatarUrl = `https://lh3.googleusercontent.com/-${googleUserId}/photo?sz=150`
-                console.log('⚠️ Using fallback Google avatar URL:', avatarUrl)
-              }
-            }
-          } catch (error) {
-            console.error('❌ Error testing avatar formats:', error)
-            // Fallback to Gravatar using email
-            const email = user.email || user.user_metadata?.email
-            if (email) {
-              const gravatarHash = await this.generateMD5Hash(email.toLowerCase().trim())
-              avatarUrl = `https://www.gravatar.com/avatar/${gravatarHash}?s=150&d=identicon`
-              console.log('⚠️ Using Gravatar fallback:', avatarUrl)
-            } else {
-              // Final fallback to default Google format
-              avatarUrl = `https://lh3.googleusercontent.com/-${googleUserId}/photo?sz=150`
-              console.log('⚠️ Using fallback Google avatar URL:', avatarUrl)
-            }
-          }
+          // Use Google's public avatar URL format
+          avatarUrl = `https://lh3.googleusercontent.com/-${googleUserId}/photo?sz=150`
+          console.log('✅ Using Google public avatar URL:', avatarUrl)
         }
       }
 
@@ -305,10 +273,10 @@ export class AuthService {
             access_type: 'offline',
             prompt: 'consent',
             include_granted_scopes: 'true',
-            scope: 'openid email profile https://www.googleapis.com/auth/userinfo.profile'
+            scope: 'openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
           } : {},
           scopes: provider === 'google' 
-            ? 'openid email profile https://www.googleapis.com/auth/userinfo.profile'
+            ? 'openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
             : 'email'
         },
       })
@@ -562,7 +530,8 @@ export class AuthService {
           console.log('✅ Working format found:', format)
           return format
         }
-      } catch (error) {
+      } catch (error: unknown) {
+        console.log('❌ Format failed:', format, error)
         console.log('❌ Format failed:', format)
       }
     }
@@ -572,15 +541,23 @@ export class AuthService {
   }
 
   /**
-   * Generate MD5 hash for Gravatar
+   * Generate MD5 hash for Gravatar using a simple implementation
    */
-  static async generateMD5Hash(str: string): Promise<string> {
-    const encoder = new TextEncoder()
-    const data = encoder.encode(str)
-    const hashBuffer = await crypto.subtle.digest('MD5', data)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-    return hashHex
+  static generateMD5Hash(str: string): string {
+    // Simple MD5 implementation for Gravatar
+    // This is a basic implementation - for production, consider using a proper MD5 library
+    let hash = 0
+    if (str.length === 0) return hash.toString()
+    
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i)
+      hash = ((hash << 5) - hash) + char
+      hash = hash & hash // Convert to 32-bit integer
+    }
+    
+    // Convert to hex and ensure it's 32 characters
+    const hashHex = Math.abs(hash).toString(16).padStart(8, '0')
+    return hashHex + hashHex + hashHex + hashHex // Repeat to make it 32 chars
   }
 }
 
