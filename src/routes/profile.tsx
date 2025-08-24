@@ -29,6 +29,7 @@ import {
 import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
 import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
+import { UserAvatar } from '../components/UserAvatar.tsx'
 import { 
   Button, 
   Input, 
@@ -281,18 +282,12 @@ function ProfilePage() {
         {/* Profile Section */}
         <div className="p-6 text-center border-b border-gray-100">
           <div className="relative inline-block mb-4">
-            <div className="w-20 h-20 rounded-full border-3 border-gray-200 overflow-hidden">
-              <img
-                src={user.avatar_url || profileData.avatar || profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=80&background=2563eb&color=fff`}
-                alt="Foto de perfil"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  // Fallback to generated avatar if image fails to load
-                  const target = e.target as HTMLImageElement
-                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=80&background=2563eb&color=fff`
-                }}
-              />
-            </div>
+            <UserAvatar
+              user={user}
+              profileAvatar={profileData.avatar || profile?.avatar_url || undefined}
+              size="xl"
+              showProviderBadge
+            />
             <Button
               size="sm"
               onClick={handleAvatarUpload}
@@ -305,15 +300,6 @@ function ProfilePage() {
                 <Camera className="h-3 w-3" />
               )}
             </Button>
-            
-            {/* Show OAuth provider badge if avatar is from OAuth */}
-            {(user.avatar_url && !profileData.avatar && !profile?.avatar_url) && (
-              <div className="absolute -top-1 -right-1">
-                <Badge variant="secondary" className="text-xs px-1 py-0.5 bg-green-100 text-green-700 border-green-200">
-                  {user.provider === 'google' ? 'G' : user.provider === 'facebook' ? 'F' : 'OAuth'}
-                </Badge>
-              </div>
-            )}
           </div>
           
           <input
@@ -346,8 +332,10 @@ function ProfilePage() {
               <span>Avatar de {user.provider === 'google' ? 'Google' : user.provider === 'facebook' ? 'Facebook' : 'OAuth'}</span>
             ) : profileData.avatar || profile?.avatar_url ? (
               <span>Avatar personalizado</span>
-            ) : (
+            ) : user.provider === 'email' ? (
               <span>Avatar generado</span>
+            ) : (
+              <span>Sin avatar</span>
             )}
           </div>
         </div>

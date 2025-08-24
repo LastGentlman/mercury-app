@@ -31,7 +31,18 @@ avatar_url: user.user_metadata?.picture ||
            user.identities?.[0]?.identity_data?.avatar_url,
 ```
 
-### 2. **Debugging Robusto**
+### 2. **Componente UserAvatar Inteligente**
+
+Creamos un componente `UserAvatar` que maneja diferentes tipos de usuarios:
+
+```typescript
+// src/components/UserAvatar.tsx
+// - Google OAuth: Usa avatar de Google, sin fallback a iniciales
+// - Facebook OAuth: Usa avatar de Facebook, sin fallback a iniciales  
+// - Email/Password: Usa avatar personalizado o fallback a iniciales
+```
+
+### 3. **Debugging Robusto**
 
 Agregamos logs detallados para troubleshooting:
 
@@ -51,7 +62,7 @@ console.log('🖼️ DEBUG - Avatar URLs disponibles:', {
 });
 ```
 
-### 3. **Scopes de Google Mejorados**
+### 4. **Scopes de Google Mejorados**
 
 Cambiamos los scopes para asegurar permisos adecuados:
 
@@ -201,6 +212,23 @@ Si el fix causa problemas:
 2. `user.user_metadata.avatar_url` (fallback)
 3. `user.identities[0].identity_data.picture` (backup)
 4. `user.identities[0].identity_data.avatar_url` (último recurso)
+
+### Comportamiento del Fallback por Tipo de Usuario
+
+#### 🔐 **Usuarios Email/Password**
+- **Avatar personalizado**: Prioridad más alta
+- **Fallback a iniciales**: Se activa si no hay avatar personalizado
+- **Generado por**: UI Avatars API con iniciales del nombre
+
+#### 🔗 **Usuarios Google OAuth**
+- **Avatar de Google**: Prioridad más alta
+- **Sin fallback**: No se muestran iniciales si no hay avatar
+- **Placeholder**: Se muestra un círculo gris con la primera letra del nombre
+
+#### 🔗 **Usuarios Facebook OAuth**
+- **Avatar de Facebook**: Prioridad más alta
+- **Sin fallback**: No se muestran iniciales si no hay avatar
+- **Placeholder**: Se muestra un círculo gris con la primera letra del nombre
 
 ### Compatibilidad
 
