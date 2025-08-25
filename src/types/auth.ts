@@ -73,7 +73,8 @@ export interface AuthHookReturn extends AuthState {
   register: UseMutationResult<RegistrationResponse, Error, RegisterCredentials>
   logout: UseMutationResult<void, Error, void>
   resendConfirmationEmail: UseMutationResult<void, Error, string>
-  socialLogin: UseMutationResult<any, Error, SocialLoginOptions>
+  changeEmail: UseMutationResult<{ newEmail: string }, Error, { currentEmail: string; newEmail: string }>
+  socialLogin: UseMutationResult<void, Error, SocialLoginOptions>
   
   // Utility functions
   refetchUser: () => Promise<AuthUser | null>

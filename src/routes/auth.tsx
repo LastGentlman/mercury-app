@@ -10,7 +10,7 @@ import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordRequirements } from '../components/PasswordRequirements.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
-import { showSuccess, showError, showWarning } from '../utils/sweetalert.ts'
+import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
 
 export const Route = createFileRoute('/auth')({
   component: RouteComponent,
@@ -31,7 +31,7 @@ function RouteComponent() {
   const [showResendEmail, setShowResendEmail] = useState(false)
   const [lastRegisteredEmail, setLastRegisteredEmail] = useState<string>('')
 
-  const { login, register, resendConfirmationEmail, isAuthenticated, isLoading } = useAuth()
+  const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading } = useAuth()
 
   // Redirect if already authenticated
   if (isAuthenticated) {
@@ -78,9 +78,22 @@ function RouteComponent() {
       
       // Manejar errores específicos (ya traducidos por handleApiError)
       if (errorMessage.includes('Email no confirmado')) {
-        showError(
-          'Email no verificado',
-          'Por favor revisa tu bandeja de entrada y haz clic en el enlace de confirmación antes de iniciar sesión.'
+        // Mostrar alerta con opciones de reenvío y cambio de email
+        await showEmailNotConfirmed(
+          formData.email,
+          async () => {
+            await resendConfirmationEmail.mutateAsync(formData.email)
+            showEmailResent(formData.email)
+          },
+          async () => {
+            await showChangeEmail(
+              formData.email,
+              async (newEmail) => {
+                await changeEmail.mutateAsync({ currentEmail: formData.email, newEmail })
+                showEmailResent(newEmail)
+              }
+            )
+          }
         )
       } else if (errorMessage.includes('Email o contraseña incorrectos') || errorMessage.includes('Credenciales inválidas')) {
         showError('Error de credenciales', 'Email o contraseña incorrectos. Verifica tus credenciales.')

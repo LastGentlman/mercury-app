@@ -373,6 +373,26 @@ export class AuthService {
   }
 
   /**
+   * Changes email for unconfirmed user
+   */
+  static async changeEmail(currentEmail: string, newEmail: string): Promise<{ newEmail: string }> {
+    const response = await fetch(`${getApiUrl()}/api/auth/change-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ currentEmail, newEmail }),
+    })
+
+    if (!response.ok) {
+      await handleApiError(response, 'email')
+    }
+
+    const data = await response.json()
+    return { newEmail: data.newEmail }
+  }
+
+  /**
    * Escuchar cambios de estado - Versión mejorada
    */
   static onAuthStateChange(callback: (event: string, session: unknown) => void) {

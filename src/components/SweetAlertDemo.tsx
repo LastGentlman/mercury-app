@@ -13,7 +13,10 @@ import {
   showPasswordInput,
   showSelect,
   showLoading,
-  closeAlert
+  closeAlert,
+  showEmailNotConfirmed,
+  showEmailResent,
+  showChangeEmail
 } from '../utils/sweetalert.ts'
 
 export function SweetAlertDemo() {
@@ -117,6 +120,42 @@ export function SweetAlertDemo() {
     showSuccess('Completado', 'La operación se ha completado exitosamente')
   }
 
+  const handleEmailNotConfirmed = async () => {
+    await showEmailNotConfirmed(
+      'usuario@ejemplo.com',
+      async () => {
+        // Simular reenvío de email
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        showEmailResent('usuario@ejemplo.com')
+      },
+      async () => {
+        await showChangeEmail(
+          'usuario@ejemplo.com',
+          async (newEmail) => {
+            // Simular cambio de email
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            showEmailResent(newEmail)
+          }
+        )
+      }
+    )
+  }
+
+  const handleEmailResent = () => {
+    showEmailResent('nuevo@ejemplo.com')
+  }
+
+  const handleChangeEmail = async () => {
+    await showChangeEmail(
+      'usuario@ejemplo.com',
+      async (newEmail) => {
+        // Simular cambio de email
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        showEmailResent(newEmail)
+      }
+    )
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
@@ -206,6 +245,27 @@ export function SweetAlertDemo() {
           <CardContent>
             <Button onClick={handleLoadingAlert} className="w-full">
               Mostrar Loading
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Alertas de Email */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Email</CardTitle>
+            <CardDescription>
+              Alertas específicas para manejo de emails
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Button onClick={handleEmailNotConfirmed} variant="outline" className="w-full">
+              Email No Confirmado
+            </Button>
+            <Button onClick={handleEmailResent} variant="outline" className="w-full">
+              Email Reenviado
+            </Button>
+            <Button onClick={handleChangeEmail} variant="outline" className="w-full">
+              Cambiar Email
             </Button>
           </CardContent>
         </Card>

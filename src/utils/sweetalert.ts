@@ -130,6 +130,122 @@ export const showDeleteConfirm = (
 }
 
 /**
+ * Muestra una alerta de email no confirmado con opciones de reenvío y cambio
+ */
+export const showEmailNotConfirmed = (
+  email: string,
+  onResendEmail: () => Promise<void>,
+  onChangeEmail: () => void
+) => {
+  return Swal.fire({
+    icon: 'warning',
+    title: 'Email no verificado',
+    html: `
+      <div class="text-left">
+        <p class="mb-4">El email <strong>${email}</strong> no ha sido verificado.</p>
+        <p class="text-sm text-gray-600 mb-4">
+          • Los enlaces de confirmación caducan en <strong>24 horas</strong><br>
+          • Revisa tu bandeja de entrada y carpeta de spam<br>
+          • Si no recibiste el email, puedes reenviarlo
+        </p>
+      </div>
+    `,
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: 'Reenviar email',
+    denyButtonText: 'Cambiar email',
+    cancelButtonText: 'Cerrar',
+    confirmButtonColor: '#3b82f6',
+    denyButtonColor: '#6b7280',
+    reverseButtons: true,
+    preConfirm: async () => {
+      try {
+        await onResendEmail()
+        return true
+      } catch (error) {
+        Swal.showValidationMessage(`Error al reenviar: ${error}`)
+        return false
+      }
+    },
+    preDeny: () => {
+      onChangeEmail()
+      return false
+    }
+  })
+}
+
+/**
+ * Muestra una alerta de email reenviado exitosamente
+ */
+export const showEmailResent = (email: string) => {
+  return Swal.fire({
+    icon: 'success',
+    title: 'Email reenviado',
+    html: `
+      <div class="text-left">
+        <p>Se ha reenviado el email de confirmación a:</p>
+        <p class="font-semibold text-blue-600">${email}</p>
+        <p class="text-sm text-gray-600 mt-2">
+          • Revisa tu bandeja de entrada<br>
+          • El enlace caduca en <strong>24 horas</strong>
+        </p>
+      </div>
+    `,
+    confirmButtonText: 'Entendido',
+    confirmButtonColor: '#3b82f6'
+  })
+}
+
+/**
+ * Muestra una alerta de cambio de email
+ */
+export const showChangeEmail = (
+  currentEmail: string,
+  onEmailChange: (newEmail: string) => Promise<void>
+) => {
+  return Swal.fire({
+    icon: 'question',
+    title: 'Cambiar email',
+    html: `
+      <div class="text-left mb-4">
+        <p>Email actual: <strong>${currentEmail}</strong></p>
+        <p class="text-sm text-gray-600 mt-2">
+          Ingresa el nuevo email donde quieres recibir la confirmación
+        </p>
+      </div>
+    `,
+    input: 'email',
+    inputPlaceholder: 'nuevo@email.com',
+    inputValue: currentEmail,
+    showCancelButton: true,
+    confirmButtonText: 'Cambiar email',
+    cancelButtonText: 'Cancelar',
+    confirmButtonColor: '#3b82f6',
+    inputValidator: (value) => {
+      if (!value) {
+        return 'Por favor ingresa un email'
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        return 'Por favor ingresa un email válido'
+      }
+      if (value === currentEmail) {
+        return 'El nuevo email debe ser diferente al actual'
+      }
+      return undefined
+    },
+    preConfirm: async (newEmail) => {
+      try {
+        await onEmailChange(newEmail)
+        return newEmail
+      } catch (error) {
+        Swal.showValidationMessage(`Error al cambiar email: ${error}`)
+        return false
+      }
+    }
+  })
+}
+
+/**
  * Muestra una alerta de carga
  */
 export const showLoading = (

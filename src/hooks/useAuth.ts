@@ -168,6 +168,21 @@ export function useAuth(): AuthHookReturn {
   })
 
   /**
+   * Change email mutation
+   */
+  const changeEmail = useMutation({
+    mutationFn: async ({ currentEmail, newEmail }: { currentEmail: string; newEmail: string }): Promise<{ newEmail: string }> => {
+      return await AuthService.changeEmail(currentEmail, newEmail)
+    },
+    onSuccess: (data) => {
+      console.log('✅ Email changed successfully:', data.newEmail)
+    },
+    onError: (error) => {
+      console.error('❌ Failed to change email:', error)
+    }
+  })
+
+  /**
    * Social login mutation (for OAuth via Supabase)
    */
   const socialLogin = useMutation({
@@ -241,6 +256,7 @@ export function useAuth(): AuthHookReturn {
     register, 
     logout,
     resendConfirmationEmail,
+    changeEmail,
     socialLogin,
     
     // Utility functions
