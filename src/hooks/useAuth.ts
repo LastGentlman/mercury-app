@@ -231,7 +231,25 @@ export function useAuth(): AuthHookReturn {
       }
     )
 
-    return () => subscription.unsubscribe()
+    // Escuchar eventos personalizados de OAuth popup
+    const handleOAuthSuccess = (event: CustomEvent) => {
+      console.log('✅ OAuth success event received:', event.detail)
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+    }
+
+    const handleOAuthError = (event: CustomEvent) => {
+      console.error('❌ OAuth error event received:', event.detail)
+      // Aquí podrías mostrar una notificación de error si es necesario
+    }
+
+    window.addEventListener('oauth-success', handleOAuthSuccess as EventListener)
+    window.addEventListener('oauth-error', handleOAuthError as EventListener)
+
+    return () => {
+      subscription.unsubscribe()
+      window.removeEventListener('oauth-success', handleOAuthSuccess as EventListener)
+      window.removeEventListener('oauth-error', handleOAuthError as EventListener)
+    }
   }, [queryClient])
 
   // Computed values

@@ -267,15 +267,23 @@ export class AuthService {
             popup.close()
             globalThis.removeEventListener('message', messageListener)
             
-            // Refrescar el estado de autenticación
-            setTimeout(() => {
-              globalThis.location.reload()
-            }, 500)
+            // Disparar un evento personalizado para que el hook useAuth pueda escucharlo
+            const authEvent = new CustomEvent('oauth-success', {
+              detail: { user: event.data.user }
+            })
+            globalThis.dispatchEvent(authEvent)
+            
+            console.log('✅ Evento OAuth disparado, popup cerrado')
           } else if (event.data?.type === 'OAUTH_ERROR') {
             console.error('❌ Error en OAuth popup:', event.data.error)
             popup.close()
             globalThis.removeEventListener('message', messageListener)
-            throw new Error(event.data.error)
+            
+            // Disparar evento de error
+            const errorEvent = new CustomEvent('oauth-error', {
+              detail: { error: event.data.error }
+            })
+            globalThis.dispatchEvent(errorEvent)
           }
         }
 
