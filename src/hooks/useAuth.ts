@@ -242,13 +242,13 @@ export function useAuth(): AuthHookReturn {
       // Aquí podrías mostrar una notificación de error si es necesario
     }
 
-    window.addEventListener('oauth-success', handleOAuthSuccess as EventListener)
-    window.addEventListener('oauth-error', handleOAuthError as EventListener)
+    globalThis.addEventListener('oauth-success', handleOAuthSuccess as EventListener)
+    globalThis.addEventListener('oauth-error', handleOAuthError as EventListener)
 
     return () => {
       subscription.unsubscribe()
-      window.removeEventListener('oauth-success', handleOAuthSuccess as EventListener)
-      window.removeEventListener('oauth-error', handleOAuthError as EventListener)
+      globalThis.removeEventListener('oauth-success', handleOAuthSuccess as EventListener)
+      globalThis.removeEventListener('oauth-error', handleOAuthError as EventListener)
     }
   }, [queryClient])
 
