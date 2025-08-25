@@ -61,7 +61,6 @@ function ProfilePage() {
   const { user, logout } = useAuth()
   const { 
     profile, 
-    stats, 
     updateProfile, 
     uploadAvatar, 
     isUpdating,
@@ -80,10 +79,6 @@ function ProfilePage() {
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
-
-  
-  // Use profile stats from hook
-  const profileStats = stats || { ordersToday: 0, satisfaction: 0 }
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -312,18 +307,6 @@ function ProfilePage() {
             ) : (
               <span>Sin avatar</span>
             )}
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4 p-4 bg-gray-50 border-b border-gray-100">
-          <div className="text-center p-3">
-            <div className="text-2xl font-bold text-blue-600">{profileStats.ordersToday}</div>
-            <div className="text-xs text-gray-500 uppercase tracking-wide">Pedidos hoy</div>
-          </div>
-          <div className="text-center p-3">
-            <div className="text-2xl font-bold text-blue-600">{profileStats.satisfaction}%</div>
-            <div className="text-xs text-gray-500 uppercase tracking-wide">Satisfacción</div>
           </div>
         </div>
 

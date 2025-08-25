@@ -56,6 +56,9 @@ function AuthCallbackPage() {
   const { refetchUser } = useAuth()
   const [loadingPhase, setLoadingPhase] = useState<'processing' | 'authenticating' | 'redirecting'>('processing')
   const [progress, setProgress] = useState(0)
+  
+  // Detectar si estamos en un popup
+  const isPopup = globalThis.opener && globalThis.opener !== globalThis.window
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
@@ -79,10 +82,21 @@ function AuthCallbackPage() {
           console.log('✅ Immediate session found - fast path!')
           setProgress(100)
           tracker.log('Fast path authentication completed')
-          notifications.success(`¡Bienvenido, ${immediateUser.name || immediateUser.email}!`)
-          setLoadingPhase('redirecting')
-          navigate({ to: '/dashboard' })
-          return
+          
+          if (isPopup) {
+            // Enviar mensaje de éxito a la ventana principal
+            globalThis.opener?.postMessage({
+              type: 'OAUTH_SUCCESS',
+              user: immediateUser
+            }, globalThis.location.origin)
+            globalThis.close()
+            return
+          } else {
+            notifications.success(`¡Bienvenido, ${immediateUser.name || immediateUser.email}!`)
+            setLoadingPhase('redirecting')
+            navigate({ to: '/dashboard' })
+            return
+          }
         }
         
         setLoadingPhase('authenticating')
@@ -114,9 +128,19 @@ function AuthCallbackPage() {
           }
           
           setProgress(100)
-          notifications.success(`¡Bienvenido, ${(user as { name: string, email: string }).name || (user as { email: string }).email}!`)
-          setLoadingPhase('redirecting')
-          navigate({ to: '/dashboard' })
+          
+          if (isPopup) {
+            // Enviar mensaje de éxito a la ventana principal
+            globalThis.opener?.postMessage({
+              type: 'OAUTH_SUCCESS',
+              user: user
+            }, globalThis.location.origin)
+            globalThis.close()
+          } else {
+            notifications.success(`¡Bienvenido, ${(user as { name: string, email: string }).name || (user as { email: string }).email}!`)
+            setLoadingPhase('redirecting')
+            navigate({ to: '/dashboard' })
+          }
         } else {
           throw new Error('Authentication failed - no user session found')
         }
@@ -135,9 +159,18 @@ function AuthCallbackPage() {
           }
         }
         
-        notifications.error(errorMessage)
-        setLoadingPhase('processing')
-        navigate({ to: '/auth' })
+        if (isPopup) {
+          // Enviar mensaje de error a la ventana principal
+          globalThis.opener?.postMessage({
+            type: 'OAUTH_ERROR',
+            error: errorMessage
+          }, globalThis.location.origin)
+          globalThis.close()
+        } else {
+          notifications.error(errorMessage)
+          setLoadingPhase('processing')
+          navigate({ to: '/auth' })
+        }
       }
     }
 

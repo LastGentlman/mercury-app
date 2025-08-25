@@ -208,7 +208,7 @@ export class AuthService {
   }
 
   /**
-   * OAuth Social Login - Versión mejorada con debugging
+   * OAuth Social Login - Versión con popup en lugar de redirect
    */
   static async socialLogin({ provider, redirectTo }: SocialLoginOptions): Promise<void> {
     if (!supabase) {
@@ -219,13 +219,14 @@ export class AuthService {
 
     try {
       const callbackUrl = redirectTo || `${globalThis.location.origin}/auth/callback`
-      console.log(`🚀 Iniciando login con ${provider}...`)
-      console.log('📍 Redirect URL:', callbackUrl)
+      console.log(`🚀 Iniciando login con ${provider} en popup...`)
+      console.log('📍 Callback URL:', callbackUrl)
       
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {
           redirectTo: callbackUrl,
+          skipBrowserRedirect: true, // Esto evita la redirección automática
           queryParams: provider === 'google' ? {
             access_type: 'offline',
             prompt: 'consent',
@@ -243,8 +244,55 @@ export class AuthService {
         throw new Error(`Error en login con ${provider}: ${error.message}`)
       }
 
-      console.log(`✅ OAuth iniciado correctamente para ${provider}`, data)
-      console.log('🔄 Redirigiendo al proveedor...')
+      if (data.url) {
+        console.log(`✅ OAuth URL generada para ${provider}`, data.url)
+        
+        // Abrir popup con la URL de OAuth
+        const popup = globalThis.open(
+          data.url,
+          `${provider}_oauth`,
+          'width=500,height=600,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
+        )
+        
+        if (!popup) {
+          throw new Error('No se pudo abrir la ventana popup. Verifica que el bloqueador de popups esté deshabilitado.')
+        }
+
+        // Escuchar el mensaje de la ventana popup cuando se complete la autenticación
+        const messageListener = (event: MessageEvent) => {
+          if (event.origin !== globalThis.location.origin) return
+          
+          if (event.data?.type === 'OAUTH_SUCCESS') {
+            console.log('✅ OAuth completado exitosamente en popup')
+            popup.close()
+            globalThis.removeEventListener('message', messageListener)
+            
+            // Refrescar el estado de autenticación
+            setTimeout(() => {
+              globalThis.location.reload()
+            }, 500)
+          } else if (event.data?.type === 'OAUTH_ERROR') {
+            console.error('❌ Error en OAuth popup:', event.data.error)
+            popup.close()
+            globalThis.removeEventListener('message', messageListener)
+            throw new Error(event.data.error)
+          }
+        }
+
+        globalThis.addEventListener('message', messageListener)
+
+        // Verificar si la ventana se cerró manualmente
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed)
+            globalThis.removeEventListener('message', messageListener)
+            console.log('ℹ️ Ventana popup cerrada por el usuario')
+          }
+        }, 1000)
+
+      } else {
+        throw new Error('No se pudo generar la URL de OAuth')
+      }
       
     } catch (error) {
       console.error(`❌ Error inesperado en socialLogin:`, error)
