@@ -74,18 +74,17 @@ export interface AuthHookReturn extends AuthState {
   logout: UseMutationResult<void, Error, void>
   resendConfirmationEmail: UseMutationResult<void, Error, string>
   changeEmail: UseMutationResult<{ newEmail: string }, Error, { currentEmail: string; newEmail: string }>
-  socialLogin: UseMutationResult<void, Error, SocialLoginOptions>
+
   
   // Utility functions
   refetchUser: () => Promise<AuthUser | null>
   
   // OAuth convenience methods
-  loginWithGoogle: () => void
-  loginWithFacebook: () => void
+  loginWithGoogle: () => Promise<void>
+  loginWithFacebook: () => Promise<void>
   
   // Loading states (convenience accessors)
   isLoginLoading: boolean
   isRegisterLoading: boolean
   isLogoutLoading: boolean
-  isSocialLoginLoading: boolean
 } 

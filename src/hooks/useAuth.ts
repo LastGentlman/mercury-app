@@ -23,7 +23,6 @@ import type {
   AuthUser, 
   LoginCredentials, 
   RegisterCredentials,
-  SocialLoginOptions,
   LoginResponse,
   RegistrationResponse
 } from '../types/auth.ts'
@@ -183,37 +182,33 @@ export function useAuth(): AuthHookReturn {
   })
 
   /**
-   * Social login mutation (for OAuth via Supabase)
+   * OAuth methods simplificados - SIN manejo de popups
    */
-  const socialLogin = useMutation({
-    mutationFn: async (options: SocialLoginOptions) => {
-      await AuthService.socialLogin(options)
-      // Note: The actual auth happens via redirect, so this just initiates the flow
-    },
-    onError: (error) => {
-      console.error('❌ Social login failed:', error)
+  const loginWithGoogle = useCallback(async () => {
+    try {
+      // El modal maneja toda la UX, aquí solo iniciamos el redirect
+      await AuthService.socialLogin({
+        provider: 'google',
+        redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback?source=modal`
+      })
+      // El usuario será redirigido, no necesitamos manejar más estado
+    } catch (error) {
+      console.error('❌ Google login failed:', error)
+      throw error
     }
-  })
+  }, [])
 
-  /**
-   * Google login shortcut
-   */
-  const loginWithGoogle = useCallback(() => {
-    socialLogin.mutate({ 
-      provider: 'google',
-      redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback`
-    })
-  }, [socialLogin])
-
-  /**
-   * Facebook login shortcut
-   */
-  const loginWithFacebook = useCallback(() => {
-    socialLogin.mutate({ 
-      provider: 'facebook',
-      redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback`
-    })
-  }, [socialLogin])
+  const loginWithFacebook = useCallback(async () => {
+    try {
+      await AuthService.socialLogin({
+        provider: 'facebook',
+        redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback?source=modal`
+      })
+    } catch (error) {
+      console.error('❌ Facebook login failed:', error)
+      throw error
+    }
+  }, [])
 
   /**
    * Listen for OAuth state changes
@@ -275,7 +270,6 @@ export function useAuth(): AuthHookReturn {
     logout,
     resendConfirmationEmail,
     changeEmail,
-    socialLogin,
     
     // Utility functions
     refetchUser,
@@ -288,6 +282,5 @@ export function useAuth(): AuthHookReturn {
     isLoginLoading: login.isPending,
     isRegisterLoading: register.isPending,
     isLogoutLoading: logout.isPending,
-    isSocialLoginLoading: socialLogin.isPending,
   }
 } 

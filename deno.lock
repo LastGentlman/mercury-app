@@ -1565,6 +1565,7 @@
         "npm:react-hook-form@^7.60.0",
         "npm:react@19",
         "npm:sonner@^2.0.5",
+        "npm:sweetalert2@^11.22.4",
         "npm:tailwind-merge@^3.0.2",
         "npm:tailwindcss-animate@^1.0.7",
         "npm:tailwindcss@^3.4.17",

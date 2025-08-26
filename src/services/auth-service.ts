@@ -12,6 +12,13 @@ import type {
   RegistrationResponse,
   SocialLoginOptions 
 } from '../types/auth.ts'
+
+interface ModalContext {
+  returnTo: string
+  timestamp: number
+  provider: 'google' | 'facebook'
+  source: 'modal'
+}
 import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors.ts'
 import { env } from '../env.ts'
 
@@ -208,7 +215,8 @@ export class AuthService {
   }
 
   /**
-   * OAuth Social Login - Versión con popup en lugar de redirect
+   * OAuth Social Login - Versión Modal con Redirect
+   * Esta versión elimina completamente los popups y usa redirect directo
    */
   static async socialLogin({ provider, redirectTo }: SocialLoginOptions): Promise<void> {
     if (!supabase) {
@@ -219,14 +227,14 @@ export class AuthService {
 
     try {
       const callbackUrl = redirectTo || `${globalThis.location.origin}/auth/callback`
-      console.log(`🚀 Iniciando login con ${provider} en popup...`)
+      console.log(`🚀 Iniciando login con ${provider} (Modal → Redirect)...`)
       console.log('📍 Callback URL:', callbackUrl)
-      
-      const { data, error } = await supabase.auth.signInWithOAuth({
+        
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {
           redirectTo: callbackUrl,
-          skipBrowserRedirect: true, // Esto evita la redirección automática
+          // ✅ SIN skipBrowserRedirect - dejamos que Supabase maneje el redirect
           queryParams: provider === 'google' ? {
             access_type: 'offline',
             prompt: 'consent',
@@ -244,67 +252,31 @@ export class AuthService {
         throw new Error(`Error en login con ${provider}: ${error.message}`)
       }
 
-      if (data.url) {
-        console.log(`✅ OAuth URL generada para ${provider}`, data.url)
+      console.log(`✅ OAuth iniciado correctamente para ${provider}`)
+      console.log('🔄 Supabase manejará el redirect automáticamente...')
         
-        // Abrir popup con la URL de OAuth
-        const popup = globalThis.open(
-          data.url,
-          `${provider}_oauth`,
-          'width=500,height=600,scrollbars=yes,resizable=yes,status=yes,location=yes,toolbar=no,menubar=no'
-        )
+      // ✅ NO necesitamos manejar popups, ventanas, o event listeners
+      // Supabase redirige automáticamente al usuario al proveedor OAuth
+      // El usuario regresará a nuestra página callback cuando complete la auth
         
-        if (!popup) {
-          throw new Error('No se pudo abrir la ventana popup. Verifica que el bloqueador de popups esté deshabilitado.')
-        }
-
-        // Escuchar el mensaje de la ventana popup cuando se complete la autenticación
-        const messageListener = (event: MessageEvent) => {
-          if (event.origin !== globalThis.location.origin) return
-          
-          if (event.data?.type === 'OAUTH_SUCCESS') {
-            console.log('✅ OAuth completado exitosamente en popup')
-            popup.close()
-            globalThis.removeEventListener('message', messageListener)
-            
-            // Disparar un evento personalizado para que el hook useAuth pueda escucharlo
-            const authEvent = new CustomEvent('oauth-success', {
-              detail: { user: event.data.user }
-            })
-            globalThis.dispatchEvent(authEvent)
-            
-            console.log('✅ Evento OAuth disparado, popup cerrado')
-          } else if (event.data?.type === 'OAUTH_ERROR') {
-            console.error('❌ Error en OAuth popup:', event.data.error)
-            popup.close()
-            globalThis.removeEventListener('message', messageListener)
-            
-            // Disparar evento de error
-            const errorEvent = new CustomEvent('oauth-error', {
-              detail: { error: event.data.error }
-            })
-            globalThis.dispatchEvent(errorEvent)
-          }
-        }
-
-        globalThis.addEventListener('message', messageListener)
-
-        // Verificar si la ventana se cerró manualmente
-        const checkClosed = setInterval(() => {
-          if (popup.closed) {
-            clearInterval(checkClosed)
-            globalThis.removeEventListener('message', messageListener)
-            console.log('ℹ️ Ventana popup cerrada por el usuario')
-          }
-        }, 1000)
-
-      } else {
-        throw new Error('No se pudo generar la URL de OAuth')
+    } catch (error: unknown) {
+      console.error(`❌ Error en socialLogin:`, error)
+        
+      // Mejorar los mensajes de error para el usuario
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      let userFriendlyError = errorMessage
+        
+      if (errorMessage.includes('network')) {
+        userFriendlyError = 'Error de conexión. Verifica tu internet e inténtalo de nuevo.'
+      } else if (errorMessage.includes('timeout')) {
+        userFriendlyError = 'La solicitud ha tardado demasiado. Inténtalo de nuevo.'
+      } else if (errorMessage.includes('blocked')) {
+        userFriendlyError = 'El acceso ha sido bloqueado. Contacta al soporte si el problema persiste.'
+      } else if (errorMessage.includes('provider')) {
+        userFriendlyError = `${provider} no está disponible temporalmente. Inténtalo más tarde.`
       }
-      
-    } catch (error) {
-      console.error(`❌ Error inesperado en socialLogin:`, error)
-      throw error
+        
+      throw new Error(userFriendlyError)
     }
   }
 
@@ -555,6 +527,43 @@ export class AuthService {
     // Convert to hex and ensure it's 32 characters
     const hashHex = Math.abs(hash).toString(16).padStart(8, '0')
     return hashHex + hashHex + hashHex + hashHex // Repeat to make it 32 chars
+  }
+
+  /**
+   * Verificar si el usuario viene de un contexto de modal
+   */
+  static getModalContext(): ModalContext | null {
+    try {
+      const saved = sessionStorage.getItem('oauth_modal_context')
+      if (saved) {
+        const context = JSON.parse(saved)
+          
+        // Validar que el contexto no sea muy viejo (más de 10 minutos)
+        const tenMinutesAgo = Date.now() - (10 * 60 * 1000)
+        if (context.timestamp && context.timestamp > tenMinutesAgo) {
+          return context
+        } else {
+          // Limpiar contexto viejo
+          sessionStorage.removeItem('oauth_modal_context')
+        }
+      }
+      return null
+    } catch (error) {
+      console.warn('⚠️ Error al obtener contexto del modal:', error)
+      return null
+    }
+  }
+
+  /**
+   * Limpiar contexto del modal después de usar
+   */
+  static clearModalContext(): void {
+    try {
+      sessionStorage.removeItem('oauth_modal_context')
+      console.log('🧹 Contexto del modal limpiado')
+    } catch (error) {
+      console.warn('⚠️ Error al limpiar contexto del modal:', error)
+    }
   }
 }
 
