@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { X } from 'lucide-react'
 import { AuthService } from '../services/auth-service.ts'
 import type { OAuthProvider } from '../hooks/useOAuthModal.ts'
@@ -39,8 +39,18 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
   onError,
   onSetStep
 }) => {
+  const [isOpening, setIsOpening] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const modalRef = useRef<HTMLDivElement>(null)
   const handleProceed = async () => {
     if (!provider) return
+    
+    // Haptic feedback on mobile
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50)
+    }
+    
+    setIsProcessing(true)
       
     try {
       onSetStep('redirecting')
@@ -85,14 +95,31 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
         onClose()
       }
     }
+    
+    // Handle Enter key for confirmation
+    const handleEnter = (e: KeyboardEvent) => {
+      if (e.key === 'Enter' && step === 'confirm' && isOpen) {
+        handleProceed()
+      }
+    }
       
     if (isOpen) {
+      setIsOpening(true)
       document.addEventListener('keydown', handleEsc)
+      document.addEventListener('keydown', handleEnter)
       document.body.style.overflow = 'hidden' // Prevenir scroll
+      
+      // Remove opening state after animation and focus modal
+      const timer = setTimeout(() => {
+        setIsOpening(false)
+        modalRef.current?.focus()
+      }, 300)
+      return () => clearTimeout(timer)
     }
       
     return () => {
       document.removeEventListener('keydown', handleEsc)
+      document.removeEventListener('keydown', handleEnter)
       document.body.style.overflow = 'unset'
     }
   }, [isOpen, step, onClose])
@@ -105,15 +132,25 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
     <div 
       className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4"
       onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="oauth-modal-title"
+      aria-describedby="oauth-modal-description"
     >
-      <div className="bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all">
+      <div 
+        ref={modalRef}
+        tabIndex={-1}
+        className={`bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all duration-300 ${
+          isOpening ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
+        }`}
+      >
           
         {/* Header */}
         <div className={`${config.color} px-6 py-4 text-white relative`}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <span className="text-2xl">{config.icon}</span>
-              <h3 className="text-lg font-semibold">
+              <h3 id="oauth-modal-title" className="text-lg font-semibold">
                 Conectar con {config.name}
               </h3>
             </div>
@@ -140,7 +177,7 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
                 <div className={`w-16 h-16 ${config.color.replace('bg-', 'bg-').replace('500', '100').replace('600', '100')} rounded-full flex items-center justify-center mx-auto mb-4`}>
                   <span className="text-2xl">{config.icon}</span>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed">
+                <p id="oauth-modal-description" className="text-gray-600 text-sm leading-relaxed">
                   {config.description}
                 </p>
               </div>
@@ -171,9 +208,17 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
                 <button
                   type="button"
                   onClick={handleProceed}
-                  className={`flex-1 px-4 py-3 ${config.color} ${config.hoverColor} text-white rounded-lg transition-colors font-medium`}
+                  disabled={isProcessing}
+                  className={`flex-1 px-4 py-3 ${config.color} ${config.hoverColor} text-white rounded-lg transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2`}
                 >
-                  Continuar
+                  {isProcessing ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Conectando...</span>
+                    </>
+                  ) : (
+                    'Continuar'
+                  )}
                 </button>
               </div>
             </>
@@ -195,8 +240,13 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
                 <div className="flex">
                   <div className="ml-3">
                     <p className="text-sm text-blue-700">
-                      <strong>💡 Consejo:</strong> Si no eres redirigido automáticamente en unos segundos, verifica que los popups estén habilitados y actualiza la página.
+                      <strong>💡 Consejo:</strong> Si no eres redirigido automáticamente en unos segundos:
                     </p>
+                    <ul className="mt-2 text-sm text-blue-700 list-disc list-inside">
+                      <li>Verifica tu conexión a internet</li>
+                      <li>Intenta actualizar la página</li>
+                      <li>Si el problema persiste, contacta soporte</li>
+                    </ul>
                   </div>
                 </div>
               </div>
