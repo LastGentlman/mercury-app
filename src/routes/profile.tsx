@@ -97,7 +97,7 @@ function ProfilePage() {
   })
 
   // Security settings state
-  const [securitySettings, setSecuritySettings] = useState({
+  const [securitySettings, _setSecuritySettings] = useState({
     twoFactorAuth: false,
     sessionTimeout: 30
   })
