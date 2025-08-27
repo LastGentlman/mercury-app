@@ -90,10 +90,9 @@ function ProfilePage() {
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false)
 
   // Settings state
-  const [settings, setSettings] = useState({
+  const [settings, _setSettings] = useState({
     darkMode: false,
-    language: 'es',
-    privacyMode: false
+    language: 'es'
   })
 
   // Security settings state
@@ -118,6 +117,14 @@ function ProfilePage() {
     notifications: true, // Notifications starts collapsed
     security: true // Security starts collapsed
   })
+
+  // Reset collapsed sections to default state
+  const resetCollapsedSections = () => {
+    setCollapsedSections({
+      notifications: true,
+      security: true
+    })
+  }
 
   // Initialize profile data when user or profile loads
   useEffect(() => {
@@ -466,7 +473,13 @@ function ProfilePage() {
       </Dialog>
 
       {/* Settings Dialog */}
-      <Dialog open={showSettingsDialog} onOpenChange={setShowSettingsDialog}>
+      <Dialog open={showSettingsDialog} onOpenChange={(open) => {
+        setShowSettingsDialog(open)
+        if (!open) {
+          // Reset sections to collapsed when dialog closes
+          resetCollapsedSections()
+        }
+      }}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Configuración</DialogTitle>
@@ -493,21 +506,10 @@ function ProfilePage() {
                   </div>
                   <Switch
                     checked={settings.darkMode}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, darkMode: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Modo privado</div>
-                      <div className="text-xs text-gray-500">Ocultar información sensible</div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={settings.privacyMode}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, privacyMode: checked }))}
+                    onCheckedChange={(_checked) => {
+                      showInfo('Feature en desarrollo', 'El modo oscuro estará disponible próximamente. ¡Mantente atento a las actualizaciones!')
+                      // No cambiar el estado para mantener la UI consistente
+                    }}
                   />
                 </div>
               </div>
