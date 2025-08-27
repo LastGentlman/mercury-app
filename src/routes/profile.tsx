@@ -24,7 +24,6 @@ import {
   Bell,
   Palette,
   Lock,
-  Eye,
   Smartphone,
   Mail,
   AlertTriangle,
@@ -86,10 +85,10 @@ function ProfilePage() {
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
+  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false)
 
   // Settings state
   const [settings, setSettings] = useState({
-    notifications: true,
     darkMode: false,
     language: 'es',
     privacyMode: false
@@ -99,9 +98,7 @@ function ProfilePage() {
   const [securitySettings, setSecuritySettings] = useState({
     twoFactorAuth: false,
     sessionTimeout: 30,
-    loginNotifications: true,
-    suspiciousActivityAlerts: true,
-    passwordChangeRequired: false
+    suspiciousActivityAlerts: true
   })
 
   // Notification settings state
@@ -117,7 +114,7 @@ function ProfilePage() {
 
   // Collapsible sections state
   const [collapsedSections, setCollapsedSections] = useState({
-    notifications: false,
+    notifications: true, // Notifications starts collapsed
     security: true // Security starts collapsed
   })
 
@@ -487,20 +484,6 @@ function ProfilePage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Bell className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Notificaciones</div>
-                      <div className="text-xs text-gray-500">Recibir alertas y recordatorios</div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={settings.notifications}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, notifications: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
                     <Palette className="h-4 w-4 text-gray-500" />
                     <div>
                       <div className="text-sm font-medium">Modo oscuro</div>
@@ -688,19 +671,7 @@ function ProfilePage() {
                     />
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Bell className="h-4 w-4 text-gray-500" />
-                      <div>
-                        <div className="text-sm font-medium">Notificaciones de inicio de sesión</div>
-                        <div className="text-xs text-gray-500">Recibir alertas de nuevos accesos</div>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={securitySettings.loginNotifications}
-                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, loginNotifications: checked }))}
-                    />
-                  </div>
+
                   
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -716,18 +687,16 @@ function ProfilePage() {
                     />
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <Eye className="h-4 w-4 text-gray-500" />
-                      <div>
-                        <div className="text-sm font-medium">Cambio de contraseña requerido</div>
-                        <div className="text-xs text-gray-500">Forzar cambio en próximo inicio</div>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={securitySettings.passwordChangeRequired}
-                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, passwordChangeRequired: checked }))}
-                    />
+                  {/* Change Password Button */}
+                  <div className="pt-3 border-t border-gray-100">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowChangePasswordDialog(true)}
+                      className="w-full"
+                    >
+                      <Lock className="h-4 w-4 mr-2" />
+                      Cambiar contraseña
+                    </Button>
                   </div>
                 </div>
               )}
@@ -737,6 +706,66 @@ function ProfilePage() {
           <DialogFooter>
             <Button onClick={() => setShowSettingsDialog(false)}>
               Cerrar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Change Password Dialog */}
+      <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Cambiar contraseña</DialogTitle>
+            <DialogDescription>
+              Actualiza tu contraseña para mantener tu cuenta segura
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Contraseña actual
+              </label>
+              <Input
+                type="password"
+                placeholder="Ingresa tu contraseña actual"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nueva contraseña
+              </label>
+              <Input
+                type="password"
+                placeholder="Ingresa tu nueva contraseña"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirmar nueva contraseña
+              </label>
+              <Input
+                type="password"
+                placeholder="Confirma tu nueva contraseña"
+              />
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              <Switch id="auto-change" />
+              <label htmlFor="auto-change" className="text-sm text-gray-700">
+                Recordarme cambiar contraseña cada 90 días
+              </label>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowChangePasswordDialog(false)}>
+              Cancelar
+            </Button>
+            <Button>
+              Cambiar contraseña
             </Button>
           </DialogFooter>
         </DialogContent>
