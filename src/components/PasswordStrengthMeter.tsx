@@ -62,9 +62,7 @@ export function PasswordStrengthMeter({
   const [strengthLabel, setStrengthLabel] = useState('')
   const [strengthColor, setStrengthColor] = useState('')
   const [completedRequirements, setCompletedRequirements] = useState<Set<string>>(new Set())
-  const [achievementMessages, setAchievementMessages] = useState<string[]>([])
   const [celebratingRequirements, setCelebratingRequirements] = useState<Set<string>>(new Set())
-  const [shownAchievements, setShownAchievements] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     calculateStrength()
@@ -112,38 +110,23 @@ export function PasswordStrengthMeter({
       if (requirement.test(password)) {
         newCompleted.add(requirement.id)
         
-        // Si es un nuevo logro, agregar mensaje
-        if (!completedRequirements.has(requirement.id) && !shownAchievements.has(requirement.id)) {
-          newAchievements.push(`🎉 ${requirement.label}`)
+        // Si es un nuevo logro, marcar para celebración
+        if (!completedRequirements.has(requirement.id)) {
+          newAchievements.push(requirement.label)
         }
       }
     })
     
-    // Delay antes de marcar como completado para que el usuario vea el logro
+    // Si hay nuevos logros, celebrar antes de marcar como completado
     if (newAchievements.length > 0) {
-      // Solo agregar achievements que no estén ya en el array
-      setAchievementMessages(prev => {
-        const existingMessages = new Set(prev)
-        const uniqueNewAchievements = newAchievements.filter(msg => !existingMessages.has(msg))
-        return [...prev, ...uniqueNewAchievements]
-      })
-      
-      // Marcar achievements como mostrados
-      setShownAchievements(prev => new Set([...prev, ...newCompleted]))
-      
       // Marcar como celebrando inmediatamente
-      setCelebratingRequirements(new Set([...newAchievements.map(msg => msg.replace('🎉 ', ''))]))
+      setCelebratingRequirements(new Set(newAchievements))
       
       // Esperar 2 segundos antes de marcar como completado
       setTimeout(() => {
         setCompletedRequirements(newCompleted)
         setCelebratingRequirements(new Set())
       }, 2000)
-      
-      // Limpiar mensajes después de 5 segundos
-      setTimeout(() => {
-        setAchievementMessages(prev => prev.filter(msg => !newAchievements.includes(msg)))
-      }, 5000)
     } else {
       setCompletedRequirements(newCompleted)
     }
@@ -243,25 +226,7 @@ export function PasswordStrengthMeter({
         </div>
       )}
 
-      {/* Mensajes de Achievement */}
-      {achievementMessages.length > 0 && (
-        <div className="fixed top-4 right-4 z-50 space-y-2">
-          {achievementMessages.map((message, index) => (
-            <div
-              key={index}
-              className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform transition-all duration-500 animate-bounce"
-              style={{
-                animationDelay: `${index * 200}ms`
-              }}
-            >
-              <div className="flex items-center space-x-2">
-                <span className="text-lg">🎉</span>
-                <span className="font-medium">{message}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+
 
       {/* Mensaje de estado */}
       {password.length > 0 && (
