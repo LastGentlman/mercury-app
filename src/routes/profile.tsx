@@ -534,6 +534,7 @@ function ProfilePage() {
             {/* Notifications Section - Collapsible */}
             <div>
               <button
+                type="button"
                 onClick={() => setCollapsedSections(prev => ({ ...prev, notifications: !prev.notifications }))}
                 className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors"
               >
@@ -656,6 +657,7 @@ function ProfilePage() {
             {/* Security Section - Collapsible and at the bottom */}
             <div>
               <button
+                type="button"
                 onClick={() => setCollapsedSections(prev => ({ ...prev, security: !prev.security }))}
                 className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors"
               >
