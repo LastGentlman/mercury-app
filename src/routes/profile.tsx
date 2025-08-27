@@ -706,7 +706,10 @@ function ProfilePage() {
           </div>
           
           <DialogFooter>
-            <Button onClick={() => setShowSettingsDialog(false)}>
+            <Button onClick={() => {
+              setShowSettingsDialog(false)
+              resetCollapsedSections()
+            }}>
               Cerrar
             </Button>
           </DialogFooter>
