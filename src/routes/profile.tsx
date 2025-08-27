@@ -28,7 +28,8 @@ import {
   Mail,
   AlertTriangle,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Trash2
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
@@ -86,6 +87,7 @@ function ProfilePage() {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false)
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false)
+  const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false)
 
   // Settings state
   const [settings, setSettings] = useState({
@@ -97,8 +99,7 @@ function ProfilePage() {
   // Security settings state
   const [securitySettings, setSecuritySettings] = useState({
     twoFactorAuth: false,
-    sessionTimeout: 30,
-    suspiciousActivityAlerts: true
+    sessionTimeout: 30
   })
 
   // Notification settings state
@@ -667,23 +668,10 @@ function ProfilePage() {
                     </div>
                     <Switch
                       checked={securitySettings.twoFactorAuth}
-                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, twoFactorAuth: checked }))}
-                    />
-                  </div>
-                  
-
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <AlertTriangle className="h-4 w-4 text-gray-500" />
-                      <div>
-                        <div className="text-sm font-medium">Alertas de actividad sospechosa</div>
-                        <div className="text-xs text-gray-500">Detectar accesos inusuales</div>
-                      </div>
-                    </div>
-                    <Switch
-                      checked={securitySettings.suspiciousActivityAlerts}
-                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, suspiciousActivityAlerts: checked }))}
+                      onCheckedChange={(_checked) => {
+                        showInfo('Feature en desarrollo', 'La autenticación de dos factores estará disponible próximamente. ¡Mantente atento a las actualizaciones!')
+                        // No cambiar el estado para mantener la UI consistente
+                      }}
                     />
                   </div>
                   
@@ -696,6 +684,18 @@ function ProfilePage() {
                     >
                       <Lock className="h-4 w-4 mr-2" />
                       Cambiar contraseña
+                    </Button>
+                  </div>
+                  
+                  {/* Delete Account Button */}
+                  <div className="pt-3">
+                    <Button
+                      variant="destructive"
+                      onClick={() => setShowDeleteAccountDialog(true)}
+                      className="w-full"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Eliminar cuenta
                     </Button>
                   </div>
                 </div>
@@ -766,6 +766,54 @@ function ProfilePage() {
             </Button>
             <Button>
               Cambiar contraseña
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Account Dialog */}
+      <Dialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Eliminar cuenta</DialogTitle>
+            <DialogDescription>
+              Esta acción es irreversible. Se eliminarán todos tus datos, pedidos y configuraciones de forma permanente.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
+                <div className="text-sm text-red-800">
+                  <p className="font-medium mb-1">⚠️ Acción irreversible</p>
+                  <ul className="space-y-1 text-xs">
+                    <li>• Se eliminarán todos tus pedidos y datos</li>
+                    <li>• No podrás recuperar tu cuenta</li>
+                    <li>• Se cancelarán todas las suscripciones activas</li>
+                    <li>• Se perderá acceso a reportes y estadísticas</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Escribe "ELIMINAR" para confirmar
+              </label>
+              <Input
+                placeholder="ELIMINAR"
+                className="border-red-300 focus:border-red-500 focus:ring-red-500"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteAccountDialog(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" disabled>
+              Eliminar cuenta permanentemente
             </Button>
           </DialogFooter>
         </DialogContent>
