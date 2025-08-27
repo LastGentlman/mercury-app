@@ -48,7 +48,7 @@ const passwordRequirements: PasswordRequirement[] = [
   {
     id: 'no-repetition',
     label: 'Sin caracteres repetidos consecutivos',
-    test: (password: string) => !/(.)\1{3,}/.test(password),
+    test: (password: string) => !/(.)\1/.test(password),
     required: true
   }
 ]
@@ -61,9 +61,14 @@ export function PasswordStrengthMeter({
   const [strength, setStrength] = useState(0)
   const [strengthLabel, setStrengthLabel] = useState('')
   const [strengthColor, setStrengthColor] = useState('')
+  const [completedRequirements, setCompletedRequirements] = useState<Set<string>>(new Set())
+  const [achievementMessages, setAchievementMessages] = useState<string[]>([])
+  const [celebratingRequirements, setCelebratingRequirements] = useState<Set<string>>(new Set())
+  const [shownAchievements, setShownAchievements] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     calculateStrength()
+    checkAchievements()
   }, [password])
 
   const calculateStrength = () => {
@@ -96,6 +101,51 @@ export function PasswordStrengthMeter({
     } else {
       setStrengthLabel('Muy fuerte')
       setStrengthColor('bg-green-500')
+    }
+  }
+
+  const checkAchievements = () => {
+    const newCompleted = new Set<string>()
+    const newAchievements: string[] = []
+    
+    passwordRequirements.forEach((requirement) => {
+      if (requirement.test(password)) {
+        newCompleted.add(requirement.id)
+        
+        // Si es un nuevo logro, agregar mensaje
+        if (!completedRequirements.has(requirement.id) && !shownAchievements.has(requirement.id)) {
+          newAchievements.push(`🎉 ${requirement.label}`)
+        }
+      }
+    })
+    
+    // Delay antes de marcar como completado para que el usuario vea el logro
+    if (newAchievements.length > 0) {
+      // Solo agregar achievements que no estén ya en el array
+      setAchievementMessages(prev => {
+        const existingMessages = new Set(prev)
+        const uniqueNewAchievements = newAchievements.filter(msg => !existingMessages.has(msg))
+        return [...prev, ...uniqueNewAchievements]
+      })
+      
+      // Marcar achievements como mostrados
+      setShownAchievements(prev => new Set([...prev, ...newCompleted]))
+      
+      // Marcar como celebrando inmediatamente
+      setCelebratingRequirements(new Set([...newAchievements.map(msg => msg.replace('🎉 ', ''))]))
+      
+      // Esperar 2 segundos antes de marcar como completado
+      setTimeout(() => {
+        setCompletedRequirements(newCompleted)
+        setCelebratingRequirements(new Set())
+      }, 2000)
+      
+      // Limpiar mensajes después de 5 segundos
+      setTimeout(() => {
+        setAchievementMessages(prev => prev.filter(msg => !newAchievements.includes(msg)))
+      }, 5000)
+    } else {
+      setCompletedRequirements(newCompleted)
     }
   }
 
@@ -151,19 +201,38 @@ export function PasswordStrengthMeter({
         </div>
       </div>
 
-      {/* Lista de requisitos */}
+      {/* Lista de requisitos con animación de achievement */}
       {showRequirements && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-gray-700">Requisitos de seguridad:</h4>
           <div className="space-y-1">
             {passwordRequirements.map((requirement) => {
               const status = getRequirementStatus(requirement)
+              const isCompleted = completedRequirements.has(requirement.id)
+              const isCelebrating = celebratingRequirements.has(requirement.label)
+              
               return (
                 <div 
                   key={requirement.id}
-                  className={`flex items-center space-x-2 text-sm transition-colors duration-200 ${getRequirementTextColor(status)}`}
+                  className={`flex items-center space-x-2 text-sm transition-all duration-1000 ease-in-out ${
+                    isCompleted 
+                      ? 'opacity-0 transform -translate-x-full scale-95' 
+                      : isCelebrating
+                      ? 'text-green-600 font-semibold animate-pulse'
+                      : getRequirementTextColor(status)
+                  }`}
+                  style={{
+                    maxHeight: isCompleted ? '0px' : '24px',
+                    overflow: 'hidden',
+                    marginBottom: isCompleted ? '0px' : '4px',
+                    transitionDelay: isCompleted ? '0ms' : '0ms'
+                  }}
                 >
-                  {getRequirementIcon(status)}
+                  {isCelebrating ? (
+                    <span className="text-green-500 animate-bounce">🎉</span>
+                  ) : (
+                    getRequirementIcon(status)
+                  )}
                   <span className={status === 'pending' ? 'text-gray-500' : ''}>
                     {requirement.label}
                   </span>
@@ -171,6 +240,26 @@ export function PasswordStrengthMeter({
               )
             })}
           </div>
+        </div>
+      )}
+
+      {/* Mensajes de Achievement */}
+      {achievementMessages.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2">
+          {achievementMessages.map((message, index) => (
+            <div
+              key={index}
+              className="bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform transition-all duration-500 animate-bounce"
+              style={{
+                animationDelay: `${index * 200}ms`
+              }}
+            >
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">🎉</span>
+                <span className="font-medium">{message}</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

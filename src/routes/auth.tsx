@@ -8,9 +8,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.tsx'
 import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
-import { PasswordRequirements } from '../components/PasswordRequirements.tsx'
+import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
-import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
+import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail, showInfo } from '../utils/sweetalert.ts'
 
 export const Route = createFileRoute('/auth')({
   component: RouteComponent,
@@ -346,19 +346,20 @@ function RouteComponent() {
                 </div>
 
                 {/* Email Access Button */}
-                <Button
+                <button
                   type="button"
-                  variant="outline"
-                  className="w-full flex items-center justify-center space-x-2 py-3"
                   onClick={() => {
                     setShowEmailForm(true)
                     setIsLogin(true) // Ensure login tab is selected by default
                   }}
                   disabled={login.isPending || register.isPending}
+                  className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
                 >
-                  <Mail className="h-5 w-5" />
-                  <span>Continuar con Email</span>
-                </Button>
+                  <div className="w-5 h-5 bg-gray-600 rounded flex items-center justify-center">
+                    <Mail className="h-3 w-3 text-white" />
+                  </div>
+                  <span className="font-medium text-gray-700">Continuar con Email</span>
+                </button>
               </>
             ) : (
               <>
@@ -498,10 +499,11 @@ function RouteComponent() {
                       </button>
                     </div>
                     
-                    {/* Requisitos de contraseña */}
+                    {/* Medidor de fortaleza de contraseña */}
                     {formData.password && (
-                      <PasswordRequirements 
+                      <PasswordStrengthMeter 
                         password={formData.password} 
+                        showRequirements
                         className="mt-3"
                       />
                     )}
@@ -517,6 +519,13 @@ function RouteComponent() {
                         placeholder="••••••••••••"
                         value={formData.confirmPassword}
                         onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                        onPaste={(e) => {
+                          e.preventDefault()
+                          showInfo(
+                            'Pegado deshabilitado',
+                            'Por seguridad, no se puede pegar en el campo de confirmar contraseña. Por favor, escribe la contraseña manualmente.'
+                          )
+                        }}
                         className="pl-10 pr-10"
                         required
                       />
