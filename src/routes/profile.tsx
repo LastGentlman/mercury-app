@@ -27,7 +27,9 @@ import {
   Eye,
   Smartphone,
   Mail,
-  AlertTriangle
+  AlertTriangle,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
@@ -111,6 +113,12 @@ function ProfilePage() {
     systemAlerts: true,
     marketingEmails: false,
     weeklyReports: true
+  })
+
+  // Collapsible sections state
+  const [collapsedSections, setCollapsedSections] = useState({
+    notifications: false,
+    security: true // Security starts collapsed
   })
 
   // Initialize profile data when user or profile loads
@@ -523,178 +531,204 @@ function ProfilePage() {
 
             <Separator />
 
-            {/* Security Section */}
+            {/* Notifications Section - Collapsible */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Lock className="h-4 w-4" />
-                Seguridad
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Shield className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Autenticación de dos factores</div>
-                      <div className="text-xs text-gray-500">Añadir una capa extra de seguridad</div>
+              <button
+                onClick={() => setCollapsedSections(prev => ({ ...prev, notifications: !prev.notifications }))}
+                className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              >
+                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Bell className="h-4 w-4" />
+                  Notificaciones Detalladas
+                </h3>
+                {collapsedSections.notifications ? (
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                )}
+              </button>
+              
+              {!collapsedSections.notifications && (
+                <div className="mt-3 space-y-3 pl-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Notificaciones por email</div>
+                        <div className="text-xs text-gray-500">Recibir alertas por correo electrónico</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={notificationSettings.emailNotifications}
+                      onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, emailNotifications: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={securitySettings.twoFactorAuth}
-                    onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, twoFactorAuth: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Bell className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Notificaciones de inicio de sesión</div>
-                      <div className="text-xs text-gray-500">Recibir alertas de nuevos accesos</div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Smartphone className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Notificaciones push</div>
+                        <div className="text-xs text-gray-500">Alertas en tiempo real en el dispositivo</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={notificationSettings.pushNotifications}
+                      onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, pushNotifications: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={securitySettings.loginNotifications}
-                    onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, loginNotifications: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Alertas de actividad sospechosa</div>
-                      <div className="text-xs text-gray-500">Detectar accesos inusuales</div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Smartphone className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Notificaciones SMS</div>
+                        <div className="text-xs text-gray-500">Mensajes de texto importantes</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={notificationSettings.smsNotifications}
+                      onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, smsNotifications: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={securitySettings.suspiciousActivityAlerts}
-                    onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, suspiciousActivityAlerts: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Eye className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Cambio de contraseña requerido</div>
-                      <div className="text-xs text-gray-500">Forzar cambio en próximo inicio</div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Bell className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Actualizaciones de pedidos</div>
+                        <div className="text-xs text-gray-500">Cambios de estado y confirmaciones</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={notificationSettings.orderUpdates}
+                      onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, orderUpdates: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={securitySettings.passwordChangeRequired}
-                    onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, passwordChangeRequired: checked }))}
-                  />
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Alertas del sistema</div>
+                        <div className="text-xs text-gray-500">Mantenimiento y problemas técnicos</div>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.systemAlerts}
+                      onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, systemAlerts: checked }))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Emails de marketing</div>
+                        <div className="text-xs text-gray-500">Ofertas y novedades del negocio</div>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.marketingEmails}
+                      onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, marketingEmails: checked }))}
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Bell className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Reportes semanales</div>
+                        <div className="text-xs text-gray-500">Resumen de actividad semanal</div>
+                      </div>
+                    </div>
+                    <Switch
+                      checked={notificationSettings.weeklyReports}
+                      onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, weeklyReports: checked }))}
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <Separator />
 
-            {/* Notifications Section */}
+            {/* Security Section - Collapsible and at the bottom */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                <Bell className="h-4 w-4" />
-                Notificaciones Detalladas
-              </h3>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Notificaciones por email</div>
-                      <div className="text-xs text-gray-500">Recibir alertas por correo electrónico</div>
+              <button
+                onClick={() => setCollapsedSections(prev => ({ ...prev, security: !prev.security }))}
+                className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors"
+              >
+                <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                  <Lock className="h-4 w-4" />
+                  Seguridad
+                </h3>
+                {collapsedSections.security ? (
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                )}
+              </button>
+              
+              {!collapsedSections.security && (
+                <div className="mt-3 space-y-3 pl-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Autenticación de dos factores</div>
+                        <div className="text-xs text-gray-500">Añadir una capa extra de seguridad</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={securitySettings.twoFactorAuth}
+                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, twoFactorAuth: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={notificationSettings.emailNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, emailNotifications: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Notificaciones push</div>
-                      <div className="text-xs text-gray-500">Alertas en tiempo real en el dispositivo</div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Bell className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Notificaciones de inicio de sesión</div>
+                        <div className="text-xs text-gray-500">Recibir alertas de nuevos accesos</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={securitySettings.loginNotifications}
+                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, loginNotifications: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={notificationSettings.pushNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, pushNotifications: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Notificaciones SMS</div>
-                      <div className="text-xs text-gray-500">Mensajes de texto importantes</div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Alertas de actividad sospechosa</div>
+                        <div className="text-xs text-gray-500">Detectar accesos inusuales</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={securitySettings.suspiciousActivityAlerts}
+                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, suspiciousActivityAlerts: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={notificationSettings.smsNotifications}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, smsNotifications: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Bell className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Actualizaciones de pedidos</div>
-                      <div className="text-xs text-gray-500">Cambios de estado y confirmaciones</div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <Eye className="h-4 w-4 text-gray-500" />
+                      <div>
+                        <div className="text-sm font-medium">Cambio de contraseña requerido</div>
+                        <div className="text-xs text-gray-500">Forzar cambio en próximo inicio</div>
+                      </div>
                     </div>
+                    <Switch
+                      checked={securitySettings.passwordChangeRequired}
+                      onCheckedChange={(checked) => setSecuritySettings(prev => ({ ...prev, passwordChangeRequired: checked }))}
+                    />
                   </div>
-                  <Switch
-                    checked={notificationSettings.orderUpdates}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, orderUpdates: checked }))}
-                  />
                 </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Alertas del sistema</div>
-                      <div className="text-xs text-gray-500">Mantenimiento y problemas técnicos</div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.systemAlerts}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, systemAlerts: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Emails de marketing</div>
-                      <div className="text-xs text-gray-500">Ofertas y novedades del negocio</div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.marketingEmails}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, marketingEmails: checked }))}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Bell className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <div className="text-sm font-medium">Reportes semanales</div>
-                      <div className="text-xs text-gray-500">Resumen de actividad semanal</div>
-                    </div>
-                  </div>
-                  <Switch
-                    checked={notificationSettings.weeklyReports}
-                    onCheckedChange={(checked) => setNotificationSettings(prev => ({ ...prev, weeklyReports: checked }))}
-                  />
-                </div>
-              </div>
+              )}
             </div>
           </div>
           
