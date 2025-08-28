@@ -29,7 +29,9 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  Trash2
+  Trash2,
+  CheckCircle,
+  X
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
@@ -49,6 +51,7 @@ import {
   Separator
 } from '../components/ui/index.ts'
 import { showSuccess, showError, showInfo } from '../utils/sweetalert.ts'
+import Swal from 'sweetalert2'
 
 interface ProfileData {
   fullName: string
@@ -117,6 +120,10 @@ function ProfilePage() {
     notifications: true, // Notifications starts collapsed
     security: true // Security starts collapsed
   })
+
+  // Account deletion state
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false)
 
   // Reset collapsed sections to default state
   const resetCollapsedSections = () => {
@@ -244,6 +251,111 @@ function ProfilePage() {
     setShowLogoutDialog(false)
     await logout.mutateAsync()
     navigate({ to: '/auth' })
+  }
+
+  // Delete account validation
+  const isDeleteConfirmationValid = deleteConfirmationText === 'ELIMINAR'
+
+  // Simulate account deletion process
+  const simulateAccountDeletion = async () => {
+    // Simular pasos del proceso
+    const steps = [
+      'Verificando permisos...',
+      'Cancelando suscripciones...',
+      'Eliminando datos personales...',
+      'Eliminando historial...',
+      'Finalizando proceso...'
+    ]
+    
+    for (let i = 0; i < steps.length; i++) {
+      // Actualizar el texto del progreso si el SweetAlert está abierto
+      const stepElement = document.getElementById('deletion-step')
+      if (stepElement && steps[i]) {
+        stepElement.textContent = steps[i] as string
+      }
+      
+      // Simular tiempo de procesamiento
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
+  }
+
+  // Handle account deletion
+  const handleDeleteAccount = async () => {
+    if (!user?.email || !isDeleteConfirmationValid) {
+      showError('Error', 'No se puede proceder con la eliminación')
+      return
+    }
+
+    try {
+      setIsDeletingAccount(true)
+
+      // 🔒 STEP 1: Confirmación adicional con SweetAlert2 
+      const finalConfirm = await Swal.fire({
+        title: '¿Estás completamente seguro?',
+        text: `Esta acción eliminará permanentemente la cuenta ${user.email}`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc2626',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Sí, eliminar cuenta',
+        cancelButtonText: 'Cancelar',
+        reverseButtons: true
+      })
+      
+      if (!finalConfirm.isConfirmed) {
+        setIsDeletingAccount(false)
+        return
+      }
+
+      // Cerrar el dialog de configuración primero
+      setShowDeleteAccountDialog(false)
+      setShowSettingsDialog(false)
+
+      // 🔄 STEP 2: Mostrar progreso
+      Swal.fire({
+        title: 'Eliminando cuenta...',
+        html: `
+          <div class="text-center">
+            <div class="mb-4">
+              <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto"></div>
+            </div>
+            <p id="deletion-step" class="text-gray-600">Iniciando proceso...</p>
+            <p class="text-sm text-gray-500 mt-2">Por favor, no cierres esta ventana</p>
+          </div>
+        `,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false
+      })
+
+      // 🗑️ STEP 3: Simular proceso por ahora (después conectar con backend)
+      await simulateAccountDeletion()
+
+      // ✅ STEP 4: Mostrar confirmación
+      Swal.close()
+      await Swal.fire({
+        title: 'Cuenta eliminada',
+        text: 'Tu cuenta ha sido eliminada permanentemente',
+        icon: 'success',
+        confirmButtonText: 'Entendido'
+      })
+
+      // 🔀 STEP 5: Logout y redirect
+      await logout.mutateAsync()
+      navigate({ to: '/auth' })
+
+    } catch (error) {
+      console.error('Delete account error:', error)
+      Swal.close()
+      setIsDeletingAccount(false)
+      
+      showError(
+        'Error al eliminar cuenta',
+        'Ocurrió un problema inesperado. Por favor contacta a soporte.'
+      )
+    } finally {
+      setDeleteConfirmationText('')
+    }
   }
 
 
@@ -690,14 +802,24 @@ function ProfilePage() {
                   </div>
                   
                   {/* Delete Account Button */}
-                  <div className="pt-3">
+                  <div className="pt-3 border-t-2 border-red-100">
+                    <div className="bg-red-50 p-3 rounded-lg mb-3">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 flex-shrink-0" />
+                        <div className="text-xs text-red-700">
+                          <p className="font-medium">Zona de peligro</p>
+                          <p>La eliminación de cuenta es permanente e irreversible</p>
+                        </div>
+                      </div>
+                    </div>
+                    
                     <Button
                       variant="destructive"
                       onClick={() => setShowDeleteAccountDialog(true)}
-                      className="w-full"
+                      className="w-full bg-red-600 hover:bg-red-700 border border-red-600"
                     >
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Eliminar cuenta
+                      Eliminar cuenta permanentemente
                     </Button>
                   </div>
                 </div>
@@ -777,12 +899,28 @@ function ProfilePage() {
       </Dialog>
 
       {/* Delete Account Dialog */}
-      <Dialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
-        <DialogContent className="max-w-md">
+      <Dialog 
+        open={showDeleteAccountDialog} 
+        onOpenChange={(open) => {
+          setShowDeleteAccountDialog(open)
+          if (!open) {
+            // 🧹 CLEANUP: Reset form state
+            setDeleteConfirmationText('')
+            setIsDeletingAccount(false)
+          }
+        }}
+      >
+        <DialogContent 
+          className="max-w-md"
+        >
           <DialogHeader>
-            <DialogTitle className="text-red-600">Eliminar cuenta</DialogTitle>
+            <DialogTitle className="text-red-600">
+              <Trash2 className="h-5 w-5 inline mr-2" />
+              Eliminar cuenta
+            </DialogTitle>
             <DialogDescription>
-              Esta acción es irreversible. Se eliminarán todos tus datos, pedidos y configuraciones de forma permanente.
+              Esta acción es <strong>irreversible</strong>. Se eliminarán todos tus datos, 
+              pedidos y configuraciones de forma permanente.
             </DialogDescription>
           </DialogHeader>
           
@@ -806,10 +944,36 @@ function ProfilePage() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Escribe "ELIMINAR" para confirmar
               </label>
-              <Input
-                placeholder="ELIMINAR"
-                className="border-red-300 focus:border-red-500 focus:ring-red-500"
-              />
+              <div className="relative">
+                <Input
+                  placeholder="ELIMINAR"
+                  className={`border-red-300 focus:border-red-500 focus:ring-red-500 pr-10 ${
+                    deleteConfirmationText && !isDeleteConfirmationValid 
+                      ? 'border-red-500 bg-red-50' 
+                      : deleteConfirmationText && isDeleteConfirmationValid 
+                      ? 'border-green-500 bg-green-50' 
+                      : ''
+                  }`}
+                  value={deleteConfirmationText}
+                  onChange={(e) => setDeleteConfirmationText(e.target.value.toUpperCase())}
+                  autoComplete="off"
+                  maxLength={8}
+                />
+                {deleteConfirmationText && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    {isDeleteConfirmationValid ? (
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <X className="h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                )}
+              </div>
+              {deleteConfirmationText && !isDeleteConfirmationValid && (
+                <p className="text-xs text-red-600 mt-1">
+                  Escribe exactamente "ELIMINAR" para confirmar
+                </p>
+              )}
             </div>
           </div>
           
@@ -817,8 +981,19 @@ function ProfilePage() {
             <Button variant="outline" onClick={() => setShowDeleteAccountDialog(false)}>
               Cancelar
             </Button>
-            <Button variant="destructive" disabled>
-              Eliminar cuenta permanentemente
+            <Button 
+              variant="destructive" 
+              disabled={!isDeleteConfirmationValid || isDeletingAccount}
+              onClick={handleDeleteAccount}
+            >
+              {isDeletingAccount ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Eliminando cuenta...
+                </>
+              ) : (
+                'Eliminar cuenta permanentemente'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
