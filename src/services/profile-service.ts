@@ -426,25 +426,40 @@ export class ProfileService {
       throw new Error('No authenticated user')
     }
 
-    // Delete user's avatar files
-    await this.deleteUserAvatars(user.id)
-
-    // Delete profile data
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .delete()
-      .eq('id', user.id)
-
-    if (profileError) {
-      throw profileError
-    }
-
-    // Delete user account
-    const { error: userError } = await supabase.auth.admin.deleteUser(user.id)
+    // Get the session for the authorization header
+    const { data: { session } } = await supabase.auth.getSession()
     
-    if (userError) {
-      throw userError
+    if (!session?.access_token) {
+      throw new Error('No valid session found')
     }
+
+    // Call the backend endpoint for account deletion
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/account`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json'
+      }
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`
+      
+      // Handle specific error cases
+      if (response.status === 400) {
+        if (errorData.code === 'PENDING_ORDERS_EXIST') {
+          throw new Error(`No puedes eliminar tu cuenta mientras tengas ${errorData.pendingOrders} pedidos pendientes`)
+        } else if (errorData.code === 'SOLE_OWNER_CANNOT_DELETE') {
+          throw new Error('No puedes eliminar tu cuenta si eres el único propietario del negocio. Transfiere la propiedad o elimina el negocio primero.')
+        }
+      }
+      
+      throw new Error(errorMessage)
+    }
+
+    // Account deletion successful
+    console.log('✅ Account deletion request successful')
   }
 
   /**

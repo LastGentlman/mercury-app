@@ -73,6 +73,7 @@ function ProfilePage() {
     profile, 
     updateProfile, 
     uploadAvatar, 
+    deleteAccount,
     isUpdating,
     isProfileLoading
   } = useProfile()
@@ -256,28 +257,7 @@ function ProfilePage() {
   // Delete account validation
   const isDeleteConfirmationValid = deleteConfirmationText === 'ELIMINAR'
 
-  // Simulate account deletion process
-  const simulateAccountDeletion = async () => {
-    // Simular pasos del proceso
-    const steps = [
-      'Verificando permisos...',
-      'Cancelando suscripciones...',
-      'Eliminando datos personales...',
-      'Eliminando historial...',
-      'Finalizando proceso...'
-    ]
-    
-    for (let i = 0; i < steps.length; i++) {
-      // Actualizar el texto del progreso si el SweetAlert está abierto
-      const stepElement = document.getElementById('deletion-step')
-      if (stepElement && steps[i]) {
-        stepElement.textContent = steps[i] as string
-      }
-      
-      // Simular tiempo de procesamiento
-      await new Promise(resolve => setTimeout(resolve, 1000))
-    }
-  }
+
 
   // Handle account deletion
   const handleDeleteAccount = async () => {
@@ -328,8 +308,8 @@ function ProfilePage() {
         showConfirmButton: false
       })
 
-      // 🗑️ STEP 3: Simular proceso por ahora (después conectar con backend)
-      await simulateAccountDeletion()
+      // 🗑️ STEP 3: Conectar con el backend para eliminar la cuenta
+      await deleteAccount.mutateAsync()
 
       // ✅ STEP 4: Mostrar confirmación
       Swal.close()
@@ -827,14 +807,7 @@ function ProfilePage() {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button onClick={() => {
-              setShowSettingsDialog(false)
-              resetCollapsedSections()
-            }}>
-              Cerrar
-            </Button>
-          </DialogFooter>
+          {/* No footer needed - users can close by clicking outside or pressing ESC */}
         </DialogContent>
       </Dialog>
 
@@ -887,11 +860,15 @@ function ProfilePage() {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowChangePasswordDialog(false)}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowChangePasswordDialog(false)}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               Cancelar
             </Button>
-            <Button>
+            <Button className="w-full sm:w-auto order-1 sm:order-2">
               Cambiar contraseña
             </Button>
           </DialogFooter>
@@ -977,14 +954,19 @@ function ProfilePage() {
             </div>
           </div>
           
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDeleteAccountDialog(false)}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowDeleteAccountDialog(false)}
+              className="w-full sm:w-auto order-2 sm:order-1"
+            >
               Cancelar
             </Button>
             <Button 
               variant="destructive" 
               disabled={!isDeleteConfirmationValid || isDeletingAccount}
               onClick={handleDeleteAccount}
+              className="w-full sm:w-auto order-1 sm:order-2"
             >
               {isDeletingAccount ? (
                 <>
