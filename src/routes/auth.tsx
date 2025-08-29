@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Button } from '../components/ui/index.ts'
 import { Input } from '../components/ui/input.tsx'
@@ -30,13 +30,50 @@ function RouteComponent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showResendEmail, setShowResendEmail] = useState(false)
   const [lastRegisteredEmail, setLastRegisteredEmail] = useState<string>('')
+  const [isRedirecting, setIsRedirecting] = useState(false)
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading } = useAuth()
 
-  // Redirect if already authenticated
+  // 🎯 OPTIMIZACIÓN: Manejo suave de redirección para evitar parpadeo
+  useEffect(() => {
+    if (isAuthenticated && !isRedirecting) {
+      console.log('✅ Usuario autenticado, iniciando redirección suave...')
+      setIsRedirecting(true)
+      
+      // Pequeño delay para mostrar transición suave
+      const timer = setTimeout(() => {
+        globalThis.location.href = '/dashboard'
+      }, 300)
+      
+      return () => clearTimeout(timer)
+    }
+    return undefined
+  }, [isAuthenticated, isRedirecting])
+
+  // 🎯 OPTIMIZACIÓN: Mostrar loading state consistente
+  if (isLoading || isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="relative">
+            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            <div className="absolute inset-0 rounded-full border-2 border-blue-200 animate-pulse"></div>
+          </div>
+          <div className="text-center">
+            <p className="text-gray-600 font-medium">
+              {isRedirecting ? 'Redirigiendo...' : 'Cargando...'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {isRedirecting ? 'Te llevamos a tu dashboard' : 'Preparando tu sesión'}
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 🎯 OPTIMIZACIÓN: No renderizar nada si ya está autenticado
   if (isAuthenticated) {
-    console.log('✅ Usuario ya autenticado, redirigiendo a dashboard...')
-    globalThis.location.href = '/dashboard'
     return null
   }
 
@@ -60,17 +97,10 @@ function RouteComponent() {
       
       showSuccess('¡Éxito!', '¡Inicio de sesión exitoso!')
       
-      // Esperar un poco para que el estado se actualice
-      setTimeout(() => {
-        // Verificar si el usuario está autenticado antes de redirigir
-        if (login.isSuccess) {
-          console.log('✅ Login exitoso, redirigiendo a dashboard...')
-          globalThis.location.href = '/dashboard'
-        } else {
-          console.log('⚠️ Login exitoso pero estado no actualizado, redirigiendo de todas formas...')
-          globalThis.location.href = '/dashboard'
-        }
-      }, 500)
+      // 🎯 OPTIMIZACIÓN: Redirección más suave sin setTimeout
+      console.log('✅ Login exitoso, redirigiendo a dashboard...')
+      setIsRedirecting(true)
+      
     } catch (error) {
       console.error('Login error:', error)
       
@@ -240,11 +270,9 @@ function RouteComponent() {
         setShowResendEmail(true)
         setFormData({ email: '', password: '', confirmPassword: '', name: '' })
       } else {
-        // Si no requiere confirmación, mostrar mensaje de éxito y redirigir
+        // 🎯 OPTIMIZACIÓN: Redirección más suave sin setTimeout
         showSuccess('¡Éxito!', '¡Cuenta creada exitosamente!')
-        setTimeout(() => {
-          globalThis.location.href = '/dashboard'
-        }, 1000)
+        setIsRedirecting(true)
       }
     } catch (error) {
       console.error('Register error:', error)
@@ -264,17 +292,6 @@ function RouteComponent() {
         showError('Error de registro', 'Error en el registro. Por favor intenta de nuevo.')
       }
     }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="flex items-center space-x-2">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Cargando...</span>
-        </div>
-      </div>
-    )
   }
 
   return (

@@ -66,8 +66,8 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
       sessionStorage.setItem('oauth_modal_context', JSON.stringify(context))
       console.log('💾 Contexto guardado:', context)
         
-      // Pequeño delay para mostrar el loading state
-      await new Promise(resolve => setTimeout(resolve, 800))
+      // 🎯 OPTIMIZACIÓN: Delay reducido para menos parpadeo
+      await new Promise(resolve => setTimeout(resolve, 400)) // Reducido de 800 a 400ms
         
       // Redirect usando el AuthService actualizado
       await AuthService.socialLogin({ 
@@ -109,11 +109,11 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
       document.addEventListener('keydown', handleEnter)
       document.body.style.overflow = 'hidden' // Prevenir scroll
       
-      // Remove opening state after animation and focus modal
+      // 🎯 OPTIMIZACIÓN: Transición más rápida para reducir parpadeo
       const timer = setTimeout(() => {
         setIsOpening(false)
         modalRef.current?.focus()
-      }, 300)
+      }, 200) // Reducido de 300 a 200ms
       return () => clearTimeout(timer)
     }
       
@@ -140,7 +140,7 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
       <div 
         ref={modalRef}
         tabIndex={-1}
-        className={`bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all duration-300 ${
+        className={`bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all duration-200 ${
           isOpening ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
         }`}
       >

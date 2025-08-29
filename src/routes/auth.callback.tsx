@@ -15,13 +15,13 @@ export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
 })
 
-// Función de polling inteligente mejorada
+// Función de polling inteligente optimizada para reducir parpadeo
 async function pollForSession(
   refetchUser: () => Promise<AuthUser | null>, 
-  maxAttempts = 8, 
-  initialInterval = 200
+  maxAttempts = 6, // Reducido de 8 a 6
+  initialInterval = 300 // Aumentado de 200 a 300ms
 ) {
-  console.log('🔄 Iniciando polling inteligente...')
+  console.log('🔄 Iniciando polling optimizado...')
     
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
@@ -33,10 +33,10 @@ async function pollForSession(
         return user
       }
         
-      // Exponential backoff: 200ms, 300ms, 450ms, 675ms, 1012ms, 1518ms...
+      // 🎯 OPTIMIZACIÓN: Backoff más suave para reducir parpadeo
       const delay = Math.min(
-        initialInterval * Math.pow(1.5, attempt), 
-        1500 // Cap máximo de 1.5 segundos
+        initialInterval * Math.pow(1.3, attempt), // Reducido de 1.5 a 1.3
+        1200 // Reducido de 1500 a 1200ms
       )
         
       console.log(`⏱️ Esperando ${delay}ms antes del siguiente intento...`)
@@ -46,11 +46,11 @@ async function pollForSession(
       console.warn(`⚠️ Intento ${attempt + 1} fallido:`, error)
         
       // En los primeros intentos, los errores son normales
-      if (attempt < 3) {
+      if (attempt < 2) { // Reducido de 3 a 2
         continue
       }
         
-      // Después del intento 3, ser más cuidadoso
+      // Después del intento 2, ser más cuidadoso
       if (error instanceof Error && error.message.includes('network')) {
         console.error('❌ Error de red persistente')
         throw new Error('Error de conexión durante la autenticación')
@@ -69,9 +69,14 @@ export const AuthCallback = () => {
   const [progress, setProgress] = useState(10)
   const [error, setError] = useState<string | null>(null)
   const [context, setContext] = useState<ModalContext | null>(null)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   useEffect(() => {
     const handleCallback = async () => {
+      if (isProcessing) return // 🎯 OPTIMIZACIÓN: Evitar múltiples ejecuciones
+      
+      setIsProcessing(true)
+      
       try {
         setProgress(20)
         console.log('🔄 Procesando callback de OAuth...')
@@ -92,7 +97,7 @@ export const AuthCallback = () => {
           
         setProgress(30)
           
-        // Verificar si ya tenemos una sesión activa (fast path)
+        // 🎯 OPTIMIZACIÓN: Verificación más rápida de sesión existente
         const immediateUser = await AuthService.getCurrentUser()
         if (immediateUser) {
           setProgress(70)
@@ -106,22 +111,22 @@ export const AuthCallback = () => {
           setProgress(100)
           setLoadingPhase('redirecting')
             
-          // Determinar a dónde redirigir
+          // 🎯 OPTIMIZACIÓN: Redirección más rápida
           const returnTo = context?.returnTo || '/dashboard'
             
           setTimeout(() => {
             console.log(`🎯 Redirigiendo a: ${returnTo}`)
             navigate({ to: returnTo })
-          }, 500)
+          }, 300) // Reducido de 500 a 300ms
             
           return
         }
           
         setLoadingPhase('authenticating')
         setProgress(50)
-        console.log('🔄 Iniciando polling inteligente...')
+        console.log('🔄 Iniciando polling optimizado...')
           
-        // Smart polling con exponential backoff
+        // Smart polling con exponential backoff optimizado
         const user = await pollForSession(refetchUser)
           
         setProgress(90)
@@ -146,12 +151,12 @@ export const AuthCallback = () => {
           const userName = (user as { name: string }).name || (user as { email: string }).email
           console.log(`🎉 Bienvenido, ${userName}!`)
             
-          // Redirigir después de un breve delay para mostrar éxito
+          // 🎯 OPTIMIZACIÓN: Redirección más rápida
           setTimeout(() => {
             const returnTo = context?.returnTo || '/dashboard'
             console.log(`🎯 Redirigiendo a: ${returnTo}`)
             navigate({ to: returnTo })
-          }, 800)
+          }, 500) // Reducido de 800 a 500ms
             
         } else {
           throw new Error('No se pudo obtener la información del usuario después de la autenticación')
@@ -180,18 +185,18 @@ export const AuthCallback = () => {
           
         setError(errorMessage)
           
-        // Redirigir a login con error después de 4 segundos
+        // 🎯 OPTIMIZACIÓN: Redirección más rápida en caso de error
         setTimeout(() => {
           navigate({ 
             to: '/auth', 
             search: { error: errorMessage } 
           })
-        }, 4000)
+        }, 3000) // Reducido de 4000 a 3000ms
       }
     }
 
     handleCallback()
-  }, [navigate, refetchUser])
+  }, [navigate, refetchUser, isProcessing])
 
   // UI de error mejorada
   if (error) {
