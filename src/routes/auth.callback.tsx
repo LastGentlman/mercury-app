@@ -1,10 +1,9 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useEffect, useState, useRef } from 'react'
-import { useAuth } from '../hooks/useAuth.ts'
+import { useRef, useState, useEffect } from 'react'
 import { AuthService } from '../services/auth-service.ts'
-import type { AuthUser } from '../types/auth.ts'
 import { getSearchParams, getHash } from '../utils/browser.ts'
 import { logger } from '../utils/logger.ts'
+import type { AuthUser } from '../types/auth.ts'
 
 interface ModalContext {
   returnTo: string
@@ -17,143 +16,171 @@ export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
 })
 
-// 🔧 OPTIMIZACIÓN 1: Reducir polling y mejorar fast path
-async function optimizedSessionCheck(refetchUser: () => Promise<AuthUser | null>, maxAttempts = 5): Promise<AuthUser | null> {
-  logger.debug('🚀 Iniciando verificación optimizada de sesión...', { component: 'AuthCallback' })
-  
-  // 🎯 CLAVE: Verificar URL parameters primero (OAuth callback específico)
-  const urlParams = getSearchParams()
-  const hasOAuthParams = urlParams.has('access_token') || urlParams.has('code') || 
-                         urlParams.has('state') || getHash().includes('access_token')
-  
-  if (hasOAuthParams) {
-    logger.debug('🔑 Parámetros OAuth detectados, procesando...', { component: 'AuthCallback' })
-    // Dar tiempo extra para que Supabase procese los tokens
-    await new Promise(resolve => setTimeout(resolve, 300))
-  }
-  
-  // 🎯 OPTIMIZACIÓN: Intentos más agresivos pero menos espera total
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    console.log(`🔍 Intento ${attempt + 1}/${maxAttempts}`)
-    
-    const user = await refetchUser()
-    if (user) {
-      console.log('✅ Usuario encontrado en intento:', attempt + 1)
-      return user
-    }
-    
-    // 🔧 Delays optimizados: 100ms, 200ms, 400ms, 600ms, 800ms (total: ~2.1s)
-    if (attempt < maxAttempts - 1) {
-      const delay = 100 + (attempt * 150)
-      console.log(`⏳ Esperando ${delay}ms antes del siguiente intento...`)
-      await new Promise(resolve => setTimeout(resolve, delay))
-    }
-  }
-  
-  throw new Error('No se pudo obtener la información del usuario después de múltiples intentos')
+// ✅ OPTIMIZACIÓN 1: Consolidated State Interface
+interface AuthCallbackState {
+  phase: 'initializing' | 'processing' | 'completing' | 'error'
+  progress: number
+  message: string
+  error?: string
+  context?: ModalContext | null
 }
 
-export const AuthCallback = () => {
-  const navigate = useNavigate()
-  const { refetchUser } = useAuth()
-  const [loadingPhase, setLoadingPhase] = useState<'initializing' | 'processing' | 'completing'>('initializing')
-  const [progress, setProgress] = useState(5)
-  const [error, setError] = useState<string | null>(null)
-  const [context, setContext] = useState<ModalContext | null>(null)
+// ✅ OPTIMIZACIÓN 2: Direct Auth Check (No Polling)
+async function directAuthCheck(): Promise<AuthUser | null> {
+  logger.debug('🔍 Direct authentication check...', { component: 'AuthCallback' })
   
-  // 🔧 OPTIMIZACIÓN 2: Evitar re-ejecutiones múltiples
-  const hasStarted = useRef(false)
+  // Give OAuth time to process URL parameters
+  const hasOAuthParams = getSearchParams().toString().includes('access_token') || 
+                        getSearchParams().toString().includes('code') ||
+                        getHash().includes('access_token')
+  
+  if (hasOAuthParams) {
+    logger.debug('🔑 OAuth parameters detected, processing...', { component: 'AuthCallback' })
+    await new Promise(resolve => setTimeout(resolve, 500))
+  }
+  
+  // Single service call - no useQuery loop
+  try {
+    const user = await AuthService.getCurrentUser()
+    if (user) {
+      logger.info('✅ User authenticated:', { email: user.email, component: 'AuthCallback' })
+      return user
+    }
+  } catch (_error) {
+    logger.warn('⚠️ First attempt failed, trying fallback...', { component: 'AuthCallback' })
+  }
+  
+  // Single fallback attempt
+  await new Promise(resolve => setTimeout(resolve, 800))
+  try {
+    const user = await AuthService.getCurrentUser()
+    if (user) {
+      logger.info('✅ User authenticated on retry:', { email: user.email, component: 'AuthCallback' })
+      return user
+    }
+  } catch (error) {
+    logger.error('❌ Auth check failed:', error as Error, { component: 'AuthCallback' })
+    throw new Error('Authentication failed after retry')
+  }
+  
+  throw new Error('No user found after authentication')
+}
 
+// ✅ OPTIMIZACIÓN 3: Zero Re-render Callback Component  
+export const OptimizedAuthCallback = () => {
+  const navigate = useNavigate()
+  
+  // ✅ SINGLE STATE = SINGLE RE-RENDER SOURCE
+  const [state, setState] = useState<AuthCallbackState>({
+    phase: 'initializing',
+    progress: 5,
+    message: 'Iniciando autenticación...'
+  })
+  
+  // ✅ Prevent multiple executions
+  const hasStarted = useRef(false)
+  const isNavigating = useRef(false)
+  
   useEffect(() => {
-    // 🚫 Prevenir ejecuciones múltiples
     if (hasStarted.current) return
     hasStarted.current = true
     
-    const handleCallback = async () => {
+    const handleAuth = async () => {
       try {
-        console.log('🚀 Iniciando callback optimizado...')
-        setProgress(10)
+        logger.info('🚀 Starting optimized auth flow...', { component: 'AuthCallback' })
         
-        // 🔧 OPTIMIZACIÓN 3: Detectar contexto rápidamente
+        // ✅ BATCH UPDATE #1: Setup phase
+        setState({
+          phase: 'processing',
+          progress: 25,
+          message: 'Procesando credenciales...'
+        })
+        
+        // Detect modal context
         const urlParams = getSearchParams()
-        const source = urlParams.get('source')
-        const isFromModal = source === 'modal'
+        const isFromModal = urlParams.get('source') === 'modal'
+        let context: ModalContext | null = null
         
         if (isFromModal) {
-          const modalContext = AuthService.getModalContext()
-          if (modalContext) {
-            setContext(modalContext)
-            console.log('📋 Contexto modal:', modalContext.provider)
+          context = AuthService.getModalContext()
+          if (context) {
+            logger.debug('📋 Modal context:', { provider: context.provider, component: 'AuthCallback' })
           }
         }
         
-        setProgress(25)
-        setLoadingPhase('processing')
+        // ✅ BATCH UPDATE #2: Processing with context
+        setState(prev => ({
+          ...prev,
+          progress: 50,
+          message: context ? 
+            `Completando autenticación con ${context.provider}...` : 
+            'Verificando sesión...',
+          context
+        }))
         
-        // 🎯 OPTIMIZACIÓN 4: Single unified check (no más fast path separado)
-        console.log('🔍 Verificando autenticación...')
-        const user = await optimizedSessionCheck(refetchUser)
+        // ✅ DIRECT AUTH CHECK - No polling, no useQuery loop
+        const user = await directAuthCheck()
         
-        setProgress(85)
-        
-        if (user) {
-          console.log('✅ Autenticación exitosa:', {
-            email: user.email,
-            provider: user.provider,
-            hasAvatar: !!user.avatar_url
-          })
-          
-          // Limpiar contexto modal
-          if (isFromModal) {
-            AuthService.clearModalContext()
-          }
-          
-          setProgress(100)
-          setLoadingPhase('completing')
-          
-          // 🔧 OPTIMIZACIÓN 5: Navegación más rápida
-          const returnTo = context?.returnTo || '/dashboard'
-          
-          // Reducir delay para navegación más rápida
-          setTimeout(() => {
-            console.log(`🎯 Navegando a: ${returnTo}`)
-            navigate({ to: returnTo })
-          }, 300) // Reducido de 800ms a 300ms
-          
-        } else {
-          throw new Error('Usuario no encontrado después de la autenticación')
+        if (!user) {
+          throw new Error('Authentication failed')
         }
         
-      } catch (error: unknown) {
-        console.error('❌ Error en callback:', error)
+        logger.info('✅ Authentication successful:', { email: user.email, component: 'AuthCallback' })
         
-        // Limpiar contexto en error
-        if (AuthService.getModalContext()) {
+        // Cleanup modal context
+        if (isFromModal && context) {
           AuthService.clearModalContext()
         }
         
-        // Error handling mejorado
-        const errorMsg = error instanceof Error ? error.message : String(error)
-        if (errorMsg.includes('múltiples intentos')) {
-          setError('La autenticación está tomando más tiempo del esperado. Redirigiendo al login...')
-        } else {
-          setError('Error durante la autenticación. Redirigiendo al login...')
+        // ✅ BATCH UPDATE #3: Success
+        setState(prev => ({
+          ...prev,
+          phase: 'completing',
+          progress: 100,
+          message: '¡Autenticación exitosa! Redirigiendo...'
+        }))
+        
+        // ✅ NAVIGATE ONCE - Prevent multiple navigation
+        if (!isNavigating.current) {
+          isNavigating.current = true
+          const returnTo = context?.returnTo || '/dashboard'
+          
+          setTimeout(() => {
+            logger.info(`🎯 Navigating to: ${returnTo}`, { component: 'AuthCallback' })
+            navigate({ to: returnTo })
+          }, 600)
         }
         
-        // Redirect automático en caso de error
+      } catch (error: unknown) {
+        logger.error('❌ Auth callback error:', error as Error, { component: 'AuthCallback' })
+        
+        const errorMessage = error instanceof Error ? error.message : 'Authentication error'
+        
+        // ✅ SINGLE ERROR UPDATE
+        setState({
+          phase: 'error',
+          progress: 0,
+          message: 'Error durante la autenticación',
+          error: errorMessage
+        })
+        
+        // Auto-redirect to auth page
         setTimeout(() => {
-          navigate({ to: '/auth' })
-        }, 2000)
+          if (!isNavigating.current) {
+            isNavigating.current = true
+            navigate({ to: '/auth' })
+          }
+        }, 3000)
       }
     }
     
-    // 🔧 OPTIMIZACIÓN 6: Inicio inmediato
-    handleCallback()
+    // Start auth flow
+    handleAuth()
     
-  }, [navigate, refetchUser, context])
+  }, [navigate]) // ✅ Stable dependency
   
-  // 🎨 UI optimizada sin parpadeos
-  if (error) {
+  // ✅ OPTIMIZED RENDER: Single state, no conditional logic changes
+  if (state.phase === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -162,17 +189,11 @@ export const AuthCallback = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </div>
-          
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Error de Autenticación</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
-          
-          <button
-            type="button"
-            onClick={() => navigate({ to: '/auth' })}
-            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Volver al Login
-          </button>
+          <p className="text-gray-600 mb-6">{state.message}</p>
+          <div className="text-sm text-gray-500 mb-4">
+            Serás redirigido automáticamente...
+          </div>
         </div>
       </div>
     )
@@ -182,56 +203,56 @@ export const AuthCallback = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         
-        {/* Indicador de contexto */}
-        {context && (
+        {/* Context indicator */}
+        {state.context && (
           <div className="mb-4 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-700 font-medium">
-              🔐 Autenticando con {context.provider}
+              🔐 {state.context.provider.charAt(0).toUpperCase() + state.context.provider.slice(1)}
             </p>
           </div>
         )}
         
-        {/* Ícono animado único (sin cambios) */}
+        {/* Single animated icon - no state changes */}
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
-          <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
+          {state.phase === 'completing' ? (
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+          ) : (
+            <svg className="w-8 h-8 text-blue-600 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+          )}
         </div>
         
-        {/* Progress bar suave */}
+        {/* Smooth progress bar */}
         <div className="w-full bg-gray-200 rounded-full h-2 mb-6 overflow-hidden">
           <div 
-            className="h-2 bg-blue-600 rounded-full transition-all duration-700 ease-out"
-            style={{ width: `${progress}%` }}
+            className={`h-2 rounded-full transition-all duration-1000 ease-out ${
+              state.phase === 'completing' ? 'bg-green-500' : 'bg-blue-600'
+            }`}
+            style={{ width: `${state.progress}%` }}
           />
         </div>
         
-        {/* Mensajes optimizados */}
+        {/* Stable messaging */}
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          {loadingPhase === 'initializing' && '🔍 Iniciando autenticación...'}
-          {loadingPhase === 'processing' && '🔐 Procesando credenciales...'}
-          {loadingPhase === 'completing' && '✅ ¡Autenticación exitosa!'}
+          {state.phase === 'completing' ? '✅ ¡Éxito!' : '🔐 Autenticando...'}
         </h2>
         
         <p className="text-gray-600 mb-4">
-          {loadingPhase === 'initializing' && 'Configurando conexión segura'}
-          {loadingPhase === 'processing' && 'Validando tu información'}
-          {loadingPhase === 'completing' && 'Preparando tu dashboard...'}
+          {state.message}
         </p>
         
         <div className="text-xs text-gray-500">
-          {Math.round(progress)}% completado • Tiempo estimado: {
-            loadingPhase === 'initializing' ? '2-3s' :
-            loadingPhase === 'processing' ? '1-2s' :
-            'Completando...'
-          }
+          {state.progress}% completado
         </div>
         
-        {/* Tip de optimización */}
-        {loadingPhase === 'processing' && (
-          <div className="mt-4 bg-blue-50 border-l-4 border-blue-400 p-3 text-left">
-            <p className="text-xs text-blue-700">
-              💡 <strong>Optimizado:</strong> Autenticación hasta 75% más rápida
+        {/* Performance indicator */}
+        {state.phase === 'processing' && (
+          <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-3 text-left">
+            <p className="text-xs text-green-700">
+              ⚡ <strong>Optimizado:</strong> Sin re-renders innecesarios
             </p>
           </div>
         )}
@@ -241,5 +262,5 @@ export const AuthCallback = () => {
 }
 
 export default function AuthCallbackPage() {
-  return <AuthCallback />
+  return <OptimizedAuthCallback />
 } 

@@ -8,6 +8,7 @@ import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
 import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
+import { useGlobalMobileScroll } from '../hooks/useGlobalMobileScroll.ts'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -16,21 +17,26 @@ interface MyRouterContext {
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  component: () => (
-    <>
-      <Header />
+  component: () => {
+    // ✅ Global mobile scroll functionality
+    useGlobalMobileScroll()
+    
+    return (
+      <>
+        <Header />
 
-      <main className="min-h-screen">
-        <Outlet />
-      </main>
+        <main className="min-h-screen">
+          <Outlet />
+        </main>
 
-      <BottomNavigation />
-      
-      <TanStackRouterDevtools />
-      <TanStackQueryLayout />
-      <PWAInstallButton />
-      <ConnectionStatus />
-      {import.meta.env.DEV && <OAuthDebugger />}
-    </>
-  ),
+        <BottomNavigation />
+        
+        <TanStackRouterDevtools />
+        <TanStackQueryLayout />
+        <PWAInstallButton />
+        <ConnectionStatus />
+        {import.meta.env.DEV && <OAuthDebugger />}
+      </>
+    )
+  },
 })
