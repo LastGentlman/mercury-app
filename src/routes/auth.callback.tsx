@@ -20,9 +20,9 @@ async function optimizedSessionCheck(refetchUser: () => Promise<AuthUser | null>
   console.log('🚀 Iniciando verificación optimizada de sesión...')
   
   // 🎯 CLAVE: Verificar URL parameters primero (OAuth callback específico)
-  const urlParams = new URLSearchParams(window.location.search)
+  const urlParams = new URLSearchParams(globalThis.location.search)
   const hasOAuthParams = urlParams.has('access_token') || urlParams.has('code') || 
-                         urlParams.has('state') || window.location.hash.includes('access_token')
+                         urlParams.has('state') || globalThis.location.hash.includes('access_token')
   
   if (hasOAuthParams) {
     console.log('🔑 Parámetros OAuth detectados, procesando...')
@@ -73,7 +73,7 @@ export const AuthCallback = () => {
         setProgress(10)
         
         // 🔧 OPTIMIZACIÓN 3: Detectar contexto rápidamente
-        const urlParams = new URLSearchParams(window.location.search)
+        const urlParams = new URLSearchParams(globalThis.location.search)
         const source = urlParams.get('source')
         const isFromModal = source === 'modal'
         
