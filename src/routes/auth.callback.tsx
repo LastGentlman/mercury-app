@@ -3,6 +3,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { AuthService } from '../services/auth-service.ts'
 import type { AuthUser } from '../types/auth.ts'
+import { getSearchParams, getHash } from '../utils/browser.ts'
+import { logger } from '../utils/logger.ts'
 
 interface ModalContext {
   returnTo: string
@@ -17,15 +19,15 @@ export const Route = createFileRoute('/auth/callback')({
 
 // 🔧 OPTIMIZACIÓN 1: Reducir polling y mejorar fast path
 async function optimizedSessionCheck(refetchUser: () => Promise<AuthUser | null>, maxAttempts = 5): Promise<AuthUser | null> {
-  console.log('🚀 Iniciando verificación optimizada de sesión...')
+  logger.debug('🚀 Iniciando verificación optimizada de sesión...', { component: 'AuthCallback' })
   
   // 🎯 CLAVE: Verificar URL parameters primero (OAuth callback específico)
-  const urlParams = new URLSearchParams(globalThis.location.search)
+  const urlParams = getSearchParams()
   const hasOAuthParams = urlParams.has('access_token') || urlParams.has('code') || 
-                         urlParams.has('state') || globalThis.location.hash.includes('access_token')
+                         urlParams.has('state') || getHash().includes('access_token')
   
   if (hasOAuthParams) {
-    console.log('🔑 Parámetros OAuth detectados, procesando...')
+    logger.debug('🔑 Parámetros OAuth detectados, procesando...', { component: 'AuthCallback' })
     // Dar tiempo extra para que Supabase procese los tokens
     await new Promise(resolve => setTimeout(resolve, 300))
   }
@@ -73,7 +75,7 @@ export const AuthCallback = () => {
         setProgress(10)
         
         // 🔧 OPTIMIZACIÓN 3: Detectar contexto rápidamente
-        const urlParams = new URLSearchParams(globalThis.location.search)
+        const urlParams = getSearchParams()
         const source = urlParams.get('source')
         const isFromModal = source === 'modal'
         
