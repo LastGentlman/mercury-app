@@ -11,6 +11,7 @@
 import { supabase } from '../utils/supabase.ts'
 import type { AuthUser, AuthProvider } from '../types/auth.ts'
 import { optimizeImage, DEFAULT_AVATAR_OPTIONS, formatFileSize } from '../utils/imageOptimization.ts'
+import { BACKEND_URL } from '../config.ts'
 
 export interface ProfileData {
   id: string
@@ -46,6 +47,52 @@ export interface UpdateProfileRequest {
 }
 
 export class ProfileService {
+  /**
+   * Helper function to make CSRF-protected requests
+   */
+  private static async makeCSRFRequest(url: string, options: RequestInit = {}): Promise<Response> {
+    // Get session ID from localStorage or generate new one
+    const sessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
+    localStorage.setItem('sessionId', sessionId);
+
+    // Get auth token
+    const authToken = localStorage.getItem('authToken');
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'X-Session-ID': sessionId,
+      ...(options.headers as Record<string, string>)
+    };
+    
+    if (authToken) {
+      headers['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    // For DELETE requests, we need CSRF token
+    if (options.method === 'DELETE') {
+      // First get CSRF token
+      const csrfResponse = await fetch(`${BACKEND_URL}/api/auth/csrf/token`, {
+        method: 'GET',
+        headers: {
+          'X-Session-ID': sessionId,
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+        }
+      });
+
+      if (csrfResponse.ok) {
+        const csrfToken = csrfResponse.headers.get('X-CSRF-Token');
+        if (csrfToken) {
+          headers['X-CSRF-Token'] = csrfToken;
+        }
+      }
+    }
+
+    return fetch(url, {
+      ...options,
+      headers
+    });
+  }
+
   /**
    * Check if storage bucket exists and is accessible
    */
@@ -433,13 +480,9 @@ export class ProfileService {
       throw new Error('No valid session found')
     }
 
-    // Call the backend endpoint for account deletion
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/account`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${session.access_token}`,
-        'Content-Type': 'application/json'
-      }
+    // Call the backend endpoint for account deletion with CSRF protection
+    const response = await this.makeCSRFRequest(`${BACKEND_URL}/api/auth/account`, {
+      method: 'DELETE'
     })
 
     if (!response.ok) {
