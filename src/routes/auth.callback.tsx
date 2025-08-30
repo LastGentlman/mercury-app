@@ -224,7 +224,7 @@ export const ZeroFlickerAuthCallback = () => {
                 const modalContext = getModalContext()
                 handleSuccess(user, modalContext)
               }
-            } catch (error) {
+            } catch (_error) {
               // Ignore - the event listener will handle it
               logger.debug('Immediate session check failed, waiting for auth state change', { component: 'AuthCallback' })
             }
