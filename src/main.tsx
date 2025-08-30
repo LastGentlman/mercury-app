@@ -1,4 +1,4 @@
-import React, { StrictMode } from 'react'
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -138,21 +138,20 @@ function initializeApp() {
   const root = ReactDOM.createRoot(rootElement)
 
   root.render(
-    <StrictMode>
-      <AppErrorBoundary>
-        <GlobalLoadingProvider>
-          <QueryClientProvider client={queryClient}>
-            <RouterProvider router={router} />
-            <Toaster 
-              position="top-right"
-              richColors
-              closeButton
-              duration={4000}
-            />
-          </QueryClientProvider>
-        </GlobalLoadingProvider>
-      </AppErrorBoundary>
-    </StrictMode>
+    // ✅ REMOVIDO: StrictMode para eliminar doble renderizado
+    <AppErrorBoundary>
+      <GlobalLoadingProvider>
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          <Toaster 
+            position="top-right"
+            richColors
+            closeButton
+            duration={4000}
+          />
+        </QueryClientProvider>
+      </GlobalLoadingProvider>
+    </AppErrorBoundary>
   )
 
   // Inicializar PWA después de que React esté montado

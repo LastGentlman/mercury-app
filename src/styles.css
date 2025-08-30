@@ -170,9 +170,9 @@
     background-attachment: local;
   }
 
-  /* 👆 Improved touch interactions */
+  /* 👆 Improved touch interactions - OPTIMIZED for OAuth */
   .auth-touch-feedback {
-    transition: all 0.15s ease;
+    transition: transform 0.1s ease; /* Reduced from 0.15s to 0.1s */
     transform-origin: center;
   }
 
@@ -303,9 +303,9 @@
     background-color: #f0fdf4;
   }
 
-  /* 🎛️ Switch/Toggle animations for login/register */
+  /* 🎛️ Switch/Toggle animations for login/register - OPTIMIZED */
   .auth-mode-switch {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); /* Reduced from 0.3s to 0.2s */
   }
 
   /* 🌊 Subtle floating animation for mobile logo */
@@ -330,7 +330,7 @@
   .auth-progress-bar {
     height: 100%;
     background: linear-gradient(to right, #2563eb, #9333ea);
-    transition: all 0.5s ease;
+    transition: all 0.3s ease; /* Reduced from 0.5s to 0.3s */
     transform-origin: left;
   }
 }
@@ -392,7 +392,7 @@ code {
     width: 100%;
     border: 1px solid #d1d5db;
     border-radius: 0.75rem;
-    transition: border-color 0.15s ease;
+    transition: border-color 0.1s ease; /* Reduced from 0.15s to 0.1s */
   }
 
   .auth-mobile-field:focus {
