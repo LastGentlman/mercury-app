@@ -16,170 +16,225 @@ export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
 })
 
-// ✅ OPTIMIZACIÓN 1: Consolidated State Interface
 interface AuthCallbackState {
-  phase: 'initializing' | 'processing' | 'completing' | 'error'
+  phase: 'connecting' | 'processing' | 'completing' | 'error'
   progress: number
   message: string
   error?: string
   context?: ModalContext | null
 }
 
-// ✅ OPTIMIZACIÓN 2: Direct Auth Check (No Polling)
-async function directAuthCheck(): Promise<AuthUser | null> {
-  logger.debug('🔍 Direct authentication check...', { component: 'AuthCallback' })
-  
-  // Give OAuth time to process URL parameters
-  const hasOAuthParams = getSearchParams().toString().includes('access_token') || 
-                        getSearchParams().toString().includes('code') ||
-                        getHash().includes('access_token')
-  
-  if (hasOAuthParams) {
-    logger.debug('🔑 OAuth parameters detected, processing...', { component: 'AuthCallback' })
-    await new Promise(resolve => setTimeout(resolve, 500))
-  }
-  
-  // Single service call - no useQuery loop
-  try {
-    const user = await AuthService.getCurrentUser()
-    if (user) {
-      logger.info('✅ User authenticated:', { email: user.email, component: 'AuthCallback' })
-      return user
-    }
-  } catch (_error) {
-    logger.warn('⚠️ First attempt failed, trying fallback...', { component: 'AuthCallback' })
-  }
-  
-  // Single fallback attempt
-  await new Promise(resolve => setTimeout(resolve, 800))
-  try {
-    const user = await AuthService.getCurrentUser()
-    if (user) {
-      logger.info('✅ User authenticated on retry:', { email: user.email, component: 'AuthCallback' })
-      return user
-    }
-  } catch (error) {
-    logger.error('❌ Auth check failed:', error as Error, { component: 'AuthCallback' })
-    throw new Error('Authentication failed after retry')
-  }
-  
-  throw new Error('No user found after authentication')
-}
-
-// ✅ OPTIMIZACIÓN 3: Zero Re-render Callback Component  
-export const OptimizedAuthCallback = () => {
+// ✅ SOLUCIÓN DEFINITIVA: Event-Driven Auth Callback
+export const ZeroFlickerAuthCallback = () => {
   const navigate = useNavigate()
-  
-  // ✅ SINGLE STATE = SINGLE RE-RENDER SOURCE
   const [state, setState] = useState<AuthCallbackState>({
-    phase: 'initializing',
-    progress: 5,
-    message: 'Iniciando autenticación...'
+    phase: 'connecting',
+    progress: 10,
+    message: 'Conectando...'
   })
   
-  // ✅ Prevent multiple executions
   const hasStarted = useRef(false)
   const isNavigating = useRef(false)
-  
+  const timeoutRef = useRef<number | null>(null)
+
   useEffect(() => {
     if (hasStarted.current) return
     hasStarted.current = true
+
+    let authStateCleanup: (() => void) | null = null
     
     const handleAuth = async () => {
       try {
-        logger.info('🚀 Starting optimized auth flow...', { component: 'AuthCallback' })
-        
-        // ✅ BATCH UPDATE #1: Setup phase
-        setState({
-          phase: 'processing',
-          progress: 25,
-          message: 'Procesando credenciales...'
-        })
-        
-        // Detect modal context
         const urlParams = getSearchParams()
-        const isFromModal = urlParams.get('source') === 'modal'
-        let context: ModalContext | null = null
+        const hasOAuthParams = urlParams.toString().includes('code') || 
+                              urlParams.toString().includes('access_token') ||
+                              getHash().includes('access_token')
         
-        if (isFromModal) {
-          context = AuthService.getModalContext()
-          if (context) {
-            logger.debug('📋 Modal context:', { provider: context.provider, component: 'AuthCallback' })
+        if (!hasOAuthParams) {
+          // 🚀 FAST PATH: No OAuth parameters, check existing session
+          logger.debug('No OAuth params detected, checking existing session')
+          const user = await AuthService.getCurrentUser()
+          if (user) {
+            handleSuccess(user, null)
+          } else {
+            throw new Error('No session found and no OAuth parameters')
           }
+          return
         }
         
-        // ✅ BATCH UPDATE #2: Processing with context
-        setState(prev => ({
-          ...prev,
-          progress: 50,
-          message: context ? 
-            `Completando autenticación con ${context.provider}...` : 
-            'Verificando sesión...',
-          context
-        }))
-        
-        // ✅ DIRECT AUTH CHECK - No polling, no useQuery loop
-        const user = await directAuthCheck()
-        
-        if (!user) {
-          throw new Error('Authentication failed')
-        }
-        
-        logger.info('✅ Authentication successful:', { email: user.email, component: 'AuthCallback' })
-        
-        // Cleanup modal context
-        if (isFromModal && context) {
-          AuthService.clearModalContext()
-        }
-        
-        // ✅ BATCH UPDATE #3: Success
-        setState(prev => ({
-          ...prev,
-          phase: 'completing',
-          progress: 100,
-          message: '¡Autenticación exitosa! Redirigiendo...'
-        }))
-        
-        // ✅ NAVIGATE ONCE - Prevent multiple navigation
-        if (!isNavigating.current) {
-          isNavigating.current = true
-          const returnTo = context?.returnTo || '/dashboard'
-          
-          setTimeout(() => {
-            logger.info(`🎯 Navigating to: ${returnTo}`, { component: 'AuthCallback' })
-            navigate({ to: returnTo })
-          }, 600)
-        }
-        
-      } catch (error: unknown) {
-        logger.error('❌ Auth callback error:', error as Error, { component: 'AuthCallback' })
-        
-        const errorMessage = error instanceof Error ? error.message : 'Authentication error'
-        
-        // ✅ SINGLE ERROR UPDATE
+        // 🔄 OAUTH PATH: Use event-driven approach for perfect timing
+        logger.debug('OAuth parameters detected, setting up Supabase listener')
         setState({
-          phase: 'error',
-          progress: 0,
-          message: 'Error durante la autenticación',
-          error: errorMessage
+          phase: 'processing', 
+          progress: 40, 
+          message: 'Procesando autenticación OAuth...'
         })
         
-        // Auto-redirect to auth page
-        setTimeout(() => {
-          if (!isNavigating.current) {
-            isNavigating.current = true
-            navigate({ to: '/auth' })
+        // ✅ CRITICAL: Use onAuthStateChange for precise synchronization
+        const { data: { subscription } } = AuthService.onAuthStateChange((event, session) => {
+          logger.debug('Auth state change event:', { event, hasSession: !!session })
+          
+          if (event === 'SIGNED_IN' && session && !isNavigating.current) {
+            logger.info('OAuth session established by Supabase')
+            
+            // Convert Supabase session to AuthUser
+            AuthService.getCurrentUser()
+              .then(user => {
+                if (user && !isNavigating.current) {
+                  const modalContext = getModalContext()
+                  handleSuccess(user, modalContext)
+                } else if (!isNavigating.current) {
+                  logger.warn('Session established but no user found')
+                  handleError(new Error('Failed to get user data'))
+                }
+              })
+              .catch(error => {
+                logger.error('Error getting user after session established:', error)
+                if (!isNavigating.current) {
+                  handleError(error)
+                }
+              })
+          } else if (event === 'SIGNED_OUT') {
+            logger.warn('Unexpected sign out during OAuth callback')
+            if (!isNavigating.current) {
+              handleError(new Error('Authentication was cancelled'))
+            }
           }
-        }, 3000)
+        })
+        
+        authStateCleanup = () => subscription.unsubscribe()
+        
+        // ⏰ Safety timeout: If Supabase doesn't respond within reasonable time
+        timeoutRef.current = globalThis.setTimeout(() => {
+          logger.warn('OAuth processing timeout, attempting direct session check')
+          
+          // Fallback: Direct session check after timeout
+          AuthService.getCurrentUser()
+            .then(user => {
+              if (user && !isNavigating.current) {
+                const modalContext = getModalContext()
+                handleSuccess(user, modalContext)
+              } else if (!isNavigating.current) {
+                handleError(new Error('Authentication timeout - no session found'))
+              }
+            })
+            .catch(error => {
+              if (!isNavigating.current) {
+                logger.error('Direct session check failed after timeout:', error)
+                handleError(new Error('Authentication timeout'))
+              }
+            })
+        }, 8000) // 8 second timeout
+        
+        // ✅ OPTIMIZATION: Also check immediately if session already exists
+        // (In case the auth state change event was missed)
+        setTimeout(async () => {
+          if (!isNavigating.current) {
+            try {
+              const user = await AuthService.getCurrentUser()
+              if (user) {
+                logger.debug('Found existing session during immediate check')
+                const modalContext = getModalContext()
+                handleSuccess(user, modalContext)
+              }
+            } catch (_error) {
+              // Ignore - the event listener will handle it
+              logger.debug('Immediate session check failed, waiting for auth state change')
+            }
+          }
+        }, 100) // Quick check after 100ms
+        
+      } catch (error) {
+        const errorObj = error instanceof Error ? error : new Error(String(error))
+        logger.error('Auth callback setup error:', errorObj)
+        handleError(error)
       }
     }
-    
-    // Start auth flow
+
+    const handleSuccess = (user: AuthUser, context: ModalContext | null) => {
+      if (isNavigating.current) return
+      
+      logger.info('Authentication successful:', { 
+        email: user.email, 
+        provider: user.provider,
+        component: 'AuthCallback' 
+      })
+      
+      // Cleanup all listeners and timeouts
+      cleanup()
+      
+      // Clear modal context if exists
+      if (context) {
+        AuthService.clearModalContext()
+      }
+      
+      setState({
+        phase: 'completing',
+        progress: 100,
+        message: '¡Autenticación exitosa!'
+      })
+      
+      // Navigate immediately
+      isNavigating.current = true
+      const returnTo = context?.returnTo || '/dashboard'
+      
+      // Minimal delay just to show success state
+      setTimeout(() => {
+        logger.info(`Navigating to: ${returnTo}`)
+        navigate({ to: returnTo })
+      }, 300) // Reduced to minimum
+    }
+
+    const handleError = (error: unknown) => {
+      if (isNavigating.current) return
+      
+      const errorObj = error instanceof Error ? error : new Error(String(error))
+      logger.error('Auth callback failed:', errorObj, { component: 'AuthCallback' })
+      
+      cleanup()
+      
+      const errorMessage = errorObj.message
+      setState({
+        phase: 'error',
+        progress: 0,
+        message: 'Error durante la autenticación',
+        error: errorMessage
+      })
+      
+      // Auto-redirect to login on error
+      setTimeout(() => {
+        if (!isNavigating.current) {
+          isNavigating.current = true
+          navigate({ to: '/auth' })
+        }
+      }, 3000)
+    }
+
+    const getModalContext = (): ModalContext | null => {
+      const urlParams = getSearchParams()
+      const isFromModal = urlParams.get('source') === 'modal'
+      return isFromModal ? AuthService.getModalContext() : null
+    }
+
+    const cleanup = () => {
+      if (authStateCleanup) {
+        authStateCleanup()
+        authStateCleanup = null
+      }
+      if (timeoutRef.current) {
+        globalThis.clearTimeout(timeoutRef.current)
+        timeoutRef.current = null
+      }
+    }
+
+    // Start the authentication process
     handleAuth()
-    
-  }, [navigate]) // ✅ Stable dependency
-  
-  // ✅ OPTIMIZED RENDER: Single state, no conditional logic changes
+
+    // Cleanup on component unmount
+    return cleanup
+  }, [navigate])
+
+  // Error state UI
   if (state.phase === 'error') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -192,13 +247,21 @@ export const OptimizedAuthCallback = () => {
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Error de Autenticación</h2>
           <p className="text-gray-600 mb-6">{state.message}</p>
           <div className="text-sm text-gray-500 mb-4">
-            Serás redirigido automáticamente...
+            Serás redirigido automáticamente al login...
           </div>
+          <button
+            type="button"
+            onClick={() => navigate({ to: '/auth' })}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            Volver al Login
+          </button>
         </div>
       </div>
     )
   }
-  
+
+  // Loading state UI
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
@@ -212,7 +275,7 @@ export const OptimizedAuthCallback = () => {
           </div>
         )}
         
-        {/* Single animated icon - no state changes */}
+        {/* Animated icon - changes based on phase */}
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
           {state.phase === 'completing' ? (
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,9 +298,11 @@ export const OptimizedAuthCallback = () => {
           />
         </div>
         
-        {/* Stable messaging */}
+        {/* Phase-appropriate messaging */}
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          {state.phase === 'completing' ? '✅ ¡Éxito!' : '🔐 Autenticando...'}
+          {state.phase === 'connecting' && '🔗 Conectando...'}
+          {state.phase === 'processing' && '🔐 Autenticando...'}
+          {state.phase === 'completing' && '✅ ¡Éxito!'}
         </h2>
         
         <p className="text-gray-600 mb-4">
@@ -252,7 +317,7 @@ export const OptimizedAuthCallback = () => {
         {state.phase === 'processing' && (
           <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-3 text-left">
             <p className="text-xs text-green-700">
-              ⚡ <strong>Optimizado:</strong> Sin re-renders innecesarios
+              ⚡ <strong>Zero-flicker:</strong> Sincronización perfecta con OAuth
             </p>
           </div>
         )}
@@ -262,5 +327,5 @@ export const OptimizedAuthCallback = () => {
 }
 
 export default function AuthCallbackPage() {
-  return <OptimizedAuthCallback />
+  return <ZeroFlickerAuthCallback />
 } 
