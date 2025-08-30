@@ -50,7 +50,7 @@ export class ProfileService {
   /**
    * Helper function to make CSRF-protected requests
    */
-  private static async makeCSRFRequest(url: string, options: RequestInit = {}): Promise<Response> {
+  static async makeCSRFRequest(url: string, options: RequestInit = {}): Promise<Response> {
     // Get session ID from localStorage or generate new one
     const sessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
     localStorage.setItem('sessionId', sessionId);
@@ -481,7 +481,7 @@ export class ProfileService {
     }
 
     // Call the backend endpoint for account deletion with CSRF protection
-    const response = await this.makeCSRFRequest(`${BACKEND_URL}/api/auth/account`, {
+    const response = await ProfileService.makeCSRFRequest(`${BACKEND_URL}/api/auth/account`, {
       method: 'DELETE'
     })
 
