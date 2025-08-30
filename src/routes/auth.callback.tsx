@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useRef, useState, useEffect } from 'react'
 import { AuthService } from '../services/auth-service.ts'
-import { getSearchParams, getHash, getCurrentUrlInfo } from '../utils/browser.ts'
+import { getSearchParams, getHash } from '../utils/browser.ts'
 import { logger } from '../utils/logger.ts'
 import type { AuthUser } from '../types/auth.ts'
 
@@ -24,7 +24,7 @@ interface AuthCallbackState {
   context?: ModalContext | null
 }
 
-// ✅ SOLUCIÓN MEJORADA: Event-Driven Auth Callback con Debugging
+// ✅ SOLUCIÓN OPTIMIZADA: Single Session Check + Event-Driven
 export const ZeroFlickerAuthCallback = () => {
   const navigate = useNavigate()
   const [state, setState] = useState<AuthCallbackState>({
@@ -36,6 +36,7 @@ export const ZeroFlickerAuthCallback = () => {
   const hasStarted = useRef(false)
   const isNavigating = useRef(false)
   const timeoutRef = useRef<number | null>(null)
+  const sessionChecked = useRef(false)
 
   useEffect(() => {
     if (hasStarted.current) return
@@ -45,143 +46,74 @@ export const ZeroFlickerAuthCallback = () => {
     
     const handleAuth = async () => {
       try {
-        // 🔍 DEBUGGING: Log current URL state
-        const urlInfo = getCurrentUrlInfo()
-        logger.info('Auth callback started with URL:', {
-          href: urlInfo.href,
-          search: urlInfo.search,
-          hash: urlInfo.hash,
-          component: 'AuthCallback'
-        })
-
         const urlParams = getSearchParams()
         const hash = getHash()
         
-        // 🔍 DEBUGGING: Log parameters
-        logger.debug('URL parameters analysis:', {
-          searchParams: urlParams.toString(),
-          hash: hash,
-          hasCode: urlParams.toString().includes('code'),
-          hasAccessToken: urlParams.toString().includes('access_token') || hash.includes('access_token'),
-          component: 'AuthCallback'
-        })
-
-        // ✅ MEJORADO: Detección de parámetros OAuth más robusta
+        // ✅ OPTIMIZADO: Single OAuth parameter check
         const hasOAuthParams = urlParams.toString().includes('code') || 
                               urlParams.toString().includes('access_token') ||
                               hash.includes('access_token') ||
-                              hash.includes('code') ||
-                              // Verificar si hay parámetros en el hash (formato OAuth)
-                              hash.includes('token_type') ||
-                              hash.includes('expires_in')
+                              hash.includes('code')
         
-        // 🔍 DEBUGGING: Log OAuth detection result
-        logger.debug('OAuth parameters detection:', {
-          hasOAuthParams,
+        logger.debug('Auth callback started:', { 
+          hasOAuthParams, 
           searchParams: urlParams.toString(),
           hash: hash,
-          component: 'AuthCallback'
+          component: 'AuthCallback' 
         })
         
-        // ✅ ESPECIAL: Manejo de hash vacío (#)
-        if (hash === '#' || hash === '') {
-          logger.warn('Empty hash fragment detected, checking for existing session', { component: 'AuthCallback' })
-          
-          try {
-            const user = await AuthService.getCurrentUser()
-            if (user) {
-              logger.info('Session found despite empty hash, proceeding to success', { 
-                email: user.email, 
-                component: 'AuthCallback' 
-              })
-              handleSuccess(user, null)
-              return
-            } else {
-              logger.warn('No session found with empty hash, redirecting to auth', { component: 'AuthCallback' })
-              setTimeout(() => {
-                if (!isNavigating.current) {
-                  isNavigating.current = true
-                  navigate({ to: '/auth' })
-                }
-              }, 1000)
-              return
-            }
-          } catch (error) {
-            const errorObj = error instanceof Error ? error : new Error(String(error))
-            logger.error('Error checking session with empty hash:', errorObj, { component: 'AuthCallback' })
-            handleError(error)
-            return
-          }
-        }
-        
         if (!hasOAuthParams) {
-          // 🚀 FAST PATH: No OAuth parameters, check existing session
-          logger.info('No OAuth params detected, checking existing session', { component: 'AuthCallback' })
-          
-          try {
-            const user = await AuthService.getCurrentUser()
-            if (user) {
-              logger.info('Existing session found, proceeding to success', { 
-                email: user.email, 
-                component: 'AuthCallback' 
-              })
-              handleSuccess(user, null)
-            } else {
-              logger.warn('No existing session found, redirecting to auth', { component: 'AuthCallback' })
-              // Redirect to auth page if no session and no OAuth params
-              setTimeout(() => {
-                if (!isNavigating.current) {
-                  isNavigating.current = true
-                  navigate({ to: '/auth' })
-                }
-              }, 1000)
-            }
-          } catch (error) {
-            const errorObj = error instanceof Error ? error : new Error(String(error))
-            logger.error('Error checking existing session:', errorObj, { component: 'AuthCallback' })
-            handleError(error)
+          // 🚀 FAST PATH: Single session check only
+          logger.debug('No OAuth params, checking existing session')
+          const user = await AuthService.getCurrentUser()
+          if (user) {
+            handleSuccess(user, null)
+          } else {
+            // Redirect to auth if no session
+            setTimeout(() => {
+              if (!isNavigating.current) {
+                isNavigating.current = true
+                navigate({ to: '/auth' })
+              }
+            }, 1000)
           }
           return
         }
         
-        // 🔄 OAUTH PATH: Use event-driven approach for perfect timing
-        logger.info('OAuth parameters detected, setting up Supabase listener', { component: 'AuthCallback' })
+        // 🔄 OAUTH PATH: Event-driven only
+        logger.debug('OAuth params detected, setting up listener')
         setState({
           phase: 'processing', 
           progress: 40, 
           message: 'Procesando autenticación OAuth...'
         })
         
-        // ✅ CRITICAL: Use onAuthStateChange for precise synchronization
+        // ✅ CRITICAL: Single event listener
         const { data: { subscription } } = AuthService.onAuthStateChange((event, session) => {
-          logger.debug('Auth state change event:', { 
-            event, 
-            hasSession: !!session,
-            component: 'AuthCallback' 
-          })
+          logger.debug('Auth state change:', { event, hasSession: !!session })
           
-          if (event === 'SIGNED_IN' && session && !isNavigating.current) {
-            logger.info('OAuth session established by Supabase', { component: 'AuthCallback' })
+          if (event === 'SIGNED_IN' && session && !isNavigating.current && !sessionChecked.current) {
+            sessionChecked.current = true
+            logger.info('OAuth session established')
             
-            // Convert Supabase session to AuthUser
+            // ✅ OPTIMIZADO: Single user fetch
             AuthService.getCurrentUser()
               .then(user => {
                 if (user && !isNavigating.current) {
                   const modalContext = getModalContext()
                   handleSuccess(user, modalContext)
                 } else if (!isNavigating.current) {
-                  logger.warn('Session established but no user found', { component: 'AuthCallback' })
                   handleError(new Error('Failed to get user data'))
                 }
               })
               .catch(error => {
-                logger.error('Error getting user after session established:', error, { component: 'AuthCallback' })
+                logger.error('Error getting user:', error)
                 if (!isNavigating.current) {
                   handleError(error)
                 }
               })
           } else if (event === 'SIGNED_OUT') {
-            logger.warn('Unexpected sign out during OAuth callback', { component: 'AuthCallback' })
+            logger.warn('Unexpected sign out during OAuth')
             if (!isNavigating.current) {
               handleError(new Error('Authentication was cancelled'))
             }
@@ -190,50 +122,32 @@ export const ZeroFlickerAuthCallback = () => {
         
         authStateCleanup = () => subscription.unsubscribe()
         
-        // ⏰ Safety timeout: If Supabase doesn't respond within reasonable time
+        // ⏰ Safety timeout: Single fallback check
         timeoutRef.current = globalThis.setTimeout(() => {
-          logger.warn('OAuth processing timeout, attempting direct session check', { component: 'AuthCallback' })
-          
-          // Fallback: Direct session check after timeout
-          AuthService.getCurrentUser()
-            .then(user => {
-              if (user && !isNavigating.current) {
-                const modalContext = getModalContext()
-                handleSuccess(user, modalContext)
-              } else if (!isNavigating.current) {
-                logger.error('Timeout reached with no session found', undefined, { component: 'AuthCallback' })
-                handleError(new Error('Authentication timeout - no session found'))
-              }
-            })
-            .catch(error => {
-              if (!isNavigating.current) {
-                logger.error('Direct session check failed after timeout:', error, { component: 'AuthCallback' })
-                handleError(new Error('Authentication timeout'))
-              }
-            })
-        }, 8000) // 8 second timeout
-        
-        // ✅ OPTIMIZATION: Also check immediately if session already exists
-        // (In case the auth state change event was missed)
-        setTimeout(async () => {
-          if (!isNavigating.current) {
-            try {
-              const user = await AuthService.getCurrentUser()
-              if (user) {
-                logger.debug('Found existing session during immediate check', { component: 'AuthCallback' })
-                const modalContext = getModalContext()
-                handleSuccess(user, modalContext)
-              }
-            } catch (_error) {
-              // Ignore - the event listener will handle it
-              logger.debug('Immediate session check failed, waiting for auth state change', { component: 'AuthCallback' })
-            }
+          if (!isNavigating.current && !sessionChecked.current) {
+            logger.warn('OAuth timeout, attempting single session check')
+            sessionChecked.current = true
+            
+            AuthService.getCurrentUser()
+              .then(user => {
+                if (user && !isNavigating.current) {
+                  const modalContext = getModalContext()
+                  handleSuccess(user, modalContext)
+                } else if (!isNavigating.current) {
+                  handleError(new Error('Authentication timeout'))
+                }
+              })
+              .catch(_error => {
+                if (!isNavigating.current) {
+                  handleError(new Error('Authentication timeout'))
+                }
+              })
           }
-        }, 100) // Quick check after 100ms
+        }, 8000)
         
       } catch (error) {
         const errorObj = error instanceof Error ? error : new Error(String(error))
-        logger.error('Auth callback setup error:', errorObj, { component: 'AuthCallback' })
+        logger.error('Auth callback setup error:', errorObj)
         handleError(error)
       }
     }
@@ -247,10 +161,10 @@ export const ZeroFlickerAuthCallback = () => {
         component: 'AuthCallback' 
       })
       
-      // Cleanup all listeners and timeouts
+      // Cleanup
       cleanup()
       
-      // Clear modal context if exists
+      // Clear modal context
       if (context) {
         AuthService.clearModalContext()
       }
@@ -265,11 +179,10 @@ export const ZeroFlickerAuthCallback = () => {
       isNavigating.current = true
       const returnTo = context?.returnTo || '/dashboard'
       
-      // Minimal delay just to show success state
       setTimeout(() => {
-        logger.info(`Navigating to: ${returnTo}`, { component: 'AuthCallback' })
+        logger.info(`Navigating to: ${returnTo}`)
         navigate({ to: returnTo })
-      }, 300) // Reduced to minimum
+      }, 300)
     }
 
     const handleError = (error: unknown) => {
@@ -288,7 +201,6 @@ export const ZeroFlickerAuthCallback = () => {
         error: errorMessage
       })
       
-      // Auto-redirect to login on error
       setTimeout(() => {
         if (!isNavigating.current) {
           isNavigating.current = true
@@ -314,10 +226,7 @@ export const ZeroFlickerAuthCallback = () => {
       }
     }
 
-    // Start the authentication process
     handleAuth()
-
-    // Cleanup on component unmount
     return cleanup
   }, [navigate])
 
@@ -367,7 +276,7 @@ export const ZeroFlickerAuthCallback = () => {
           </div>
         )}
         
-        {/* Animated icon - changes based on phase */}
+        {/* Animated icon */}
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
           {state.phase === 'completing' ? (
             <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -380,7 +289,7 @@ export const ZeroFlickerAuthCallback = () => {
           )}
         </div>
         
-        {/* Smooth progress bar */}
+        {/* Progress bar */}
         <div className="w-full bg-gray-200 rounded-full h-2 mb-6 overflow-hidden">
           <div 
             className={`h-2 rounded-full transition-all duration-1000 ease-out ${
@@ -390,7 +299,7 @@ export const ZeroFlickerAuthCallback = () => {
           />
         </div>
         
-        {/* Phase-appropriate messaging */}
+        {/* Messaging */}
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
           {state.phase === 'connecting' && '🔗 Conectando...'}
           {state.phase === 'processing' && '🔐 Autenticando...'}
@@ -409,7 +318,7 @@ export const ZeroFlickerAuthCallback = () => {
         {state.phase === 'processing' && (
           <div className="mt-4 bg-green-50 border-l-4 border-green-400 p-3 text-left">
             <p className="text-xs text-green-700">
-              ⚡ <strong>Zero-flicker:</strong> Sincronización perfecta con OAuth
+              ⚡ <strong>Optimizado:</strong> Single session check + Event-driven
             </p>
           </div>
         )}

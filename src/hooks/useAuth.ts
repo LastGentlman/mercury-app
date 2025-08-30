@@ -211,39 +211,25 @@ export function useAuth(): AuthHookReturn {
   }, [])
 
   /**
-   * Listen for OAuth state changes
+   * Listen for OAuth state changes - OPTIMIZED to prevent conflicts
    */
   useEffect(() => {
+    // ✅ OPTIMIZADO: Solo invalidar queries, no manejar navegación
     const { data: { subscription } } = AuthService.onAuthStateChange(
       (event, session) => {
         if (event === 'SIGNED_IN' && session) {
-          console.log('✅ OAuth sign in detected')
+          console.log('✅ OAuth sign in detected in useAuth')
+          // Solo invalidar, el auth callback maneja la navegación
           queryClient.invalidateQueries({ queryKey: ['auth-user'] })
         } else if (event === 'SIGNED_OUT') {
-          console.log('✅ OAuth sign out detected')
+          console.log('✅ OAuth sign out detected in useAuth')
           queryClient.setQueryData(['auth-user'], null)
         }
       }
     )
 
-    // Escuchar eventos personalizados de OAuth popup
-    const handleOAuthSuccess = (event: CustomEvent) => {
-      console.log('✅ OAuth success event received:', event.detail)
-      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
-    }
-
-    const handleOAuthError = (event: CustomEvent) => {
-      console.error('❌ OAuth error event received:', event.detail)
-      // Aquí podrías mostrar una notificación de error si es necesario
-    }
-
-    globalThis.addEventListener('oauth-success', handleOAuthSuccess as EventListener)
-    globalThis.addEventListener('oauth-error', handleOAuthError as EventListener)
-
     return () => {
       subscription.unsubscribe()
-      globalThis.removeEventListener('oauth-success', handleOAuthSuccess as EventListener)
-      globalThis.removeEventListener('oauth-error', handleOAuthError as EventListener)
     }
   }, [queryClient])
 
