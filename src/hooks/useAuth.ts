@@ -16,7 +16,7 @@
  * ```
  */
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { 
   AuthHookReturn, 
@@ -29,12 +29,17 @@ import type {
 import { AuthService } from '../services/auth-service.ts'
 import { useAuthToken } from './useStorageSync.ts'
 
+// ✅ SINGLETON: Prevent multiple auth state listeners
+let authStateListenerInitialized = false
+let authStateSubscription: (() => void) | null = null
+
 /**
  * Main authentication hook
  * Returns mutation objects with all expected properties (mutate, mutateAsync, isPending, etc.)
  */
 export function useAuth(): AuthHookReturn {
   const queryClient = useQueryClient()
+  const hasInitializedListener = useRef(false)
   
   // Use secure storage sync for auth token
   const { value: _authToken, setValue: setAuthToken, isLoading: isTokenLoading } = useAuthToken()
@@ -106,15 +111,20 @@ export function useAuth(): AuthHookReturn {
       return await AuthService.register(credentials)
     },
     onSuccess: (response) => {
-      // Store auth token if no email confirmation required
-      if (!response.emailConfirmationRequired && response.user) {
-        queryClient.setQueryData(['auth-user'], response.user)
+      // Set user data immediately (registration doesn't return session)
+      const userData = {
+        ...response.user,
+        provider: 'email' as const
       }
       
-      console.log('✅ Registration successful')
+      queryClient.setQueryData(['auth-user'], userData)
+      
+      console.log('✅ Registration successful, user state updated')
     },
     onError: (error) => {
       console.error('❌ Registration failed:', error)
+      setAuthToken(null)
+      localStorage.removeItem('authToken')
     }
   })
 
@@ -122,32 +132,25 @@ export function useAuth(): AuthHookReturn {
    * Logout mutation
    */
   const logout = useMutation({
-    mutationFn: async (): Promise<void> => {
-      await AuthService.logout()
+    mutationFn: async () => {
+      return await AuthService.logout()
     },
     onSuccess: () => {
-      // Clear auth state
+      // Clear auth token
       setAuthToken(null)
-      queryClient.setQueryData(['auth-user'], null)
-      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
-      
-      // Also clear localStorage directly for immediate effect
       localStorage.removeItem('authToken')
       
-      // 🔒 SECURITY: Redirect to auth page immediately
-      globalThis.location.href = '/auth'
+      // Clear user data
+      queryClient.setQueryData(['auth-user'], null)
       
-      console.log('✅ Logout successful, redirected to auth page')
+      console.log('✅ Logout successful, user state cleared')
     },
     onError: (error) => {
       console.error('❌ Logout failed:', error)
-      // Even if logout fails on server, clear local state
+      // Still clear local state even if server logout fails
       setAuthToken(null)
-      queryClient.setQueryData(['auth-user'], null)
       localStorage.removeItem('authToken')
-      
-      // 🔒 SECURITY: Redirect to auth page even on error
-      globalThis.location.href = '/auth'
+      queryClient.setQueryData(['auth-user'], null)
     }
   })
 
@@ -155,14 +158,11 @@ export function useAuth(): AuthHookReturn {
    * Resend confirmation email mutation
    */
   const resendConfirmationEmail = useMutation({
-    mutationFn: async (email: string): Promise<void> => {
+    mutationFn: async (email: string) => {
       await AuthService.resendConfirmationEmail(email)
     },
-    onSuccess: () => {
-      console.log('✅ Confirmation email sent')
-    },
     onError: (error) => {
-      console.error('❌ Failed to resend confirmation email:', error)
+      console.error('❌ Resend confirmation email failed:', error)
     }
   })
 
@@ -170,19 +170,20 @@ export function useAuth(): AuthHookReturn {
    * Change email mutation
    */
   const changeEmail = useMutation({
-    mutationFn: async ({ currentEmail, newEmail }: { currentEmail: string; newEmail: string }): Promise<{ newEmail: string }> => {
+    mutationFn: async ({ currentEmail, newEmail }: { currentEmail: string; newEmail: string }) => {
       return await AuthService.changeEmail(currentEmail, newEmail)
     },
-    onSuccess: (data) => {
-      console.log('✅ Email changed successfully:', data.newEmail)
+    onSuccess: () => {
+      // Invalidate user data to refetch with new email
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
     },
     onError: (error) => {
-      console.error('❌ Failed to change email:', error)
+      console.error('❌ Change email failed:', error)
     }
   })
 
   /**
-   * OAuth methods simplificados - SIN manejo de popups
+   * OAuth login methods
    */
   const loginWithGoogle = useCallback(async () => {
     try {
@@ -211,9 +212,18 @@ export function useAuth(): AuthHookReturn {
   }, [])
 
   /**
-   * Listen for OAuth state changes - OPTIMIZED to prevent conflicts
+   * Listen for OAuth state changes - SINGLETON PATTERN
    */
   useEffect(() => {
+    // ✅ CRITICAL: Only initialize listener once across all components
+    if (authStateListenerInitialized || hasInitializedListener.current) {
+      return
+    }
+
+    console.log('👂 Initializing SINGLE auth state listener...')
+    authStateListenerInitialized = true
+    hasInitializedListener.current = true
+
     // ✅ OPTIMIZADO: Solo invalidar queries, no manejar navegación
     const { data: { subscription } } = AuthService.onAuthStateChange(
       (event, session) => {
@@ -228,8 +238,19 @@ export function useAuth(): AuthHookReturn {
       }
     )
 
+    authStateSubscription = () => subscription.unsubscribe()
+
     return () => {
-      subscription.unsubscribe()
+      // Only cleanup if this is the component that initialized the listener
+      if (hasInitializedListener.current) {
+        console.log('🧹 Cleaning up SINGLE auth state listener...')
+        authStateListenerInitialized = false
+        hasInitializedListener.current = false
+        if (authStateSubscription) {
+          authStateSubscription()
+          authStateSubscription = null
+        }
+      }
     }
   }, [queryClient])
 
