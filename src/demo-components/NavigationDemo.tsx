@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from './ui/index.ts'
-import { Button } from './ui/index.ts'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/index.ts'
+import { Button } from '../components/ui/index.ts'
 import { 
   Smartphone, 
   Monitor, 

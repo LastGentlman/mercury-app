@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { SweetAlertDemo } from '../components/SweetAlertDemo.tsx'
+import { SweetAlertDemo } from '../demo-components/SweetAlertDemo.tsx'
 
 export const Route = createFileRoute('/sweetalert-demo')({
   component: SweetAlertDemoPage,

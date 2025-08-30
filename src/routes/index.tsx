@@ -1,8 +1,8 @@
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { Loader2, Smartphone, Globe, Navigation } from 'lucide-react'
-import { usePWARouteStrategy, PWARouteConfigs } from '../hooks/usePWARouteStrategy'
+import { usePWARouteStrategy, PWARouteConfigs } from '../hooks/usePWARouteStrategy.ts'
 import { Button } from '../components/ui/index.ts'
-import NavigationDemo from '../components/NavigationDemo'
+import NavigationDemo from '../demo-components/NavigationDemo.tsx'
 
 export const Route = createFileRoute('/')({
   component: Index,

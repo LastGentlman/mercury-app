@@ -1,6 +1,6 @@
 
-import { Button } from './ui/button.tsx'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card.tsx'
+import { Button } from '../components/ui/button.tsx'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card.tsx'
 import { 
   showSuccess, 
   showError, 
