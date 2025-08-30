@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import type { Order } from '../types/index.ts'
 import { EnhancedButton, StatusBadge, StatsCard, EmptyState, Skeleton } from '../components/ui/index.ts'
-import { EnhancedOrderCard } from '../components/EnhancedOrderCard.tsx'
+import { OrderCard } from '../components/orders/OrderCard.tsx'
 
 // ✅ CORRECCIÓN: Crear y exportar la ruta correctamente
 export const Route = createFileRoute('/enhanced-design-system-demo')({
@@ -233,10 +233,10 @@ export default function EnhancedDesignSystemPage() {
         <section className="mb-12">
           <h2 className="text-2xl font-semibold text-gray-900 mb-6">📋 Enhanced Order Card</h2>
           <div className="max-w-2xl">
-            <EnhancedOrderCard
+            <OrderCard
               order={mockOrder}
               onStatusChange={handleStatusChange}
-              onEdit={(id) => console.log('Edit order:', id)}
+              onEdit={(order) => console.log('Edit order:', order)}
               onDelete={(id) => console.log('Delete order:', id)}
             />
           </div>
