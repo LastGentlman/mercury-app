@@ -33,10 +33,10 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
         return {
           bgColor: 'bg-orange-100',
           borderColor: 'border-orange-400',
-          mobileBgColor: 'bg-orange-500',
+          mobileBgColor: 'bg-orange-100',
           icon: '⚠️',
           title: 'Sin conexión',
-          message: 'Trabajando offline (datos se sincronizarán)',
+          message: 'Trabajando offline',
           showAction: true
         }
 
@@ -44,7 +44,7 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
         return {
           bgColor: 'bg-red-100',
           borderColor: 'border-red-400',
-          mobileBgColor: 'bg-red-500',
+          mobileBgColor: 'bg-red-100',
           icon: '🚫',
           title: 'Sin conexión',
           message: 'Funcionalidad limitada',
@@ -55,10 +55,10 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
         return {
           bgColor: 'bg-blue-100',
           borderColor: 'border-blue-400',
-          mobileBgColor: 'bg-blue-500',
+          mobileBgColor: 'bg-blue-100',
           icon: '🔄',
           title: 'Sincronizando',
-          message: 'Sincronizando datos pendientes...',
+          message: 'Sincronizando datos...',
           showAction: false
         }
 
@@ -94,19 +94,15 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
       {/* 🖥️ Desktop Banner - Banner completo */}
       <div className={`hidden md:block ${config.bgColor} bg-opacity-90 border-l-4 ${config.borderColor} p-3 ${className}`}>
         <div className="flex items-center justify-between">
-          {/* 🚨 Icono de alerta a la izquierda */}
-          <div className="flex-shrink-0">
-            <span className="text-lg">{config.icon}</span>
-          </div>
+          {/* Espaciador izquierdo */}
+          <div className="flex-shrink-0 w-5 h-5" />
           
-          {/* 📝 Mensaje descriptivo centrado */}
-          <div className="flex-1 text-center mx-4">
-            <h3 className="text-sm font-medium text-gray-800">
-              {config.title}
-            </h3>
-            <p className="text-xs text-gray-700 mt-1">
+          {/* 📝 Mensaje descriptivo centrado con icono */}
+          <div className="flex-1 flex items-center justify-center space-x-2">
+            <span className="text-lg">{config.icon}</span>
+            <span className="text-sm font-medium text-gray-800">
               {config.message}
-            </p>
+            </span>
           </div>
           
           {/* 🔄 Icono de refresh a la derecha */}
@@ -140,7 +136,7 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
       </div>
 
       {/* 📱 Mobile Indicator - Indicador compacto en esquina superior derecha */}
-      <div className={`md:hidden fixed top-4 right-4 z-50 ${config.mobileBgColor} bg-opacity-90 text-white rounded-lg shadow-lg backdrop-blur-sm ${className}`}>
+      <div className={`md:hidden fixed top-4 right-4 z-50 ${config.mobileBgColor} border border-gray-200 rounded-lg shadow-lg ${className}`}>
         {/* 📱 Versión completa para pantallas móviles normales */}
         <div className="hidden sm:block p-3">
           <div className="flex items-center space-x-3">
@@ -151,12 +147,9 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
             
             {/* 📝 Mensaje descriptivo */}
             <div className="flex-1 min-w-0">
-              <h3 className="text-xs font-medium text-white truncate">
-                {config.title}
-              </h3>
-              <p className="text-xs text-white/80 truncate">
+              <span className="text-xs font-medium text-gray-800 truncate">
                 {config.message}
-              </p>
+              </span>
             </div>
             
             {/* 🔄 Icono de refresh */}
@@ -164,7 +157,7 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
               <button
                 type="button"
                 onClick={handleRetrySync}
-                className="flex-shrink-0 text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                className="flex-shrink-0 text-gray-600 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100"
                 title="Reintentar sincronización"
               >
                 <svg 
@@ -196,7 +189,7 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
               <button
                 type="button"
                 onClick={handleRetrySync}
-                className="text-white/80 hover:text-white transition-colors"
+                className="text-gray-600 hover:text-gray-800 transition-colors"
                 title="Reintentar sincronización"
               >
                 <svg 

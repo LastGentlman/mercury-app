@@ -68,11 +68,11 @@ export function OAuthDebugger() {
     // Escuchar cambios de auth
     let subscription: unknown = null
     try {
-      const authChange = AuthService.onAuthStateChange((event, session) => {
-        setDebugInfo(prev => ({
-          ...prev,
-          lastAuthEvent: `${new Date().toLocaleTimeString()}: ${event} - ${session?.user?.email || 'No user'}`
-        }))
+              const authChange = AuthService.onAuthStateChange((event, session) => {
+          setDebugInfo(prev => ({
+            ...prev,
+            lastAuthEvent: `${new Date().toLocaleTimeString()}: ${event} - ${(session as { user?: { email?: string } })?.user?.email || 'No user'}`
+          }))
         // Actualizar info después de cambio
         setTimeout(updateDebugInfo, 1000)
       })
