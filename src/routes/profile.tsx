@@ -39,6 +39,8 @@ import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
 import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
 import { UserAvatar } from '../components/UserAvatar.tsx'
+import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
+import { AuthService } from '../services/auth-service.ts'
 import { 
   Button, 
   Input, 
@@ -70,7 +72,7 @@ export const Route = createFileRoute('/profile')({
 
 function ProfilePage() {
   const navigate = useNavigate()
-  const { user, logout, changePassword } = useAuth()
+  const { user, logout } = useAuth()
   const { 
     profile, 
     updateProfile, 
@@ -139,6 +141,34 @@ function ProfilePage() {
   // Account deletion state
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
   const [isDeletingAccount, setIsDeletingAccount] = useState(false)
+  
+  // 🔒 NEW: Password change loading state
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+
+  // 🔒 NEW: Change password function
+  const handleChangePassword = async (passwordData: {
+    currentPassword: string
+    newPassword: string
+    confirmPassword: string
+  }) => {
+    try {
+      const result = await AuthService.changePassword(passwordData)
+      showSuccess('¡Éxito!', result.message)
+      setShowChangePasswordDialog(false)
+      // Force logout después de cambio exitoso
+      logout.mutate()
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Error al cambiar contraseña'
+      showError('Error', errorMessage)
+    }
+  }
+
+  // 🔒 NEW: Password strength validation
+  const validatePasswordStrength = (password: string) => {
+    if (password.length < 12) return false
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(password)) return false
+    return true
+  }
 
   // Reset collapsed sections to default state
   const resetCollapsedSections = () => {
@@ -861,19 +891,19 @@ function ProfilePage() {
               return
             }
             
-            try {
-              await changePassword.mutateAsync({
-                currentPassword: passwordData.currentPassword,
-                newPassword: passwordData.newPassword,
-                confirmPassword: passwordData.confirmPassword
-              })
-              
-              showSuccess('¡Éxito!', 'Contraseña actualizada exitosamente. Debes iniciar sesión nuevamente.')
-              setShowChangePasswordDialog(false)
-            } catch (error) {
-              console.error('Error changing password:', error)
-              // Error handling is done by the mutation
+            // 🔒 NEW: Validate password strength before submission
+            if (!validatePasswordStrength(passwordData.newPassword)) {
+              showError('Error', 'La contraseña no cumple con los requisitos de seguridad')
+              return
             }
+            
+            setIsChangingPassword(true)
+            await handleChangePassword({
+              currentPassword: passwordData.currentPassword,
+              newPassword: passwordData.newPassword,
+              confirmPassword: passwordData.confirmPassword
+            })
+            setIsChangingPassword(false)
           }}>
             <div className="space-y-4">
               <div>
@@ -921,6 +951,14 @@ function ProfilePage() {
                 <p className="text-xs text-gray-500 mt-1">
                   Mínimo 12 caracteres, incluir mayúsculas, minúsculas, números y símbolos
                 </p>
+                {/* 🔒 NEW: Password strength meter */}
+                {passwordData.newPassword && (
+                  <PasswordStrengthMeter 
+                    password={passwordData.newPassword}
+                    showRequirements
+                    className="mt-3"
+                  />
+                )}
               </div>
               
               <div>
@@ -959,16 +997,16 @@ function ProfilePage() {
                 variant="outline" 
                 onClick={() => setShowChangePasswordDialog(false)}
                 className="w-full sm:w-auto order-2 sm:order-1"
-                disabled={changePassword.isPending}
+                disabled={isChangingPassword}
               >
                 Cancelar
               </Button>
               <Button 
                 type="submit"
                 className="w-full sm:w-auto order-1 sm:order-2"
-                disabled={changePassword.isPending}
+                disabled={isChangingPassword}
               >
-                {changePassword.isPending ? (
+                {isChangingPassword ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Cambiando...
