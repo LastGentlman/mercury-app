@@ -74,6 +74,7 @@ export interface AuthHookReturn extends AuthState {
   logout: UseMutationResult<void, Error, void>
   resendConfirmationEmail: UseMutationResult<void, Error, string>
   changeEmail: UseMutationResult<{ newEmail: string }, Error, { currentEmail: string; newEmail: string }>
+  changePassword: UseMutationResult<{ message: string }, Error, { currentPassword: string; newPassword: string; confirmPassword: string }>
 
   
   // Utility functions

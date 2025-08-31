@@ -6,7 +6,7 @@ import BottomNavigation from '../components/BottomNavigation.tsx'
 import { PWAInstallButton } from '../components/PWAInstallButton.tsx'
 import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
 import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
-import { AutoConnectionBanner } from '../components/ConnectionBanner.tsx'
+import { AutoConnectionBanner, ConnectionBannerDemo } from '../components/ConnectionBanner.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 import { useGlobalMobileScroll } from '../hooks/useGlobalMobileScroll.ts'
@@ -40,6 +40,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         <PWAInstallButton />
         <ConnectionStatus />
         {import.meta.env.DEV && <OAuthDebugger />}
+        {import.meta.env.DEV && <ConnectionBannerDemo />}
       </>
     )
   },

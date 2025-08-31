@@ -434,7 +434,7 @@ export class ProfileService {
     }
 
     // Call the backend endpoint for account deletion
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/account`, {
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/auth/account`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${session.access_token}`,

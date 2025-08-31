@@ -207,6 +207,32 @@ export function useAuth(): AuthHookReturn {
   })
 
   /**
+   * Change password mutation
+   */
+  const changePassword = useMutation({
+    mutationFn: async ({ 
+      currentPassword, 
+      newPassword, 
+      confirmPassword 
+    }: { 
+      currentPassword: string
+      newPassword: string
+      confirmPassword: string
+    }): Promise<{ message: string }> => {
+      return await AuthService.changePassword({ currentPassword, newPassword, confirmPassword })
+    },
+    onSuccess: (data) => {
+      console.log('✅ Password changed successfully:', data.message)
+      // Clear user data and redirect to login
+      queryClient.clear()
+      globalThis.location.href = '/auth'
+    },
+    onError: (error) => {
+      console.error('❌ Failed to change password:', error)
+    }
+  })
+
+  /**
    * OAuth methods simplificados - SIN manejo de popups
    */
   const loginWithGoogle = useCallback(async () => {
@@ -272,10 +298,7 @@ export function useAuth(): AuthHookReturn {
     }
   }, [queryClient])
 
-  // Computed values
-  const isLoading = isTokenLoading || isUserLoading
-  const isAuthenticated = Boolean(user)
-  const provider = user?.provider || 'email'
+
 
   /**
    * Return object with all expected properties for backward compatibility
@@ -285,16 +308,17 @@ export function useAuth(): AuthHookReturn {
   return {
     // State
     user: user || null,
-    isAuthenticated,
-    isLoading,
-    provider,
+    isAuthenticated: !!user,
+    isLoading: isUserLoading || isTokenLoading,
+    provider: user?.provider || 'email',
     
-    // Mutation objects (with all TanStack Query properties)
+    // Mutations
     login,
-    register, 
+    register,
     logout,
     resendConfirmationEmail,
     changeEmail,
+    changePassword,
     
     // Utility functions
     refetchUser,
@@ -303,9 +327,9 @@ export function useAuth(): AuthHookReturn {
     loginWithGoogle,
     loginWithFacebook,
     
-    // Loading states (extracted from mutations for convenience)
+    // Loading states (convenience accessors)
     isLoginLoading: login.isPending,
     isRegisterLoading: register.isPending,
-    isLogoutLoading: logout.isPending,
+    isLogoutLoading: logout.isPending
   }
 } 

@@ -31,7 +31,9 @@ import {
   ChevronRight,
   Trash2,
   CheckCircle,
-  X
+  X,
+  Eye,
+  EyeOff
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
@@ -68,7 +70,7 @@ export const Route = createFileRoute('/profile')({
 
 function ProfilePage() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { user, logout, changePassword } = useAuth()
   const { 
     profile, 
     updateProfile, 
@@ -92,6 +94,18 @@ function ProfilePage() {
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false)
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false)
+
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  })
 
   // Settings state
   const [settings, _setSettings] = useState({
@@ -812,7 +826,25 @@ function ProfilePage() {
       </Dialog>
 
       {/* Change Password Dialog */}
-      <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
+      <Dialog 
+        open={showChangePasswordDialog} 
+        onOpenChange={(open) => {
+          setShowChangePasswordDialog(open)
+          if (!open) {
+            // Reset form state
+            setPasswordData({
+              currentPassword: '',
+              newPassword: '',
+              confirmPassword: ''
+            })
+            setShowPasswords({
+              current: false,
+              new: false,
+              confirm: false
+            })
+          }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Cambiar contraseña</DialogTitle>
@@ -821,57 +853,132 @@ function ProfilePage() {
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Contraseña actual
-              </label>
-              <Input
-                type="password"
-                placeholder="Ingresa tu contraseña actual"
-              />
+          <form onSubmit={async (e) => {
+            e.preventDefault()
+            
+            if (passwordData.newPassword !== passwordData.confirmPassword) {
+              showError('Error', 'Las contraseñas no coinciden')
+              return
+            }
+            
+            try {
+              await changePassword.mutateAsync({
+                currentPassword: passwordData.currentPassword,
+                newPassword: passwordData.newPassword,
+                confirmPassword: passwordData.confirmPassword
+              })
+              
+              showSuccess('¡Éxito!', 'Contraseña actualizada exitosamente. Debes iniciar sesión nuevamente.')
+              setShowChangePasswordDialog(false)
+            } catch (error) {
+              console.error('Error changing password:', error)
+              // Error handling is done by the mutation
+            }
+          }}>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Contraseña actual
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPasswords.current ? "text" : "password"}
+                    placeholder="Ingresa tu contraseña actual"
+                    value={passwordData.currentPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nueva contraseña
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPasswords.new ? "text" : "password"}
+                    placeholder="Ingresa tu nueva contraseña"
+                    value={passwordData.newPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Mínimo 12 caracteres, incluir mayúsculas, minúsculas, números y símbolos
+                </p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirmar nueva contraseña
+                </label>
+                <div className="relative">
+                  <Input
+                    type={showPasswords.confirm ? "text" : "password"}
+                    placeholder="Confirma tu nueva contraseña"
+                    value={passwordData.confirmPassword}
+                    onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  >
+                    {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Switch id="auto-change" />
+                <label htmlFor="auto-change" className="text-sm text-gray-700">
+                  Recordarme cambiar contraseña cada 90 días
+                </label>
+              </div>
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nueva contraseña
-              </label>
-              <Input
-                type="password"
-                placeholder="Ingresa tu nueva contraseña"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Confirmar nueva contraseña
-              </label>
-              <Input
-                type="password"
-                placeholder="Confirma tu nueva contraseña"
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch id="auto-change" />
-              <label htmlFor="auto-change" className="text-sm text-gray-700">
-                Recordarme cambiar contraseña cada 90 días
-              </label>
-            </div>
-          </div>
-          
-          <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-2">
-            <Button 
-              variant="outline" 
-              onClick={() => setShowChangePasswordDialog(false)}
-              className="w-full sm:w-auto order-2 sm:order-1"
-            >
-              Cancelar
-            </Button>
-            <Button className="w-full sm:w-auto order-1 sm:order-2">
-              Cambiar contraseña
-            </Button>
-          </DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row gap-3 sm:gap-2 mt-6">
+              <Button 
+                type="button"
+                variant="outline" 
+                onClick={() => setShowChangePasswordDialog(false)}
+                className="w-full sm:w-auto order-2 sm:order-1"
+                disabled={changePassword.isPending}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit"
+                className="w-full sm:w-auto order-1 sm:order-2"
+                disabled={changePassword.isPending}
+              >
+                {changePassword.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Cambiando...
+                  </>
+                ) : (
+                  'Cambiar contraseña'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

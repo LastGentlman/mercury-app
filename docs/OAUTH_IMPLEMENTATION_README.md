@@ -18,7 +18,7 @@ Create a `.env.local` file in the `pedidolist-app` directory with the following 
 
 ```env
 # API Configuration
-VITE_API_URL=http://localhost:3000
+VITE_BACKEND_URL=http://localhost:3030
 
 # App Configuration  
 VITE_APP_TITLE=PedidoList App
