@@ -1549,6 +1549,7 @@
         "npm:@types/uuid@10",
         "npm:@vitejs/plugin-react@^4.3.4",
         "npm:@vitest/coverage-v8@^3.2.4",
+        "npm:@vitest/ui@^3.2.4",
         "npm:autoprefixer@^10.4.21",
         "npm:class-variance-authority@~0.7.1",
         "npm:clsx@^2.1.1",
