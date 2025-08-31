@@ -28,6 +28,7 @@ import type {
 } from '../types/auth.ts'
 import { AuthService } from '../services/auth-service.ts'
 import { useAuthToken } from './useStorageSync.ts'
+import { useOfflineAuth } from './useOfflineAuth.ts'
 
 /**
  * Main authentication hook
@@ -38,10 +39,14 @@ export function useAuth(): AuthHookReturn {
   
   // Use secure storage sync for auth token
   const { value: _authToken, setValue: setAuthToken, isLoading: isTokenLoading } = useAuthToken()
+  
+  // ✅ Integrar sistema de autenticación offline
+  const { actions: offlineActions } = useOfflineAuth()
 
   /**
    * Query to get current user profile
    * Uses the new getCurrentUser method for better consistency
+   * ✅ Enhanced with offline authentication verification
    */
   const { 
     data: user, 
@@ -50,6 +55,19 @@ export function useAuth(): AuthHookReturn {
   } = useQuery({
     queryKey: ['auth-user'],
     queryFn: async (): Promise<AuthUser | null> => {
+      // ✅ Verificar token con sistema offline antes de obtener usuario
+      const token = localStorage.getItem('authToken')
+      if (token) {
+        const verification = await offlineActions.verifyToken(token)
+        if (!verification.valid) {
+          console.log('❌ Token invalid during user fetch:', verification.reason)
+          // Limpiar token inválido
+          setAuthToken(null)
+          localStorage.removeItem('authToken')
+          return null
+        }
+      }
+      
       return await AuthService.getCurrentUser()
     },
     enabled: !isTokenLoading, // Wait for token to load from storage
@@ -120,12 +138,16 @@ export function useAuth(): AuthHookReturn {
 
   /**
    * Logout mutation
+   * ✅ Enhanced with offline authentication cleanup
    */
   const logout = useMutation({
     mutationFn: async (): Promise<void> => {
       await AuthService.logout()
     },
     onSuccess: () => {
+      // ✅ Clear offline authentication data
+      offlineActions.clearOfflineData()
+      
       // Clear auth state
       setAuthToken(null)
       queryClient.setQueryData(['auth-user'], null)
@@ -141,6 +163,9 @@ export function useAuth(): AuthHookReturn {
     },
     onError: (error) => {
       console.error('❌ Logout failed:', error)
+      // ✅ Clear offline authentication data even on error
+      offlineActions.clearOfflineData()
+      
       // Even if logout fails on server, clear local state
       setAuthToken(null)
       queryClient.setQueryData(['auth-user'], null)

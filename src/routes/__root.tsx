@@ -6,6 +6,7 @@ import BottomNavigation from '../components/BottomNavigation.tsx'
 import { PWAInstallButton } from '../components/PWAInstallButton.tsx'
 import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
 import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
+import { AutoConnectionBanner } from '../components/ConnectionBanner.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 import { useGlobalMobileScroll } from '../hooks/useGlobalMobileScroll.ts'
@@ -24,6 +25,9 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     return (
       <>
         <Header />
+
+        {/* ✅ Offline Authentication Banner */}
+        <AutoConnectionBanner className="sticky top-0 z-50" />
 
         <main className="min-h-screen">
           <Outlet />

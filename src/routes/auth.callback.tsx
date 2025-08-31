@@ -5,8 +5,6 @@ import { getSearchParams, getHash } from '../utils/browser.ts'
 import { logger } from '../utils/logger.ts'
 import type { AuthUser } from '../types/auth.ts'
 
-
-
 export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
 })
@@ -19,21 +17,71 @@ interface AuthCallbackState {
   error?: string
 }
 
-// ✅ OPTIMIZACIÓN 2: Direct Auth Check (No Polling)
+// ✅ OPTIMIZACIÓN 2: Enhanced OAuth Parameter Detection
+function detectOAuthParameters(): boolean {
+  const searchParams = getSearchParams().toString()
+  const hash = getHash()
+  
+  // Check for OAuth parameters in search params
+  const hasSearchParams = searchParams.includes('access_token') || 
+                         searchParams.includes('code') ||
+                         searchParams.includes('error')
+  
+  // Check for OAuth parameters in hash fragment
+  const hasHashParams = hash.includes('access_token') || 
+                       hash.includes('code') ||
+                       hash.includes('error') ||
+                       hash.includes('type=recovery')
+  
+  logger.debug('🔍 OAuth parameter detection:', {
+    searchParams,
+    hash,
+    hasSearchParams,
+    hasHashParams,
+    component: 'AuthCallback'
+  })
+  
+  return hasSearchParams || hasHashParams
+}
+
+// ✅ OPTIMIZACIÓN 3: Enhanced Auth Check with Fragment Support
 async function directAuthCheck(): Promise<AuthUser | null> {
   logger.debug('🔍 Direct authentication check...', { component: 'AuthCallback' })
   
-  // Give OAuth time to process URL parameters
-  const hasOAuthParams = getSearchParams().toString().includes('access_token') || 
-                        getSearchParams().toString().includes('code') ||
-                        getHash().includes('access_token')
+  // Check for OAuth parameters in both search and hash
+  const hasOAuthParams = detectOAuthParameters()
   
   if (hasOAuthParams) {
     logger.debug('🔑 OAuth parameters detected, processing...', { component: 'AuthCallback' })
-    await new Promise(resolve => setTimeout(resolve, 500))
+    
+    // Give Supabase time to process URL parameters and hash fragments
+    // This is crucial for fragment-based OAuth flows
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    // Force Supabase to process the session from URL
+    try {
+      if (AuthService.supabase) {
+        logger.debug('🔄 Forcing Supabase session processing...', { component: 'AuthCallback' })
+        
+        // Get session immediately after processing
+        const { data: { session }, error } = await AuthService.supabase.auth.getSession()
+        
+        if (error) {
+          logger.error('❌ Supabase session error:', error)
+        } else if (session) {
+          logger.info('✅ Supabase session found:', { 
+            userId: session.user.id, 
+            email: session.user.email,
+            component: 'AuthCallback' 
+          })
+        }
+      }
+    } catch (_error) {
+      logger.warn('⚠️ Supabase session processing failed:', { component: 'AuthCallback' })
+    }
   }
   
-  // Single service call - no useQuery loop
+  // Try to get user from AuthService
   try {
     const user = await AuthService.getCurrentUser()
     if (user) {
@@ -44,8 +92,14 @@ async function directAuthCheck(): Promise<AuthUser | null> {
     logger.warn('⚠️ First attempt failed, trying fallback...', { component: 'AuthCallback' })
   }
   
-  // Single fallback attempt
-  await new Promise(resolve => setTimeout(resolve, 800))
+  // Enhanced fallback with longer delay for fragment-based auth
+  if (hasOAuthParams) {
+    logger.debug('🔄 Enhanced fallback for OAuth parameters...', { component: 'AuthCallback' })
+    await new Promise(resolve => setTimeout(resolve, 1500))
+  } else {
+    await new Promise(resolve => setTimeout(resolve, 800))
+  }
+  
   try {
     const user = await AuthService.getCurrentUser()
     if (user) {
@@ -53,14 +107,14 @@ async function directAuthCheck(): Promise<AuthUser | null> {
       return user
     }
   } catch (error) {
-    logger.error('❌ Auth check failed:', error as Error, { component: 'AuthCallback' })
+    logger.error('❌ Auth check failed:', error as Error)
     throw new Error('Authentication failed after retry')
   }
   
   throw new Error('No user found after authentication')
 }
 
-// ✅ OPTIMIZACIÓN 3: Zero Re-render Callback Component  
+// ✅ OPTIMIZACIÓN 4: Zero Re-render Callback Component  
 export const OptimizedAuthCallback = () => {
   const navigate = useNavigate()
   
@@ -82,6 +136,18 @@ export const OptimizedAuthCallback = () => {
     const handleAuth = async () => {
       try {
         logger.info('🚀 Starting optimized auth flow...', { component: 'AuthCallback' })
+        
+        // Log current URL state for debugging
+        const currentUrl = globalThis.location.href
+        const urlHash = globalThis.location.hash
+        const urlSearch = globalThis.location.search
+        
+        logger.debug('📍 Current URL state:', {
+          url: currentUrl,
+          hash: urlHash,
+          search: urlSearch,
+          component: 'AuthCallback'
+        })
         
         // ✅ BATCH UPDATE #1: Setup phase
         setState({
@@ -125,7 +191,7 @@ export const OptimizedAuthCallback = () => {
         }
         
       } catch (error: unknown) {
-        logger.error('❌ Auth callback error:', error as Error, { component: 'AuthCallback' })
+        logger.error('❌ Auth callback error:', error as Error)
         
         const errorMessage = error instanceof Error ? error.message : 'Authentication error'
         
