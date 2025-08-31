@@ -5,4 +5,12 @@
       "destination": "/index.html"
     }
   ]
+  ,
+  "git": {
+    "deploymentEnabled": {
+      "main": true,
+      "develop": false,
+      "staging": false
+    }
+  }
 } 
