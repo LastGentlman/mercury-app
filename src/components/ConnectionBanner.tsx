@@ -92,62 +92,129 @@ export function ConnectionBanner({ authMode, className = '' }: ConnectionBannerP
   return (
     <>
       {/* 🖥️ Desktop Banner - Banner completo */}
-      <div className={`hidden md:block ${config.bgColor} border-l-4 ${config.borderColor} p-4 ${className}`}>
-        <div className="flex items-start">
+      <div className={`hidden md:block ${config.bgColor} bg-opacity-90 border-l-4 ${config.borderColor} p-3 ${className}`}>
+        <div className="flex items-center justify-between">
+          {/* 🚨 Icono de alerta a la izquierda */}
           <div className="flex-shrink-0">
             <span className="text-lg">{config.icon}</span>
           </div>
           
-          <div className="ml-3 flex-1">
+          {/* 📝 Mensaje descriptivo centrado */}
+          <div className="flex-1 text-center mx-4">
             <h3 className="text-sm font-medium text-gray-800">
               {config.title}
             </h3>
-            <p className="mt-1 text-sm text-gray-700">
+            <p className="text-xs text-gray-700 mt-1">
               {config.message}
             </p>
-            
-            {config.showAction && (
-              <div className="mt-2">
-                <button
-                  type="button"
-                  onClick={handleRetrySync}
-                  className="text-sm font-medium text-orange-800 hover:text-orange-900 underline"
+          </div>
+          
+          {/* 🔄 Icono de refresh a la derecha */}
+          <div className="flex-shrink-0">
+            {config.showAction ? (
+              <button
+                type="button"
+                onClick={handleRetrySync}
+                className="text-gray-600 hover:text-gray-800 transition-colors p-1 rounded-full hover:bg-gray-100"
+                title="Reintentar sincronización"
+              >
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
                 >
-                  Reintentar sincronización
-                </button>
-              </div>
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                  />
+                </svg>
+              </button>
+            ) : (
+              <div className="w-5 h-5" />
             )}
           </div>
         </div>
       </div>
 
       {/* 📱 Mobile Indicator - Indicador compacto en esquina superior derecha */}
-      <div className={`md:hidden fixed top-4 right-4 z-50 ${config.mobileBgColor} text-white rounded-full p-2 shadow-lg ${className}`}>
-        <div className="flex items-center space-x-2">
-          <span className="text-sm">{config.icon}</span>
-          
-          {config.showAction && (
-            <button
-              type="button"
-              onClick={handleRetrySync}
-              className="text-white hover:text-gray-200 transition-colors"
-              title="Reintentar sincronización"
-            >
-              <svg 
-                className="w-4 h-4" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
+      <div className={`md:hidden fixed top-4 right-4 z-50 ${config.mobileBgColor} bg-opacity-90 text-white rounded-lg shadow-lg backdrop-blur-sm ${className}`}>
+        {/* 📱 Versión completa para pantallas móviles normales */}
+        <div className="hidden sm:block p-3">
+          <div className="flex items-center space-x-3">
+            {/* 🚨 Icono de alerta */}
+            <div className="flex-shrink-0">
+              <span className="text-base">{config.icon}</span>
+            </div>
+            
+            {/* 📝 Mensaje descriptivo */}
+            <div className="flex-1 min-w-0">
+              <h3 className="text-xs font-medium text-white truncate">
+                {config.title}
+              </h3>
+              <p className="text-xs text-white/80 truncate">
+                {config.message}
+              </p>
+            </div>
+            
+            {/* 🔄 Icono de refresh */}
+            {config.showAction && (
+              <button
+                type="button"
+                onClick={handleRetrySync}
+                className="flex-shrink-0 text-white/80 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+                title="Reintentar sincronización"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
-                />
-              </svg>
-            </button>
-          )}
+                <svg 
+                  className="w-4 h-4" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 📱 Versión ultra compacta para pantallas muy pequeñas */}
+        <div className="sm:hidden p-2">
+          <div className="flex items-center space-x-2">
+            {/* 🚨 Icono de alerta */}
+            <span className="text-sm">{config.icon}</span>
+            
+            {/* 🔄 Icono de refresh (solo si hay acción) */}
+            {config.showAction && (
+              <button
+                type="button"
+                onClick={handleRetrySync}
+                className="text-white/80 hover:text-white transition-colors"
+                title="Reintentar sincronización"
+              >
+                <svg 
+                  className="w-3 h-3" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" 
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
         
         {/* 🔍 Debug indicator - solo en desarrollo */}
