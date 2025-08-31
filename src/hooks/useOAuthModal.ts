@@ -5,7 +5,6 @@ export type OAuthProvider = 'google' | 'facebook'
 export interface OAuthModalState {
   isOpen: boolean
   provider: OAuthProvider | null
-  step: 'confirm' | 'redirecting' | 'error'
   error: string | undefined
 }
 
@@ -13,7 +12,6 @@ export const useOAuthModal = () => {
   const [state, setState] = useState<OAuthModalState>({
     isOpen: false,
     provider: null,
-    step: 'confirm',
     error: undefined
   })
 
@@ -21,7 +19,6 @@ export const useOAuthModal = () => {
     setState({
       isOpen: true,
       provider,
-      step: 'confirm',
       error: undefined
     })
   }, [])
@@ -30,23 +27,13 @@ export const useOAuthModal = () => {
     setState({
       isOpen: false,
       provider: null,
-      step: 'confirm',
       error: undefined
     })
-  }, [])
-
-  const setStep = useCallback((step: OAuthModalState['step'], error?: string) => {
-    setState(prev => ({
-      ...prev,
-      step,
-      error
-    }))
   }, [])
 
   const setError = useCallback((error: string) => {
     setState(prev => ({
       ...prev,
-      step: 'error',
       error
     }))
   }, [])
@@ -55,7 +42,6 @@ export const useOAuthModal = () => {
     ...state,
     openModal,
     closeModal,
-    setStep,
     setError
   }
 } 

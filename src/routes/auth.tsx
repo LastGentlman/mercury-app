@@ -10,7 +10,7 @@ import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
-import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail, showInfo } from '../utils/sweetalert.ts'
+import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
 
 export const Route = createFileRoute('/auth')({
   component: RouteComponent,
@@ -538,10 +538,20 @@ function RouteComponent() {
                         onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                         onPaste={(e) => {
                           e.preventDefault()
-                          showInfo(
-                            'Pegado deshabilitado',
-                            'Por seguridad, no se puede pegar en el campo de confirmar contraseña. Por favor, escribe la contraseña manualmente.'
-                          )
+                          // Subtle visual feedback instead of intrusive alert
+                          const input = e.target as HTMLInputElement
+                          const originalBorder = input.style.borderColor
+                          const originalBg = input.style.backgroundColor
+                          
+                          // Quick red flash to indicate paste was blocked
+                          input.style.borderColor = '#ef4444'
+                          input.style.backgroundColor = '#fef2f2'
+                          
+                          // Restore original styling after 300ms
+                          setTimeout(() => {
+                            input.style.borderColor = originalBorder
+                            input.style.backgroundColor = originalBg
+                          }, 300)
                         }}
                         className="pl-10 pr-10"
                         required

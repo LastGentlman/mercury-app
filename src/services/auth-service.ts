@@ -13,12 +13,7 @@ import type {
   SocialLoginOptions 
 } from '../types/auth.ts'
 
-interface ModalContext {
-  returnTo: string
-  timestamp: number
-  provider: 'google' | 'facebook'
-  source: 'modal'
-}
+
 import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors.ts'
 import { env } from '../env.ts'
 
@@ -529,42 +524,7 @@ export class AuthService {
     return hashHex + hashHex + hashHex + hashHex // Repeat to make it 32 chars
   }
 
-  /**
-   * Verificar si el usuario viene de un contexto de modal
-   */
-  static getModalContext(): ModalContext | null {
-    try {
-      const saved = sessionStorage.getItem('oauth_modal_context')
-      if (saved) {
-        const context = JSON.parse(saved)
-          
-        // Validar que el contexto no sea muy viejo (más de 10 minutos)
-        const tenMinutesAgo = Date.now() - (10 * 60 * 1000)
-        if (context.timestamp && context.timestamp > tenMinutesAgo) {
-          return context
-        } else {
-          // Limpiar contexto viejo
-          sessionStorage.removeItem('oauth_modal_context')
-        }
-      }
-      return null
-    } catch (error) {
-      console.warn('⚠️ Error al obtener contexto del modal:', error)
-      return null
-    }
-  }
 
-  /**
-   * Limpiar contexto del modal después de usar
-   */
-  static clearModalContext(): void {
-    try {
-      sessionStorage.removeItem('oauth_modal_context')
-      console.log('🧹 Contexto del modal limpiado')
-    } catch (error) {
-      console.warn('⚠️ Error al limpiar contexto del modal:', error)
-    }
-  }
 }
 
  

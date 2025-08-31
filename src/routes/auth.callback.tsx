@@ -5,12 +5,7 @@ import { getSearchParams, getHash } from '../utils/browser.ts'
 import { logger } from '../utils/logger.ts'
 import type { AuthUser } from '../types/auth.ts'
 
-interface ModalContext {
-  returnTo: string
-  timestamp: number
-  provider: 'google' | 'facebook'
-  source: 'modal'
-}
+
 
 export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
@@ -22,7 +17,6 @@ interface AuthCallbackState {
   progress: number
   message: string
   error?: string
-  context?: ModalContext | null
 }
 
 // ✅ OPTIMIZACIÓN 2: Direct Auth Check (No Polling)
@@ -96,26 +90,11 @@ export const OptimizedAuthCallback = () => {
           message: 'Procesando credenciales...'
         })
         
-        // Detect modal context
-        const urlParams = getSearchParams()
-        const isFromModal = urlParams.get('source') === 'modal'
-        let context: ModalContext | null = null
-        
-        if (isFromModal) {
-          context = AuthService.getModalContext()
-          if (context) {
-            logger.debug('📋 Modal context:', { provider: context.provider, component: 'AuthCallback' })
-          }
-        }
-        
-        // ✅ BATCH UPDATE #2: Processing with context
+        // ✅ BATCH UPDATE #2: Processing
         setState(prev => ({
           ...prev,
           progress: 50,
-          message: context ? 
-            `Completando autenticación con ${context.provider}...` : 
-            'Verificando sesión...',
-          context
+          message: 'Verificando sesión...'
         }))
         
         // ✅ DIRECT AUTH CHECK - No polling, no useQuery loop
@@ -126,11 +105,6 @@ export const OptimizedAuthCallback = () => {
         }
         
         logger.info('✅ Authentication successful:', { email: user.email, component: 'AuthCallback' })
-        
-        // Cleanup modal context
-        if (isFromModal && context) {
-          AuthService.clearModalContext()
-        }
         
         // ✅ BATCH UPDATE #3: Success
         setState(prev => ({
@@ -143,11 +117,10 @@ export const OptimizedAuthCallback = () => {
         // ✅ NAVIGATE ONCE - Prevent multiple navigation
         if (!isNavigating.current) {
           isNavigating.current = true
-          const returnTo = context?.returnTo || '/dashboard'
           
           setTimeout(() => {
-            logger.info(`🎯 Navigating to: ${returnTo}`, { component: 'AuthCallback' })
-            navigate({ to: returnTo })
+            logger.info('🎯 Navigating to: /dashboard', { component: 'AuthCallback' })
+            navigate({ to: '/dashboard' })
           }, 600)
         }
         
@@ -203,14 +176,7 @@ export const OptimizedAuthCallback = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
         
-        {/* Context indicator */}
-        {state.context && (
-          <div className="mb-4 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700 font-medium">
-              🔐 {state.context.provider.charAt(0).toUpperCase() + state.context.provider.slice(1)}
-            </p>
-          </div>
-        )}
+
         
         {/* Single animated icon - no state changes */}
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">

@@ -1,6 +1,7 @@
 import React from 'react'
 import { OAuthModal } from './OAuthModal.tsx'
 import { useOAuthModal } from '../hooks/useOAuthModal.ts'
+import { AuthService } from '../services/auth-service.ts'
 
 interface SocialLoginButtonsProps {
   className?: string
@@ -14,13 +15,46 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
   const { 
     isOpen, 
     provider, 
-    step, 
     error,
     openModal, 
     closeModal, 
-    setStep,
     setError 
   } = useOAuthModal()
+
+  // 🎯 OPTIMIZACIÓN: Iniciar OAuth directamente sin modal de confirmación
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    if (disabled) return
+    
+    try {
+      // Iniciar OAuth directamente sin mostrar modal de confirmación
+      await AuthService.socialLogin({
+        provider,
+        redirectTo: `${globalThis.location.origin}/auth/callback?source=direct`
+      })
+      // El usuario será redirigido automáticamente, no necesitamos manejar más estado
+    } catch (error) {
+      console.error(`❌ ${provider} login failed:`, error)
+      // Solo mostrar modal de error si falla la autenticación
+      const errorMessage = error instanceof Error ? error.message : 'Error al conectar con el proveedor'
+      setError(errorMessage)
+      openModal(provider)
+    }
+  }
+
+  // 🎯 OPTIMIZACIÓN: Función para reintentar OAuth desde el modal
+  const handleRetrySocialLogin = async (provider: 'google' | 'facebook') => {
+    try {
+      await AuthService.socialLogin({
+        provider,
+        redirectTo: `${globalThis.location.origin}/auth/callback?source=retry`
+      })
+    } catch (error) {
+      console.error(`❌ ${provider} retry failed:`, error)
+      const errorMessage = error instanceof Error ? error.message : 'Error al conectar con el proveedor'
+      setError(errorMessage)
+      openModal(provider)
+    }
+  }
 
   return (
     <>
@@ -29,7 +63,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         {/* Google Button */}
         <button
           type="button"
-          onClick={() => openModal('google')}
+          onClick={() => handleSocialLogin('google')}
           disabled={disabled}
           className="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 hover:border-gray-400 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
         >
@@ -59,7 +93,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         {/* Facebook Button */}
         <button
           type="button"
-          onClick={() => openModal('facebook')}
+          onClick={() => handleSocialLogin('facebook')}
           disabled={disabled}
           className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -82,15 +116,14 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
         </div>
       </div>
 
-      {/* OAuth Modal */}
+      {/* OAuth Modal - Solo para errores */}
       <OAuthModal
         isOpen={isOpen}
         provider={provider}
-        step={step}
         error={error}
         onClose={closeModal}
         onError={setError}
-        onSetStep={setStep}
+        onRetry={handleRetrySocialLogin}
       />
     </>
   )
