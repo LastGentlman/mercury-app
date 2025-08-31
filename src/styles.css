@@ -26,6 +26,72 @@
     --radius: 0.5rem;
   }
 
+  /* 🎯 Mobile Scroll Optimizations */
+  html {
+    /* Prevent zoom on input focus on iOS */
+    -webkit-text-size-adjust: 100%;
+    /* Smooth scrolling for better mobile experience */
+    scroll-behavior: smooth;
+    /* Prevent horizontal scroll */
+    overflow-x: hidden;
+  }
+
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: white;
+    color: rgb(17 24 39); /* gray-900 */
+    /* Prevent bounce scroll on iOS */
+    overscroll-behavior: none;
+    /* Better touch scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Prevent horizontal scroll */
+    overflow-x: hidden;
+  }
+
+  /* 🎯 Input focus optimizations for mobile */
+  input, textarea, select {
+    /* Prevent zoom on iOS */
+    font-size: 16px;
+    /* Better touch targets */
+    min-height: 44px;
+    /* Prevent default browser styling */
+    -webkit-appearance: none;
+    appearance: none;
+    /* Smooth transitions */
+    transition: all 0.2s ease;
+  }
+
+  /* 🎯 Form container optimizations */
+  form {
+    /* Prevent form submission on enter in some cases */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* 🎯 Mobile viewport optimizations */
+  @media (max-width: 768px) {
+    /* Ensure proper viewport height on mobile */
+    .mobile-viewport {
+      min-height: 100vh;
+      min-height: 100dvh; /* Dynamic viewport height */
+    }
+    
+    /* Prevent input zoom on iOS */
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="search"],
+    input[type="tel"],
+    input[type="url"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;

@@ -173,7 +173,6 @@ function ProfilePage() {
   // 🔒 NEW: OAuth user detection
   const userIsOAuth = isOAuthUser(user)
   const providerName = getProviderDisplayName(user?.provider || 'email')
-  const showChangePasswordButton = !userIsOAuth
 
   // 🔒 NEW: Set password mutation for OAuth users
   const setPasswordMutation = useMutation({
@@ -181,7 +180,7 @@ function ProfilePage() {
       newPassword: string
       confirmPassword: string
     }) => AuthService.setPassword({ newPassword, confirmPassword }),
-    onSuccess: (data) => {
+    onSuccess: () => {
       showSuccess('¡Contraseña establecida!', 'Ahora puedes iniciar sesión con email y contraseña')
       setShowSetPasswordDialog(false)
       setOauthPasswordData({ newPassword: '', confirmPassword: '' })
