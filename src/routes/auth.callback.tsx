@@ -180,14 +180,36 @@ export const OptimizedAuthCallback = () => {
           message: '¡Autenticación exitosa! Redirigiendo...'
         }))
         
-        // ✅ NAVIGATE ONCE - Prevent multiple navigation
+        // ✅ NAVIGATE ONCE - Prevent multiple navigation with multiple fallbacks
         if (!isNavigating.current) {
           isNavigating.current = true
           
+          // Primary navigation attempt
           setTimeout(() => {
-            logger.info('🎯 Navigating to: /dashboard', { component: 'AuthCallback' })
-            navigate({ to: '/dashboard' })
+            logger.info('🎯 Attempting TanStack Router navigation to: /dashboard', { component: 'AuthCallback' })
+            try {
+              navigate({ to: '/dashboard' })
+            } catch (navError) {
+              logger.error('❌ TanStack Router navigation failed, trying window.location:', navError as Error)
+              globalThis.window.location.href = '/dashboard'
+            }
           }, 600)
+          
+          // Secondary fallback after 2 seconds
+          setTimeout(() => {
+            if (globalThis.window.location.pathname.includes('/auth/callback')) {
+              logger.warn('⚠️ Still on callback page after 2s, trying window.location...')
+              globalThis.window.location.href = '/dashboard'
+            }
+          }, 2000)
+          
+          // Final fallback after 5 seconds
+          setTimeout(() => {
+            if (globalThis.window.location.pathname.includes('/auth/callback')) {
+              logger.error('❌ Still on callback page after 5s, forcing page reload...')
+              globalThis.window.location.reload()
+            }
+          }, 5000)
         }
         
       } catch (error: unknown) {
@@ -207,7 +229,7 @@ export const OptimizedAuthCallback = () => {
         setTimeout(() => {
           if (!isNavigating.current) {
             isNavigating.current = true
-            navigate({ to: '/auth' })
+            globalThis.window.location.href = '/auth'
           }
         }, 3000)
       }

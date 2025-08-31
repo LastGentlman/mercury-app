@@ -17,6 +17,10 @@ export const env = createEnv({
     VITE_BACKEND_URL: z.string().url().optional(),
     VITE_SUPABASE_URL: z.string().url().optional(),
     VITE_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+    VITE_PWA_DISABLED: z.string().optional(),
+    VITE_SENTRY_DSN: z.string().optional(),
+    VITE_ENVIRONMENT: z.string().optional(),
+    VITE_ENABLE_SENTRY_DEV: z.string().optional(),
   },
 
   /**

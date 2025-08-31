@@ -53,6 +53,10 @@ function getApiUrl(): string {
 
 export class AuthService {
   static supabase = supabase
+  
+  // ✅ Singleton pattern to prevent multiple auth state listeners
+  private static authStateSubscription: { data: { subscription: { unsubscribe: () => void } } } | null = null
+  private static authStateCallbacks: Set<(event: string, session: unknown) => void> = new Set()
 
   /**
    * Gets current user session from Supabase OAuth - Versión mejorada
@@ -416,7 +420,7 @@ export class AuthService {
   }
 
   /**
-   * Escuchar cambios de estado - Versión mejorada
+   * Escuchar cambios de estado - Versión mejorada con singleton
    */
   static onAuthStateChange(callback: (event: string, session: unknown) => void) {
     if (!supabase) {
@@ -430,17 +434,48 @@ export class AuthService {
       }
     }
 
-    console.log('👂 Configurando listener de auth state changes...')
-    
-    return supabase.auth.onAuthStateChange((event, session) => {
-      console.log(`🔄 Auth state cambió: ${event}`, {
-        hasSession: !!session,
-        userEmail: session?.user?.email,
-        provider: session?.user?.app_metadata?.provider,
-        timestamp: new Date().toISOString()
+    // ✅ Add callback to the set
+    this.authStateCallbacks.add(callback)
+
+    // ✅ Only set up listener once
+    if (!this.authStateSubscription) {
+      console.log('👂 Configurando listener de auth state changes...')
+      
+      this.authStateSubscription = supabase.auth.onAuthStateChange((event, session) => {
+        console.log(`🔄 Auth state cambió: ${event}`, {
+          hasSession: !!session,
+          userEmail: session?.user?.email,
+          provider: session?.user?.app_metadata?.provider,
+          timestamp: new Date().toISOString()
+        })
+        
+        // ✅ Notify all registered callbacks
+        this.authStateCallbacks.forEach(cb => {
+          try {
+            cb(event, session)
+          } catch (error) {
+            console.error('❌ Error in auth state callback:', error)
+          }
+        })
       })
-      callback(event, session)
-    })
+    }
+
+    // ✅ Return subscription that only removes this specific callback
+    return {
+      data: {
+        subscription: {
+          unsubscribe: () => {
+            this.authStateCallbacks.delete(callback)
+            // If no more callbacks, clean up the subscription
+            if (this.authStateCallbacks.size === 0 && this.authStateSubscription) {
+              this.authStateSubscription.data.subscription.unsubscribe()
+              this.authStateSubscription = null
+              console.log('🧹 Auth state listener cleaned up')
+            }
+          }
+        }
+      }
+    }
   }
 
   /**
