@@ -16,7 +16,7 @@ export const useGlobalMobileScroll = () => {
         const rect = target.getBoundingClientRect()
         const scrollTop = globalThis.window.pageYOffset + rect.top - 120 // 120px desde el top
         
-        globalThis.scrollTo({
+        globalThis.window.scrollTo({
           top: Math.max(0, scrollTop),
           behavior: 'smooth'
         })
