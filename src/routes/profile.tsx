@@ -56,6 +56,7 @@ import {
 } from '../components/ui/index.ts'
 import { showSuccess, showError, showInfo } from '../utils/sweetalert.ts'
 import Swal from 'sweetalert2'
+import { useMutation } from '@tanstack/react-query'
 
 interface ProfileData {
   fullName: string
@@ -64,6 +65,23 @@ interface ProfileData {
   isDirty: boolean
 }
 
+// 🔒 NEW: Helper functions for OAuth user detection
+const isOAuthUser = (user: any): boolean => {
+  if (!user) return false
+  
+  // Usuario OAuth si el provider no es 'email'
+  return user.provider !== 'email'
+}
+
+const getProviderDisplayName = (provider: string): string => {
+  switch (provider) {
+    case 'google': return 'Google'
+    case 'facebook': return 'Facebook'
+    case 'github': return 'GitHub'
+    case 'email':
+    default: return 'Email/Password'
+  }
+}
 
 
 export const Route = createFileRoute('/profile')({
@@ -96,6 +114,13 @@ function ProfilePage() {
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false)
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false)
+
+  // 🔒 NEW: Set password dialog state for OAuth users
+  const [showSetPasswordDialog, setShowSetPasswordDialog] = useState(false)
+  const [oauthPasswordData, setOauthPasswordData] = useState({
+    newPassword: '',
+    confirmPassword: ''
+  })
 
   // Password change state
   const [passwordData, setPasswordData] = useState({
@@ -144,6 +169,27 @@ function ProfilePage() {
   
   // 🔒 NEW: Password change loading state
   const [isChangingPassword, setIsChangingPassword] = useState(false)
+
+  // 🔒 NEW: OAuth user detection
+  const userIsOAuth = isOAuthUser(user)
+  const providerName = getProviderDisplayName(user?.provider || 'email')
+  const showChangePasswordButton = !userIsOAuth
+
+  // 🔒 NEW: Set password mutation for OAuth users
+  const setPasswordMutation = useMutation({
+    mutationFn: ({ newPassword, confirmPassword }: {
+      newPassword: string
+      confirmPassword: string
+    }) => AuthService.setPassword({ newPassword, confirmPassword }),
+    onSuccess: (data) => {
+      showSuccess('¡Contraseña establecida!', 'Ahora puedes iniciar sesión con email y contraseña')
+      setShowSetPasswordDialog(false)
+      setOauthPasswordData({ newPassword: '', confirmPassword: '' })
+    },
+    onError: (error: Error) => {
+      showError('Error', error.message)
+    }
+  })
 
   // 🔒 NEW: Change password function
   const handleChangePassword = async (passwordData: {
@@ -813,16 +859,66 @@ function ProfilePage() {
                     />
                   </div>
                   
-                  {/* Change Password Button */}
+                  {/* Security Settings - CONDICIONAL según tipo de usuario */}
                   <div className="pt-3 border-t border-gray-100">
-                    <Button
-                      variant="outline"
-                      onClick={() => setShowChangePasswordDialog(true)}
-                      className="w-full"
-                    >
-                      <Lock className="h-4 w-4 mr-2" />
-                      Cambiar contraseña
-                    </Button>
+                    {/* Información del tipo de cuenta */}
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
+                      <Shield className="h-4 w-4" />
+                      <span>Cuenta vinculada con: <strong>{providerName}</strong></span>
+                    </div>
+
+                    {/* PARA USUARIOS EMAIL/PASSWORD */}
+                    {!userIsOAuth && (
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowChangePasswordDialog(true)}
+                          className="w-full mb-3"
+                        >
+                          <Lock className="h-4 w-4 mr-2" />
+                          Cambiar contraseña
+                        </Button>
+                        
+                        <div className="text-xs text-gray-500 mb-3">
+                          Tu cuenta usa autenticación por email y contraseña
+                        </div>
+                      </>
+                    )}
+
+                    {/* PARA USUARIOS OAUTH */}
+                    {userIsOAuth && (
+                      <>
+                        {/* Información de seguridad OAuth */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-3">
+                          <div className="flex items-start gap-3">
+                            <Shield className="h-5 w-5 text-blue-600 mt-0.5" />
+                            <div className="text-sm">
+                              <p className="font-medium text-blue-800 mb-1">
+                                🔒 Cuenta protegida por {providerName}
+                              </p>
+                              <p className="text-blue-700 text-xs">
+                                Tu contraseña es gestionada directamente por {providerName}. 
+                                Para cambiarla, hazlo desde tu cuenta de {providerName}.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Opción para agregar contraseña local */}
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowSetPasswordDialog(true)}
+                          className="w-full mb-3"
+                        >
+                          <Lock className="h-4 w-4 mr-2" />
+                          Establecer contraseña local
+                        </Button>
+                        
+                        <div className="text-xs text-gray-500 mb-3">
+                          Opcional: Agrega una contraseña para poder acceder también con email
+                        </div>
+                      </>
+                    )}
                   </div>
                   
                   {/* Delete Account Button */}
@@ -1017,6 +1113,144 @@ function ProfilePage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Set Password Dialog - For OAuth users */}
+      <Dialog 
+        open={showSetPasswordDialog} 
+        onOpenChange={(open) => {
+          setShowSetPasswordDialog(open)
+          if (!open) {
+            setOauthPasswordData({ newPassword: '', confirmPassword: '' })
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Establecer contraseña local</DialogTitle>
+            <DialogDescription>
+              Agrega una contraseña para poder acceder con email además de {providerName}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Información importante */}
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-800 mb-1">Información importante</p>
+                  <ul className="text-amber-700 text-xs space-y-1">
+                    <li>• Podrás iniciar sesión con email Y con {providerName}</li>
+                    <li>• Tu cuenta {providerName} seguirá funcionando normalmente</li>
+                    <li>• Esta contraseña es opcional</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* Nueva contraseña */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nueva contraseña
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPasswords.new ? "text" : "password"}
+                  placeholder="Ingresa tu nueva contraseña"
+                  value={oauthPasswordData.newPassword}
+                  onChange={(e) => setOauthPasswordData(prev => ({ 
+                    ...prev, 
+                    newPassword: e.target.value 
+                  }))}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+              
+              {/* Medidor de fortaleza */}
+              {oauthPasswordData.newPassword && (
+                <PasswordStrengthMeter 
+                  password={oauthPasswordData.newPassword}
+                  showRequirements={true}
+                  className="mt-3"
+                />
+              )}
+            </div>
+            
+            {/* Confirmar contraseña */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Confirmar contraseña
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPasswords.confirm ? "text" : "password"}
+                  placeholder="Confirma tu nueva contraseña"
+                  value={oauthPasswordData.confirmPassword}
+                  onChange={(e) => setOauthPasswordData(prev => ({ 
+                    ...prev, 
+                    confirmPassword: e.target.value 
+                  }))}
+                  onPaste={(e) => {
+                    e.preventDefault()
+                    showInfo(
+                      'Pegado deshabilitado',
+                      'Por seguridad, no se puede pegar en este campo. Por favor, escribe la contraseña manualmente.'
+                    )
+                  }}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                >
+                  {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowSetPasswordDialog(false)}
+              disabled={setPasswordMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => {
+                if (oauthPasswordData.newPassword !== oauthPasswordData.confirmPassword) {
+                  showError('Error', 'Las contraseñas no coinciden')
+                  return
+                }
+                
+                setPasswordMutation.mutate({
+                  newPassword: oauthPasswordData.newPassword,
+                  confirmPassword: oauthPasswordData.confirmPassword
+                })
+              }}
+              disabled={setPasswordMutation.isPending || !oauthPasswordData.newPassword || !oauthPasswordData.confirmPassword}
+            >
+              {setPasswordMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Estableciendo...
+                </>
+              ) : (
+                'Establecer contraseña'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

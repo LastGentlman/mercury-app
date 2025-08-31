@@ -602,6 +602,42 @@ export class AuthService {
     return { message: data.message }
   }
 
+  /**
+   * Set password for OAuth users
+   */
+  static async setPassword({
+    newPassword,
+    confirmPassword
+  }: {
+    newPassword: string
+    confirmPassword: string
+  }): Promise<{ message: string }> {
+    const authToken = localStorage.getItem('authToken')
+    
+    if (!authToken) {
+      throw new Error('No hay sesión activa')
+    }
+
+    const response = await fetch(`${getApiUrl()}/api/auth/set-password`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        newPassword,
+        confirmPassword
+      })
+    })
+
+    if (!response.ok) {
+      await handleApiError(response, 'email')
+    }
+
+    const data = await response.json()
+    return { message: data.message }
+  }
+
 }
 
  
