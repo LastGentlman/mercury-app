@@ -51,22 +51,27 @@ export class ProfileService {
    * Helper function to make CSRF-protected requests
    */
   static async makeCSRFRequest(url: string, options: RequestInit = {}): Promise<Response> {
+    if (!supabase) {
+      throw new Error('Supabase client not configured')
+    }
+
+    // Get current session from Supabase
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session?.access_token) {
+      throw new Error('No valid session found')
+    }
+
     // Get session ID from localStorage or generate new one
     const sessionId = localStorage.getItem('sessionId') || crypto.randomUUID();
     localStorage.setItem('sessionId', sessionId);
-
-    // Get auth token
-    const authToken = localStorage.getItem('authToken');
     
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Session-ID': sessionId,
+      'Authorization': `Bearer ${session.access_token}`,
       ...(options.headers as Record<string, string>)
     };
-    
-    if (authToken) {
-      headers['Authorization'] = `Bearer ${authToken}`;
-    }
 
     // For DELETE requests, we need CSRF token
     if (options.method === 'DELETE') {
@@ -75,7 +80,7 @@ export class ProfileService {
         method: 'GET',
         headers: {
           'X-Session-ID': sessionId,
-          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          'Authorization': `Bearer ${session.access_token}`
         }
       });
 
