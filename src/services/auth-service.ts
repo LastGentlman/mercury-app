@@ -179,6 +179,18 @@ export class AuthService {
       // First check OAuth session
       const oauthUser = await this.getOAuthSession()
       if (oauthUser) {
+        // For OAuth users, get businessId from profile
+        if (supabase) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('current_business_id')
+            .eq('id', oauthUser.id)
+            .single()
+          
+          if (profile?.current_business_id) {
+            oauthUser.businessId = profile.current_business_id
+          }
+        }
         return oauthUser
       }
 

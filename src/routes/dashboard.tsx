@@ -13,9 +13,6 @@ function DashboardPage() {
   const { user } = useAuth()
   const notifications = useNotifications()
 
-  // En una app real, esto vendría del contexto de autenticación
-  const businessId = user?.businessId || 'demo-business-id'
-  
   // Si no hay businessId, mostrar la configuración del negocio
   if (!user?.businessId) {
     return (
@@ -39,7 +36,7 @@ function DashboardPage() {
       <div className="min-h-screen bg-gray-50">
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Dashboard businessId={businessId} />
+          <Dashboard businessId={user.businessId} />
         </main>
       </div>
     </ProtectedRoute>

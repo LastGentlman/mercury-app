@@ -12,6 +12,7 @@ import { Textarea } from './ui/index.ts';
 import { PhoneInput } from './ui/index.ts';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useAuth } from '../hooks/useAuth.ts';
+import { BusinessService } from '../services/business-service.ts';
 
 interface BusinessSetupProps {
   onBusinessSetup?: (businessId: string) => void;
@@ -117,17 +118,21 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
 
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // In a real app, this would create the business and return the ID
-      const mockBusinessId = `business-${Date.now()}`;
+      // Convertir datos del formulario al formato de la API
+      const apiData = BusinessService.convertFormDataToAPI(formData);
+      
+      // Crear el negocio usando el servicio real
+      const business = await BusinessService.createBusiness(apiData);
+      
+      // Actualizar el perfil del usuario con el businessId
+      await BusinessService.updateUserBusiness(business.id);
       
       notifications.success('¡Negocio creado exitosamente!');
       setIsOpen(false);
-      onBusinessSetup?.(mockBusinessId);
-    } catch (_error) {
-      notifications.error('Error al crear el negocio');
+      onBusinessSetup?.(business.id);
+    } catch (error) {
+      console.error('Error creating business:', error);
+      notifications.error(error instanceof Error ? error.message : 'Error al crear el negocio');
     } finally {
       setIsLoading(false);
     }
@@ -148,17 +153,18 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
 
     setIsLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // In a real app, this would validate the code and join the business
-      const mockBusinessId = `business-${businessCode}`;
+      // Unirse al negocio usando el servicio real
+      const business = await BusinessService.joinBusiness(businessCode);
+      
+      // Actualizar el perfil del usuario con el businessId
+      await BusinessService.updateUserBusiness(business.id);
 
       notifications.success('¡Te has unido al negocio exitosamente!');
       setIsOpen(false);
-      onBusinessSetup?.(mockBusinessId);
-    } catch (_error) {
-      notifications.error('Código de negocio inválido');
+      onBusinessSetup?.(business.id);
+    } catch (error) {
+      console.error('Error joining business:', error);
+      notifications.error(error instanceof Error ? error.message : 'Código de negocio inválido');
     } finally {
       setIsLoading(false);
     }

@@ -148,30 +148,33 @@ export function PhoneInput({
         </Label>
       )}
       
-      <div className="flex gap-2">
-        {/* Selector de país */}
-        <Select value={selectedCountry.code} onValueChange={handleCountryChange}>
-          <SelectTrigger className="w-[70px] border-r-0 rounded-r-none">
-            <SelectValue>
-              <div className="flex items-center justify-center">
-                <span className="text-base">{selectedCountry.flag}</span>
-              </div>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent>
-            {countries.map((country) => (
-              <SelectItem key={country.code} value={country.code}>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">{country.flag}</span>
-                  <div className="flex-1">
-                    <div className="font-medium">{country.name}</div>
-                    <div className="text-sm text-gray-500">{country.dialCode}</div>
-                  </div>
+      <div className="relative">
+        {/* Selector de país como parte del input */}
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2 z-10">
+          <Select value={selectedCountry.code} onValueChange={handleCountryChange}>
+            <SelectTrigger className="w-auto h-auto p-0 border-0 bg-transparent hover:bg-transparent focus:bg-transparent">
+              <SelectValue>
+                <div className="flex items-center gap-1">
+                  <span className="text-base">{selectedCountry.flag}</span>
+                  <span className="text-sm text-gray-500">{selectedCountry.dialCode}</span>
                 </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {countries.map((country) => (
+                <SelectItem key={country.code} value={country.code}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg">{country.flag}</span>
+                    <div className="flex-1">
+                      <div className="font-medium">{country.name}</div>
+                      <div className="text-sm text-gray-500">{country.dialCode}</div>
+                    </div>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
         {/* Input del número de teléfono */}
         <Input
@@ -180,7 +183,7 @@ export function PhoneInput({
           onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder={placeholder}
           className={cn(
-            "flex-1 rounded-l-none",
+            "pl-20", // Espacio para el selector de país
             (localError || error) && "border-red-500 focus:border-red-500"
           )}
           disabled={disabled}
