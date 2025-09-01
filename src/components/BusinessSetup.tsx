@@ -29,13 +29,13 @@ interface BusinessFormData {
 }
 
 const businessTypes = [
-  { value: 'restaurant', label: 'Restaurante' },
-  { value: 'retail', label: 'Tienda' },
-  { value: 'cafe', label: 'Cafetería' },
-  { value: 'bakery', label: 'Panadería' },
-  { value: 'grocery', label: 'Supermercado' },
-  { value: 'pharmacy', label: 'Farmacia' },
-  { value: 'other', label: 'Otro' }
+  { value: 'restaurant', label: '🍕 Restaurante' },
+  { value: 'retail', label: '🛍️ Tienda / Retail' },
+  { value: 'services', label: '🔧 Servicios' },
+  { value: 'cafe', label: '☕ Cafetería' },
+  { value: 'bakery', label: '🥖 Panadería' },
+  { value: 'pharmacy', label: '💊 Farmacia' },
+  { value: 'other', label: '📦 Otro' }
 ];
 
 const currencies = [
@@ -168,7 +168,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   const isStepValid = () => {
     switch (currentStep) {
       case 0:
-        return formData.name && formData.type && formData.description;
+        return formData.name && formData.type;
       case 1:
         return formData.address && formData.phone && formData.email;
       case 2:
@@ -219,11 +219,11 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
 
             <div>
               <Label htmlFor="description">
-                Descripción <span className="text-red-500">*</span>
+                Descripción
               </Label>
               <Textarea
                 id="description"
-                placeholder="Describe tu negocio en pocas palabras..."
+                placeholder="Describe tu negocio en pocas palabras... (opcional)"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 className="min-h-[80px]"

@@ -7,6 +7,7 @@ export const useGlobalMobileScroll = () => {
   useEffect(() => {
     const calculateOptimalOffset = () => {
       const viewportHeight = globalThis.window.innerHeight
+      const viewportWidth = globalThis.window.innerWidth
       
       // Base offset - start with a smaller value
       let offset = 80
@@ -16,6 +17,13 @@ export const useGlobalMobileScroll = () => {
         offset = 60 // Smaller screens need less offset
       } else if (viewportHeight > 800) {
         offset = 100 // Larger screens can have more offset
+      }
+      
+      // Adjust based on viewport width (landscape vs portrait)
+      if (viewportWidth < 400) {
+        offset -= 10 // Very narrow screens need less offset
+      } else if (viewportWidth > 500) {
+        offset += 10 // Wider screens can have more offset
       }
       
       // Check for connection banner (sticky top-0)

@@ -27,6 +27,13 @@ export const MobileScrollDebugger = () => {
       offset = 100 // Larger screens can have more offset
     }
     
+    // Adjust based on viewport width (for different orientations)
+    if (viewportWidth < 400) {
+      offset += 10 // Narrow screens need extra offset
+    } else if (viewportWidth > 600) {
+      offset -= 10 // Wide screens can use less offset
+    }
+    
     // Check for connection banner (sticky top-0)
     const connectionBanner = globalThis.document.querySelector('.sticky.top-0.z-50')
     let bannerHeight = 0
