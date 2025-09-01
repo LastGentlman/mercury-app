@@ -5,6 +5,39 @@ export const useGlobalMobileScroll = () => {
   const lastScrollTimeRef = useRef(0)
 
   useEffect(() => {
+    const calculateOptimalOffset = () => {
+      const viewportHeight = globalThis.window.innerHeight
+      
+      // Base offset - start with a smaller value
+      let offset = 80
+      
+      // Adjust based on viewport height (for different mobile devices)
+      if (viewportHeight < 600) {
+        offset = 60 // Smaller screens need less offset
+      } else if (viewportHeight > 800) {
+        offset = 100 // Larger screens can have more offset
+      }
+      
+      // Check for connection banner (sticky top-0)
+      const connectionBanner = globalThis.document.querySelector('.sticky.top-0.z-50')
+      if (connectionBanner) {
+        const bannerHeight = connectionBanner.getBoundingClientRect().height
+        offset += bannerHeight
+      }
+      
+      // Check for header (if visible)
+      const header = globalThis.document.querySelector('header')
+      if (header && header.offsetParent !== null) { // Check if header is visible
+        const headerHeight = header.getBoundingClientRect().height
+        offset += headerHeight
+      }
+      
+      // Add some padding for better visual comfort
+      offset += 20
+      
+      return Math.max(60, Math.min(offset, 200)) // Keep between 60-200px
+    }
+
     const handleFocusIn = (event: FocusEvent) => {
       const target = event.target as HTMLElement
       
@@ -24,6 +57,9 @@ export const useGlobalMobileScroll = () => {
       const viewportHeight = globalThis.window.innerHeight
       const isVisible = rect.top >= 0 && rect.bottom <= viewportHeight
       
+      // Calculate optimal offset
+      const optimalOffset = calculateOptimalOffset()
+      
       // If element is already visible and not too close to bottom, don't scroll
       if (isVisible && rect.bottom < viewportHeight - 200) return
       
@@ -36,7 +72,20 @@ export const useGlobalMobileScroll = () => {
       const scrollToElement = () => {
         try {
           const rect = target.getBoundingClientRect()
-          const scrollTop = globalThis.window.pageYOffset + rect.top - 150 // 150px from top for better visibility
+          const scrollTop = globalThis.window.pageYOffset + rect.top - optimalOffset
+          
+          // Debug logging in development
+          if (import.meta.env.DEV) {
+            console.log('🎯 Mobile Scroll Debug:', {
+              element: target.tagName,
+              id: target.id,
+              rectTop: rect.top,
+              pageYOffset: globalThis.window.pageYOffset,
+              optimalOffset,
+              finalScrollTop: Math.max(0, scrollTop),
+              viewportHeight: globalThis.window.innerHeight
+            })
+          }
           
           globalThis.window.scrollTo({
             top: Math.max(0, scrollTop),

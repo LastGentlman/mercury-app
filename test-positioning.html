@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Scroll Positioning Test</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        .banner {
+            background: #fef3c7;
+            padding: 0.5rem;
+            border-bottom: 1px solid #f59e0b;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .position-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .test-info {
+            background: white;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .spacer {
+            height: 50vh;
+            background: linear-gradient(45deg, #f3f4f6 25%, transparent 25%), 
+                        linear-gradient(-45deg, #f3f4f6 25%, transparent 25%), 
+                        linear-gradient(45deg, transparent 75%, #f3f4f6 75%), 
+                        linear-gradient(-45deg, transparent 75%, #f3f4f6 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="position-indicator" id="positionIndicator">
+        Calculating position...
+    </div>
+
+    <div class="header">
+        <h1 style="margin: 0; text-align: center;">Test Header</h1>
+    </div>
+
+    <div class="banner" id="banner">
+        <div style="text-align: center; font-size: 14px;">
+            🔔 Connection Banner (sticky top-0 z-50)
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="test-info">
+            <h3>🎯 Mobile Scroll Positioning Test</h3>
+            <p>This page simulates your app's layout to test positioning calculations.</p>
+            <ul>
+                <li><strong>Header:</strong> Sticky top-0 (hidden on mobile auth)</li>
+                <li><strong>Banner:</strong> Sticky top-0 z-50 (connection status)</li>
+                <li><strong>Form:</strong> Centered with proper spacing</li>
+            </ul>
+            <p><strong>Instructions:</strong> Focus on inputs below and check the position indicator above.</p>
+        </div>
+
+        <div class="spacer">
+            Scroll down to see the form...
+        </div>
+
+        <form style="background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);">
+            <h2 style="margin-top: 0; text-align: center; margin-bottom: 2rem;">Test Form</h2>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="test@example.com" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password" />
+            </div>
+
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" placeholder="John Doe" />
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" placeholder="+1 (555) 123-4567" />
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address</label>
+                <input type="text" id="address" placeholder="123 Main St, City, State" />
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <input type="text" id="notes" placeholder="Additional information..." />
+            </div>
+        </form>
+
+        <div class="spacer">
+            End of form...
+        </div>
+    </div>
+
+    <script>
+        function calculateOptimalOffset() {
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
+            
+            // Base offset - start with a smaller value
+            let offset = 80;
+            
+            // Adjust based on viewport height (for different mobile devices)
+            if (viewportHeight < 600) {
+                offset = 60; // Smaller screens need less offset
+            } else if (viewportHeight > 800) {
+                offset = 100; // Larger screens can have more offset
+            }
+            
+            // Check for connection banner (sticky top-0)
+            const connectionBanner = document.querySelector('.banner');
+            let bannerHeight = 0;
+            if (connectionBanner) {
+                bannerHeight = connectionBanner.getBoundingClientRect().height;
+                offset += bannerHeight;
+            }
+            
+            // Check for header (if visible)
+            const header = document.querySelector('.header');
+            let headerHeight = 0;
+            if (header && header.offsetParent !== null) {
+                headerHeight = header.getBoundingClientRect().height;
+                offset += headerHeight;
+            }
+            
+            // Add some padding for better visual comfort
+            offset += 20;
+            
+            const finalOffset = Math.max(60, Math.min(offset, 200));
+            
+            return { finalOffset, headerHeight, bannerHeight };
+        }
+
+        function updatePositionIndicator() {
+            const { finalOffset, headerHeight, bannerHeight } = calculateOptimalOffset();
+            const indicator = document.getElementById('positionIndicator');
+            
+            indicator.innerHTML = `
+                <strong>Positioning Debug:</strong><br>
+                Window: ${window.innerWidth}×${window.innerHeight}px | 
+                Mobile: ${window.innerWidth <= 768 ? 'Yes' : 'No'}<br>
+                Offset: ${finalOffset}px | 
+                Header: ${headerHeight}px | 
+                Banner: ${bannerHeight}px | 
+                Scroll: ${window.scrollY}px
+            `;
+        }
+
+        // Update on load and resize
+        window.addEventListener('load', updatePositionIndicator);
+        window.addEventListener('resize', updatePositionIndicator);
+        window.addEventListener('scroll', updatePositionIndicator);
+
+        // Focus event logging
+        document.addEventListener('focusin', (event) => {
+            const target = event.target;
+            if (target.tagName === 'INPUT') {
+                const { finalOffset } = calculateOptimalOffset();
+                const rect = target.getBoundingClientRect();
+                const scrollTop = window.pageYOffset + rect.top - finalOffset;
+                
+                console.log('🎯 Focus Event:', {
+                    element: target.tagName,
+                    id: target.id,
+                    rectTop: rect.top,
+                    pageYOffset: window.pageYOffset,
+                    optimalOffset: finalOffset,
+                    finalScrollTop: Math.max(0, scrollTop),
+                    viewportHeight: window.innerHeight
+                });
+                
+                updatePositionIndicator();
+            }
+        });
+    </script>
+</body>
+</html> 
