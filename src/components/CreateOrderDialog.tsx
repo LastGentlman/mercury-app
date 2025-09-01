@@ -190,6 +190,7 @@ _${new Date().toLocaleString('es-MX')}_`;
                   value={formData.clientPhone}
                   onChange={(value) => updateFormData('clientPhone', value)}
                   placeholder="123 456 7890"
+                  validateOnChange={true}
                 />
               </div>
             </div>

@@ -257,6 +257,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                 onChange={(value) => handleInputChange('phone', value)}
                 placeholder="123 456 7890"
                 required
+                validateOnChange={true}
               />
             </div>
 

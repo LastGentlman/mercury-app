@@ -51,8 +51,15 @@ export function EditClientModal({ client, isOpen, onClose, onSave, isLoading = f
       newErrors.email = 'Email inválido';
     }
 
-    if (formData.phone && formData.phone.length > 20) {
-      newErrors.phone = 'El teléfono debe tener máximo 20 caracteres';
+    if (formData.phone && formData.phone.length > 7) {
+      newErrors.phone = 'El teléfono debe tener máximo 7 caracteres';
+    } else if (formData.phone) {
+      // Validar formato de 7 dígitos
+      const cleanPhone = formData.phone.replace(/\D/g, '');
+      const phoneRegex = /^[1-9][0-9]{6}$/;
+      if (!phoneRegex.test(cleanPhone)) {
+        newErrors.phone = 'El teléfono debe tener exactamente 7 dígitos numéricos';
+      }
     }
 
     if (formData.address && formData.address.length > 500) {
@@ -158,6 +165,7 @@ export function EditClientModal({ client, isOpen, onClose, onSave, isLoading = f
               onChange={(value) => handleInputChange('phone', value)}
               placeholder="123 456 7890"
               error={errors.phone}
+              validateOnChange={true}
             />
           </div>
 

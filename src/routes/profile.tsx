@@ -566,6 +566,7 @@ function ProfilePage() {
                 value={profileData.phone}
                 onChange={(value) => handleInputChange('phone', value)}
                 placeholder="123 456 7890"
+                validateOnChange={true}
               />
             </div>
           </div>

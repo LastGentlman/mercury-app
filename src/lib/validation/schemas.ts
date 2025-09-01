@@ -2,7 +2,19 @@ import { z } from 'zod';
 
 // Base schemas for common patterns
 const uuidSchema = z.string().uuid('Invalid UUID format');
-const phoneSchema = z.string().regex(/^\+?[\d\s\-\(\)]{10,}$/, 'Invalid phone number format').optional();
+// Función de validación de teléfono (7 dígitos)
+const validatePhone = (phone: string): boolean => {
+  const cleanPhone = phone.replace(/\D/g, '');
+  const phoneRegex = /^[1-9][0-9]{6}$/;
+  return phoneRegex.test(cleanPhone);
+};
+
+const phoneSchema = z.string()
+  .max(20, 'El teléfono debe tener máximo 20 caracteres')
+  .optional()
+  .refine((val) => !val || validatePhone(val), {
+    message: 'El teléfono debe tener exactamente 7 dígitos numéricos'
+  });
 const emailSchema = z.string().email('Invalid email format').optional();
 const timestampSchema = z.string().datetime('Invalid timestamp format');
 const positiveNumberSchema = z.number().positive('Must be a positive number');

@@ -55,19 +55,31 @@ interface PhoneInputProps {
   error?: string | undefined;
   className?: string;
   disabled?: boolean;
+  validateOnChange?: boolean;
 }
 
 export function PhoneInput({
   value,
   onChange,
-  placeholder = "123 456 7890",
+  placeholder = "4567890",
   label,
   required = false,
   error,
   className,
-  disabled = false
+  disabled = false,
+  validateOnChange = false
 }: PhoneInputProps) {
   const [selectedCountry, setSelectedCountry] = useState<Country>(countries[0]!); // México por defecto
+
+  // Función de validación de teléfono (7 dígitos)
+  const validatePhone = (phone: string): boolean => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const phoneRegex = /^[1-9][0-9]{6}$/;
+    return phoneRegex.test(cleanPhone);
+  };
+
+  // Estado para validación local
+  const [localError, setLocalError] = useState<string | undefined>(error);
 
   // Extraer el número del teléfono completo (sin prefijo)
   const getPhoneNumber = (fullPhone: string | undefined) => {
@@ -89,6 +101,15 @@ export function PhoneInput({
   const handlePhoneChange = (phoneNumber: string) => {
     const fullPhone = getFullPhone(phoneNumber);
     onChange(fullPhone);
+    
+    // Validación en tiempo real si está habilitada
+    if (validateOnChange && phoneNumber) {
+      if (!validatePhone(phoneNumber)) {
+        setLocalError('El teléfono debe tener exactamente 7 dígitos numéricos');
+      } else {
+        setLocalError(undefined);
+      }
+    }
   };
 
   // Manejar cambio de país
@@ -111,6 +132,11 @@ export function PhoneInput({
       }
     }
   }, [value]);
+
+  // Actualizar error local cuando cambia el error externo
+  useEffect(() => {
+    setLocalError(error);
+  }, [error]);
 
   const phoneNumber = getPhoneNumber(value || '');
 
@@ -155,14 +181,14 @@ export function PhoneInput({
           placeholder={placeholder}
           className={cn(
             "flex-1 rounded-l-none",
-            error && "border-red-500 focus:border-red-500"
+            (localError || error) && "border-red-500 focus:border-red-500"
           )}
           disabled={disabled}
         />
       </div>
       
-      {error && (
-        <p className="text-sm text-red-500">{error}</p>
+      {(localError || error) && (
+        <p className="text-sm text-red-500">{localError || error}</p>
       )}
     </div>
   );
