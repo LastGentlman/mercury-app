@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FileText, Mail, MapPin, Phone, User } from 'lucide-react';
+import { FileText, Mail, MapPin, User } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/index.ts';
 import { Button } from './ui/index.ts';
 import { Input } from './ui/index.ts';

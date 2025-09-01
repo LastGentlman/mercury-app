@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Store, Plus, Link, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Phone, Mail } from 'lucide-react';
+import { Store, Plus, Link, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Mail } from 'lucide-react';
 import { Button } from './ui/index.ts';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/index.ts';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/index.ts';
