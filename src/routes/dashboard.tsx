@@ -19,8 +19,8 @@ function DashboardPage() {
       <ProtectedRoute>
         <BusinessSetup 
           onBusinessSetup={(_businessId: string) => {
-            // En una implementación real, aquí actualizarías el usuario con el businessId
-            // Por ahora, simplemente recargamos la página
+            // El negocio ya fue creado y el perfil actualizado en BusinessSetup
+            // Solo necesitamos invalidar la query del usuario para que se actualice
             notifications.success('Negocio configurado exitosamente. Redirigiendo...');
             setTimeout(() => {
               globalThis.location.reload();
