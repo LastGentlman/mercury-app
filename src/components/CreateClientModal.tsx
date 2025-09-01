@@ -41,11 +41,14 @@ export function CreateClientModal({ isOpen, onClose, onSave, isLoading = false }
     if (formData.phone && formData.phone.length > 20) {
       newErrors.phone = 'El teléfono debe tener máximo 20 caracteres';
     } else if (formData.phone) {
-      // Validar formato de 7 dígitos
+      // Validar formato usando la función de validación híbrida
       const cleanPhone = formData.phone.replace(/\D/g, '');
-      const phoneRegex = /^[1-9][0-9]{6}$/;
-      if (!phoneRegex.test(cleanPhone)) {
-        newErrors.phone = 'El teléfono debe tener exactamente 7 dígitos numéricos';
+      if (cleanPhone.length < 9) {
+        newErrors.phone = 'El teléfono debe tener al menos 9 dígitos';
+      } else if (cleanPhone.length > 15) {
+        newErrors.phone = 'El teléfono debe tener máximo 15 dígitos';
+      } else if (cleanPhone.startsWith('0')) {
+        newErrors.phone = 'El teléfono no puede empezar con 0';
       }
     }
 

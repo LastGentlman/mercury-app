@@ -3,6 +3,7 @@ import { Input } from './input';
 import { Label } from './label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
 import { cn } from '../../lib/utils';
+import { validatePhoneWithDetails } from '../../lib/validation/phone';
 
 interface Country {
   code: string;
@@ -12,10 +13,8 @@ interface Country {
 }
 
 const countries: Country[] = [
+  // ===== MÉXICO Y LATINOAMÉRICA =====
   { code: 'MX', name: 'México', dialCode: '+52', flag: '🇲🇽' },
-  { code: 'US', name: 'Estados Unidos', dialCode: '+1', flag: '🇺🇸' },
-  { code: 'CA', name: 'Canadá', dialCode: '+1', flag: '🇨🇦' },
-  { code: 'ES', name: 'España', dialCode: '+34', flag: '🇪🇸' },
   { code: 'AR', name: 'Argentina', dialCode: '+54', flag: '🇦🇷' },
   { code: 'CO', name: 'Colombia', dialCode: '+57', flag: '🇨🇴' },
   { code: 'PE', name: 'Perú', dialCode: '+51', flag: '🇵🇪' },
@@ -35,15 +34,16 @@ const countries: Country[] = [
   { code: 'CU', name: 'Cuba', dialCode: '+53', flag: '🇨🇺' },
   { code: 'DO', name: 'República Dominicana', dialCode: '+1', flag: '🇩🇴' },
   { code: 'PR', name: 'Puerto Rico', dialCode: '+1', flag: '🇵🇷' },
+  
+  // ===== AMÉRICA DEL NORTE =====
+  { code: 'US', name: 'Estados Unidos', dialCode: '+1', flag: '🇺🇸' },
+  { code: 'CA', name: 'Canadá', dialCode: '+1', flag: '🇨🇦' },
+  
+  // ===== EUROPA =====
+  { code: 'ES', name: 'España', dialCode: '+34', flag: '🇪🇸' },
   { code: 'FR', name: 'Francia', dialCode: '+33', flag: '🇫🇷' },
   { code: 'DE', name: 'Alemania', dialCode: '+49', flag: '🇩🇪' },
-  { code: 'IT', name: 'Italia', dialCode: '+39', flag: '🇮🇹' },
   { code: 'GB', name: 'Reino Unido', dialCode: '+44', flag: '🇬🇧' },
-  { code: 'JP', name: 'Japón', dialCode: '+81', flag: '🇯🇵' },
-  { code: 'CN', name: 'China', dialCode: '+86', flag: '🇨🇳' },
-  { code: 'IN', name: 'India', dialCode: '+91', flag: '🇮🇳' },
-  { code: 'AU', name: 'Australia', dialCode: '+61', flag: '🇦🇺' },
-  { code: 'NZ', name: 'Nueva Zelanda', dialCode: '+64', flag: '🇳🇿' },
 ];
 
 interface PhoneInputProps {
@@ -71,13 +71,6 @@ export function PhoneInput({
 }: PhoneInputProps) {
   const [selectedCountry, setSelectedCountry] = useState<Country>(countries[0]!); // México por defecto
 
-  // Función de validación de teléfono (7 dígitos)
-  const validatePhone = (phone: string): boolean => {
-    const cleanPhone = phone.replace(/\D/g, '');
-    const phoneRegex = /^[1-9][0-9]{6}$/;
-    return phoneRegex.test(cleanPhone);
-  };
-
   // Estado para validación local
   const [localError, setLocalError] = useState<string | undefined>(error);
 
@@ -104,8 +97,9 @@ export function PhoneInput({
     
     // Validación en tiempo real si está habilitada
     if (validateOnChange && phoneNumber) {
-      if (!validatePhone(phoneNumber)) {
-        setLocalError('El teléfono debe tener exactamente 7 dígitos numéricos');
+      const validationResult = validatePhoneWithDetails(phoneNumber);
+      if (!validationResult.isValid) {
+        setLocalError(validationResult.reason || 'Formato inválido');
       } else {
         setLocalError(undefined);
       }
