@@ -125,11 +125,10 @@ export function PhoneInput({
       <div className="flex gap-2">
         {/* Selector de país */}
         <Select value={selectedCountry.code} onValueChange={handleCountryChange}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[70px] border-r-0 rounded-r-none">
             <SelectValue>
-              <div className="flex items-center gap-2">
-                <span className="text-lg">{selectedCountry.flag}</span>
-                <span className="text-sm font-medium">{selectedCountry.dialCode}</span>
+              <div className="flex items-center justify-center">
+                <span className="text-base">{selectedCountry.flag}</span>
               </div>
             </SelectValue>
           </SelectTrigger>
@@ -155,7 +154,7 @@ export function PhoneInput({
           onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder={placeholder}
           className={cn(
-            "flex-1",
+            "flex-1 rounded-l-none",
             error && "border-red-500 focus:border-red-500"
           )}
           disabled={disabled}
