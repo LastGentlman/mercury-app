@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Store, Plus, Link, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Mail } from 'lucide-react';
+import { Store, Plus, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Mail } from 'lucide-react';
 import { Button } from './ui/index.ts';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/index.ts';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/index.ts';
@@ -151,6 +151,12 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       return;
     }
 
+    // Validate code length
+    if (businessCode.length !== 11) {
+      notifications.error('El código debe tener exactamente 11 caracteres (incluyendo guiones)');
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Unirse al negocio usando el servicio real
@@ -164,7 +170,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       onBusinessSetup?.(business.id);
     } catch (error) {
       console.error('Error joining business:', error);
-      notifications.error(error instanceof Error ? error.message : 'Código de negocio inválido');
+      notifications.error(error instanceof Error ? error.message : 'Código de negocio inválido o expirado');
     } finally {
       setIsLoading(false);
     }
@@ -485,41 +491,99 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                     <TabsContent value="join" className="space-y-4">
                       <div className="pt-4">
                         <div className="text-center mb-6">
-                          <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 rounded-full mb-3">
-                            <Users className="w-8 h-8 text-gray-600" />
+                          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-3">
+                            <Users className="w-8 h-8 text-green-600" />
                           </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                            Unirse con Código
+                          </h3>
                           <p className="text-sm text-gray-600">
-                            Ingresa el código de invitación proporcionado por el administrador del negocio
+                            Ingresa el código de invitación que recibiste del administrador del negocio
                           </p>
                         </div>
 
                         <div>
-                          <Label htmlFor="business-code">Código del Negocio</Label>
-                          <div className="mt-1 relative">
-                            <Link className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Label htmlFor="business-code">Código de Invitación</Label>
+                          <div className="mt-1">
                             <Input
                               id="business-code"
                               placeholder="ABC-123-XYZ"
                               value={businessCode}
-                              onChange={(e) => setBusinessCode(e.target.value.toUpperCase())}
-                              className="pl-10 text-center font-mono text-lg"
+                              onChange={(e) => {
+                                // Limpiar y formatear código: solo A-Z, 0-9, agregar guiones automáticamente
+                                let cleanCode = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                
+                                // Limitar a 9 caracteres (sin contar guiones)
+                                cleanCode = cleanCode.slice(0, 9);
+                                
+                                // Agregar guiones automáticamente
+                                if (cleanCode.length > 3 && cleanCode.length <= 6) {
+                                  cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3);
+                                } else if (cleanCode.length > 6) {
+                                  cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3, 6) + '-' + cleanCode.slice(6);
+                                }
+                                
+                                setBusinessCode(cleanCode);
+                              }}
+                              onKeyPress={(e) => {
+                                if (e.key === 'Enter' && businessCode.length === 11) {
+                                  handleJoinBusiness();
+                                }
+                              }}
+                              onPaste={(e) => {
+                                e.preventDefault();
+                                const pastedText = e.clipboardData.getData('text');
+                                let cleanCode = pastedText.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                                cleanCode = cleanCode.slice(0, 9);
+                                if (cleanCode.length > 3 && cleanCode.length <= 6) {
+                                  cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3);
+                                } else if (cleanCode.length > 6) {
+                                  cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3, 6) + '-' + cleanCode.slice(6);
+                                }
+                                setBusinessCode(cleanCode);
+                              }}
+                              className="text-center font-mono text-xl tracking-wider"
                               maxLength={11}
                             />
                           </div>
-                          <p className="text-xs text-gray-500 mt-1">
-                            El código debe tener el formato XXX-XXX-XXX
+                          <p className="text-xs text-gray-500 mt-1 text-center">
+                            Formato: XXX-XXX-XXX (expira en 24 horas)
                           </p>
+                        </div>
+
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                          <div className="flex items-start space-x-3">
+                            <div className="flex-shrink-0">
+                              <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                                <Check className="w-3 h-3 text-green-600" />
+                              </div>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="text-sm font-medium text-green-900 mb-1">
+                                Código Válido
+                              </h4>
+                              <p className="text-xs text-green-700">
+                                {businessCode.length === 11 
+                                  ? 'El código tiene el formato correcto y está listo para usar.'
+                                  : 'Ingresa un código de 9 caracteres para continuar.'
+                                }
+                              </p>
+                            </div>
+                          </div>
                         </div>
                       </div>
 
                       <DialogFooter className="pt-4">
                         <Button
                           onClick={handleJoinBusiness}
-                          disabled={isLoading || !businessCode}
-                          className="w-full"
+                          disabled={isLoading || businessCode.length !== 11}
+                          className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
                         >
                           {isLoading ? (
-                            <>Uniéndose al negocio...</>
+                            <div className="flex items-center">
+                              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                              Uniéndose al negocio...
+                            </div>
                           ) : (
                             <>
                               Unirse al Negocio
@@ -528,6 +592,12 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                           )}
                         </Button>
                       </DialogFooter>
+
+                      <div className="text-center pt-2">
+                        <p className="text-xs text-gray-500">
+                          ¿No tienes un código? Solicítalo al administrador del negocio
+                        </p>
+                      </div>
                     </TabsContent>
                   </Tabs>
                 </DialogContent>
