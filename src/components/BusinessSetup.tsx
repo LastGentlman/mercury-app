@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/index.ts';
 import { Alert } from './ui/index.ts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/index.ts';
 import { Textarea } from './ui/index.ts';
+import { PhoneInput } from './ui/index.ts';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 
@@ -250,18 +251,13 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
             </div>
 
             <div>
-              <Label htmlFor="business-phone">Teléfono <span className="text-red-500">*</span></Label>
-              <div className="mt-1 relative">
-                <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-              <Input
-                  id="business-phone"
-                  placeholder="+1 234 567 8900"
+              <PhoneInput
+                label="Teléfono"
                 value={formData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                  type="tel"
-                  className="pl-10"
+                onChange={(value) => handleInputChange('phone', value)}
+                placeholder="123 456 7890"
+                required
               />
-              </div>
             </div>
 
             <div>

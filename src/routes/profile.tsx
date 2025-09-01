@@ -52,7 +52,8 @@ import {
   DialogFooter,
   Switch,
   Badge,
-  Separator
+  Separator,
+  PhoneInput
 } from '../components/ui/index.ts'
 import { showSuccess, showError, showInfo } from '../utils/sweetalert.ts'
 import Swal from 'sweetalert2'
@@ -560,14 +561,11 @@ function ProfilePage() {
             </div>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Teléfono
-              </label>
-              <Input
+              <PhoneInput
+                label="Teléfono"
                 value={profileData.phone}
-                onChange={(e) => handleInputChange('phone', e.target.value)}
-                placeholder="+34 666 777 888"
-                type="tel"
+                onChange={(value) => handleInputChange('phone', value)}
+                placeholder="123 456 7890"
               />
             </div>
           </div>

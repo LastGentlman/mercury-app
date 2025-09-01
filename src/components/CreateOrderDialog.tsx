@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/index.ts'
 import { Input } from './ui/index.ts';
 import { Label } from './ui/index.ts';
 import { Textarea } from './ui/index.ts';
+import { PhoneInput } from './ui/index.ts';
 import type { OrderFormData } from '../types/index.ts';
 
 interface CreateOrderDialogProps {
@@ -184,13 +185,11 @@ _${new Date().toLocaleString('es-MX')}_`;
                 />
               </div>
               <div>
-                <Label htmlFor="clientPhone">Teléfono</Label>
-                <Input
-                  id="clientPhone"
-                  type="tel"
+                <PhoneInput
+                  label="Teléfono"
                   value={formData.clientPhone}
-                  onChange={(e) => updateFormData('clientPhone', e.target.value)}
-                  placeholder="123-456-7890"
+                  onChange={(value) => updateFormData('clientPhone', value)}
+                  placeholder="123 456 7890"
                 />
               </div>
             </div>

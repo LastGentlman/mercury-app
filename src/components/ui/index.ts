@@ -14,6 +14,7 @@ export { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs.tsx'
 export { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from './select.tsx'
 export { Label } from './label.tsx'
+export { PhoneInput } from './phone-input.tsx'
 export { Textarea } from './textarea.tsx'
 export { Switch } from './switch.tsx'
 export { Slider } from './slider.tsx'

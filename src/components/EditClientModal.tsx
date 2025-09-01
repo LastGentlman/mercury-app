@@ -5,6 +5,7 @@ import { Button } from './ui/index.ts';
 import { Input } from './ui/index.ts';
 import { Label } from './ui/index.ts';
 import { Textarea } from './ui/index.ts';
+import { PhoneInput } from './ui/index.ts';
 import type { Client } from '../types/index.ts';
 
 interface EditClientModalProps {
@@ -151,20 +152,13 @@ export function EditClientModal({ client, isOpen, onClose, onSave, isLoading = f
 
           {/* Phone */}
           <div className="space-y-2">
-            <Label htmlFor="phone" className="flex items-center gap-2">
-              <Phone className="w-4 h-4" />
-              Teléfono
-            </Label>
-            <Input
-              id="phone"
+            <PhoneInput
+              label="Teléfono"
               value={formData.phone}
-              onChange={(e) => handleInputChange('phone', e.target.value)}
-              placeholder="+52 123 456 7890"
-              className={errors.phone ? 'border-red-500' : ''}
+              onChange={(value) => handleInputChange('phone', value)}
+              placeholder="123 456 7890"
+              error={errors.phone}
             />
-            {errors.phone && (
-              <p className="text-sm text-red-500">{errors.phone}</p>
-            )}
           </div>
 
           {/* Address */}
