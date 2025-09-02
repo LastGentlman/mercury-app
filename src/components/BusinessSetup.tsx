@@ -12,6 +12,7 @@ import { Textarea } from './ui/index.ts';
 import { PhoneInput } from './ui/index.ts';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useAuth } from '../hooks/useAuth.ts';
+import { useAuthToken } from '../hooks/useStorageSync.ts';
 import { BusinessService } from '../services/business-service.ts';
 
 interface BusinessSetupProps {
@@ -55,6 +56,7 @@ const currencies = [
 
 export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   const { user } = useAuth();
+  const { value: authToken } = useAuthToken();
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
@@ -139,10 +141,10 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       const apiData = BusinessService.convertFormDataToAPI(formData);
       
       // Crear el negocio usando el servicio real
-      const business = await BusinessService.createBusiness(apiData);
+      const business = await BusinessService.createBusiness(apiData, authToken || undefined);
       
       // Actualizar el perfil del usuario con el businessId
-      await BusinessService.updateUserBusiness(business.id);
+      await BusinessService.updateUserBusiness(business.id, authToken || undefined);
       
       notifications.success('¡Negocio creado exitosamente!');
       setIsOpen(false);
@@ -177,10 +179,10 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
     setIsLoading(true);
     try {
       // Unirse al negocio usando el servicio real
-      const business = await BusinessService.joinBusiness(businessCode);
+      const business = await BusinessService.joinBusiness(businessCode, authToken || undefined);
       
       // Actualizar el perfil del usuario con el businessId
-      await BusinessService.updateUserBusiness(business.id);
+      await BusinessService.updateUserBusiness(business.id, authToken || undefined);
 
       notifications.success('¡Te has unido al negocio exitosamente!');
       setIsOpen(false);

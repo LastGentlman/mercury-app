@@ -60,22 +60,26 @@ export class BusinessService {
   /**
    * Crear un nuevo negocio
    */
-  static async createBusiness(data: CreateBusinessRequest): Promise<Business> {
+  static async createBusiness(data: CreateBusinessRequest, authToken?: string): Promise<Business> {
     if (!supabase) {
       throw new Error('Cliente Supabase no inicializado');
     }
     
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('No hay sesión activa');
+    // Obtener token de autenticación
+    let token = authToken;
+    if (!token) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No hay sesión activa');
+      }
+      token = session.access_token;
     }
 
     const response = await fetch('/api/business/activate-trial', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
@@ -92,55 +96,72 @@ export class BusinessService {
   /**
    * Obtener el negocio actual del usuario
    */
-  static async getCurrentBusiness(): Promise<Business | null> {
+  static async getCurrentBusiness(authToken?: string): Promise<Business | null> {
     if (!supabase) {
       throw new Error('Cliente Supabase no inicializado');
     }
     
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      return null;
+    // Obtener token de autenticación
+    let token = authToken;
+    if (!token) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        return null;
+      }
+      token = session.access_token;
     }
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('current_business_id')
-      .eq('id', session.user.id)
-      .single();
+    // Decodificar el token para obtener el user ID
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.sub;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('current_business_id')
+        .eq('id', userId)
+        .single();
 
-    if (!profile?.current_business_id) {
+      if (!profile?.current_business_id) {
+        return null;
+      }
+
+      const { data: business } = await supabase
+        .from('businesses')
+        .select('*')
+        .eq('id', profile.current_business_id)
+        .single();
+
+      return business;
+    } catch (error) {
+      console.error('Error decoding token or fetching business:', error);
       return null;
     }
-
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('*')
-      .eq('id', profile.current_business_id)
-      .single();
-
-    return business;
   }
 
   /**
    * Unirse a un negocio existente usando código de invitación
    */
-  static async joinBusiness(businessCode: string): Promise<Business> {
+  static async joinBusiness(businessCode: string, authToken?: string): Promise<Business> {
     if (!supabase) {
       throw new Error('Cliente Supabase no inicializado');
     }
     
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('No hay sesión activa');
+    // Obtener token de autenticación
+    let token = authToken;
+    if (!token) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No hay sesión activa');
+      }
+      token = session.access_token;
     }
 
     const response = await fetch('/api/business/join', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ businessCode }),
     });
@@ -157,26 +178,42 @@ export class BusinessService {
   /**
    * Actualizar el perfil del usuario con el businessId
    */
-  static async updateUserBusiness(businessId: string): Promise<void> {
+  static async updateUserBusiness(businessId: string, authToken?: string): Promise<void> {
     if (!supabase) {
       throw new Error('Cliente Supabase no inicializado');
     }
     
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (!session) {
-      throw new Error('No hay sesión activa');
+    // Obtener token de autenticación
+    let token = authToken;
+    if (!token) {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No hay sesión activa');
+      }
+      token = session.access_token;
     }
 
-    const { error } = await supabase
-      .from('profiles')
-      .update({ 
-        current_business_id: businessId,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', session.user.id);
+    // Decodificar el token para obtener el user ID
+    try {
+      if (!token) {
+        throw new Error('Token de autenticación requerido');
+      }
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.sub;
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ 
+          current_business_id: businessId,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId);
 
-    if (error) {
+      if (error) {
+        throw new Error('Error al actualizar el perfil del usuario');
+      }
+    } catch (error) {
+      console.error('Error decoding token or updating profile:', error);
       throw new Error('Error al actualizar el perfil del usuario');
     }
   }
