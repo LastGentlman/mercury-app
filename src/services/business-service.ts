@@ -60,7 +60,11 @@ export class BusinessService {
   /**
    * Crear un nuevo negocio
    */
-  static async createBusiness(data: CreateBusinessRequest, authToken?: string): Promise<Business> {
+  static async createBusiness(
+    data: CreateBusinessRequest, 
+    authToken?: string,
+    csrfRequest?: (url: string, options: RequestInit) => Promise<Response>
+  ): Promise<Business> {
     if (!supabase) {
       throw new Error('Cliente Supabase no inicializado');
     }
@@ -75,22 +79,43 @@ export class BusinessService {
       token = session.access_token;
     }
 
-    const response = await fetch('/api/business/activate-trial', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify(data),
-    });
+    // Use CSRF request if provided, otherwise fall back to direct fetch
+    if (csrfRequest) {
+      const response = await csrfRequest('/api/business/activate-trial', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Error al crear el negocio');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al crear el negocio');
+      }
+
+      const result = await response.json();
+      return result.business;
+    } else {
+      // Fallback to direct fetch (for testing or when CSRF is not available)
+      const response = await fetch('/api/business/activate-trial', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al crear el negocio');
+      }
+
+      const result = await response.json();
+      return result.business;
     }
-
-    const result = await response.json();
-    return result.business;
   }
 
   /**
@@ -149,7 +174,11 @@ export class BusinessService {
   /**
    * Unirse a un negocio existente usando código de invitación
    */
-  static async joinBusiness(businessCode: string, authToken?: string): Promise<Business> {
+  static async joinBusiness(
+    businessCode: string, 
+    authToken?: string,
+    csrfRequest?: (url: string, options: RequestInit) => Promise<Response>
+  ): Promise<Business> {
     if (!supabase) {
       throw new Error('Cliente Supabase no inicializado');
     }
@@ -164,22 +193,43 @@ export class BusinessService {
       token = session.access_token;
     }
 
-    const response = await fetch('/api/business/join', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ businessCode }),
-    });
+    // Use CSRF request if provided, otherwise fall back to direct fetch
+    if (csrfRequest) {
+      const response = await csrfRequest('/api/business/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ businessCode }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Error al unirse al negocio');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al unirse al negocio');
+      }
+
+      const result = await response.json();
+      return result.business;
+    } else {
+      // Fallback to direct fetch (for testing or when CSRF is not available)
+      const response = await fetch('/api/business/join', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ businessCode }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Error al unirse al negocio');
+      }
+
+      const result = await response.json();
+      return result.business;
     }
-
-    const result = await response.json();
-    return result.business;
   }
 
   /**
@@ -195,7 +245,7 @@ export class BusinessService {
     if (!token) {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        throw new Error('No hay sesión activa');
+        throw new Error('Token de autenticación requerido');
       }
       token = session.access_token;
     }

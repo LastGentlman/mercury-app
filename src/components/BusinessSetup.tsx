@@ -13,6 +13,7 @@ import { PhoneInput } from './ui/index.ts';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useAuthToken } from '../hooks/useStorageSync.ts';
+import { useCSRFRequest } from '../hooks/useCSRF.ts';
 import { BusinessService } from '../services/business-service.ts';
 
 interface BusinessSetupProps {
@@ -61,6 +62,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const notifications = useNotifications();
+  const { csrfRequest } = useCSRFRequest();
 
   // Form states for new business
   const [formData, setFormData] = useState<BusinessFormData>({
@@ -141,7 +143,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       const apiData = BusinessService.convertFormDataToAPI(formData);
       
       // Crear el negocio usando el servicio real
-      const business = await BusinessService.createBusiness(apiData, authToken || undefined);
+      const business = await BusinessService.createBusiness(apiData, authToken || undefined, csrfRequest);
       
       // Actualizar el perfil del usuario con el businessId
       await BusinessService.updateUserBusiness(business.id, authToken || undefined);
@@ -179,7 +181,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
     setIsLoading(true);
     try {
       // Unirse al negocio usando el servicio real
-      const business = await BusinessService.joinBusiness(businessCode, authToken || undefined);
+      const business = await BusinessService.joinBusiness(businessCode, authToken || undefined, csrfRequest);
       
       // Actualizar el perfil del usuario con el businessId
       await BusinessService.updateUserBusiness(business.id, authToken || undefined);
@@ -365,12 +367,8 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                       )}
                     </div>
                     <div className="flex items-center space-x-2">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                        <Clock className="w-4 h-4 text-white" />
-                      </div>
                       <div>
                         <span className="font-medium">Abierto 24/7</span>
-                        <p className="text-xs text-gray-500">24 horas, 7 días a la semana</p>
                       </div>
                     </div>
                   </label>
