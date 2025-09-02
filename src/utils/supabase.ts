@@ -1,6 +1,10 @@
 /**
  * Supabase client configuration for frontend
  * Centralized supabase client instance
+ * 
+ * ⚠️ IMPORTANT: This is the ONLY place where createClient should be called in the frontend.
+ * All other files should import { supabase } from this file.
+ * Creating multiple instances will cause "Multiple GoTrueClient instances" warnings.
  */
 
 import { createClient } from '@supabase/supabase-js'
@@ -15,6 +19,7 @@ console.log('🔧 Supabase Config:', {
   env: import.meta.env.MODE
 })
 
+// ✅ SINGLE INSTANCE: Create Supabase client only once
 export const supabase = (supabaseUrl && supabaseAnonKey) 
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: {

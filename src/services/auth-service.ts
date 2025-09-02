@@ -3,7 +3,6 @@
  * Handles API communication for authentication operations
  */
 
-import { createClient } from '@supabase/supabase-js'
 import type { 
   AuthUser, 
   LoginCredentials, 
@@ -13,36 +12,11 @@ import type {
   SocialLoginOptions 
 } from '../types/auth.ts'
 
-
+// ✅ IMPORTANT: Import the shared Supabase client instance to prevent multiple instances
+// This prevents the "Multiple GoTrueClient instances" warning
+import { supabase } from '../utils/supabase.ts'
 import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors.ts'
 import { env } from '../env.ts'
-
-/**
- * Supabase client configuration with debugging
- * Only create client if environment variables are properly configured
- */
-const supabaseUrl = env.VITE_SUPABASE_URL
-const supabaseAnonKey = env.VITE_SUPABASE_ANON_KEY
-
-console.log('🔧 Supabase Config:', {
-  url: supabaseUrl ? '✅ Configured' : '❌ Missing',
-  key: supabaseAnonKey ? '✅ Configured' : '❌ Missing',
-  env: import.meta.env.MODE
-})
-
-const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        autoRefreshToken: true,
-        persistSession: true,
-        detectSessionInUrl: true
-      }
-    })
-  : null
-
-if (!supabase) {
-  console.warn('⚠️ Supabase no está configurado. OAuth no funcionará.')
-}
 
 /**
  * Gets the API base URL from environment

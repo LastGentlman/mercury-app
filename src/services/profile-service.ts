@@ -9,7 +9,11 @@
  */
 
 import { supabase } from '../utils/supabase.ts'
-import type { AuthUser, AuthProvider } from '../types/auth.ts'
+import { STORAGE_CONFIG } from '../config/storage.ts'
+import type { 
+  AuthUser, 
+  AuthProvider 
+} from '../types/auth.ts'
 import { optimizeImage, DEFAULT_AVATAR_OPTIONS, formatFileSize } from '../utils/imageOptimization.ts'
 
 export interface ProfileData {
@@ -89,7 +93,7 @@ export class ProfileService {
 
       console.log('📦 All buckets:', data?.map(b => ({ name: b.name, public: b.public })) || [])
       
-      const avatarsBucket = data?.find(bucket => bucket.name === 'user_avatars')
+              const avatarsBucket = data?.find(bucket => bucket.name === STORAGE_CONFIG.BUCKETS.USER_AVATARS)
       
       if (!avatarsBucket) {
         console.warn('⚠️ User avatars bucket not found in list. Available buckets:', data?.map(b => b.name))
@@ -283,17 +287,17 @@ export class ProfileService {
     const currentProfile = await this.getProfile()
     const existingAvatarUrl = currentProfile?.avatar_url
 
-    // Delete previous avatar if it exists and is from our bucket
-    if (existingAvatarUrl && existingAvatarUrl.includes('user_avatars')) {
+          // Delete previous avatar if it exists and is from our bucket
+      if (existingAvatarUrl && existingAvatarUrl.includes(STORAGE_CONFIG.BUCKETS.USER_AVATARS)) {
       try {
         // Extract the file path from the URL
         const urlParts = existingAvatarUrl.split('/')
         const fileName = urlParts[urlParts.length - 1]
         
         if (fileName && fileName.includes(user.id)) {
-          const { error: deleteError } = await supabase.storage
-            .from('user_avatars')
-            .remove([fileName])
+                      const { error: deleteError } = await supabase.storage
+              .from(STORAGE_CONFIG.BUCKETS.USER_AVATARS)
+              .remove([fileName])
           
           if (deleteError) {
             console.warn('⚠️ Failed to delete previous avatar:', deleteError)
@@ -311,10 +315,10 @@ export class ProfileService {
     const fileExt = optimizedFile.name.split('.').pop()?.toLowerCase() || 'webp'
     const fileName = `${user.id}-${Date.now()}.${fileExt}`
     
-    // Upload optimized file to user_avatars bucket
-    const { data: uploadData, error: uploadError } = await supabase.storage
-      .from('user_avatars')
-      .upload(fileName, optimizedFile, {
+          // Upload optimized file to user_avatars bucket
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from(STORAGE_CONFIG.BUCKETS.USER_AVATARS)
+        .upload(fileName, optimizedFile, {
         cacheControl: '3600',
         upsert: true // Allow overwriting
       })
@@ -328,10 +332,10 @@ export class ProfileService {
       throw new Error('Upload succeeded but no path returned')
     }
 
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('user_avatars')
-      .getPublicUrl(uploadData.path)
+          // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from(STORAGE_CONFIG.BUCKETS.USER_AVATARS)
+        .getPublicUrl(uploadData.path)
 
     console.log('✅ Avatar uploaded successfully:', {
       path: uploadData.path,
@@ -471,10 +475,10 @@ export class ProfileService {
     }
 
     try {
-      // List all files in the user_avatars bucket
-      const { data: files, error } = await supabase.storage
-        .from('user_avatars')
-        .list('', {
+              // List all files in the user_avatars bucket
+        const { data: files, error } = await supabase.storage
+          .from(STORAGE_CONFIG.BUCKETS.USER_AVATARS)
+          .list('', {
           limit: 1000,
           offset: 0
         })
@@ -489,9 +493,9 @@ export class ProfileService {
       
       if (userFiles.length > 0) {
         const fileNames = userFiles.map(file => file.name)
-        const { error: deleteError } = await supabase.storage
-          .from('user_avatars')
-          .remove(fileNames)
+                  const { error: deleteError } = await supabase.storage
+            .from(STORAGE_CONFIG.BUCKETS.USER_AVATARS)
+            .remove(fileNames)
         
         if (deleteError) {
           console.warn('⚠️ Error deleting user avatars:', deleteError)

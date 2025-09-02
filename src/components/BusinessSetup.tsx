@@ -98,6 +98,23 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const formatPhoneNumber = (phone: string): string => {
+    // Remover todos los caracteres no numéricos
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Aplicar formato según la longitud
+    if (cleaned.length === 10) {
+      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    } else if (cleaned.length === 11) {
+      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
+    } else if (cleaned.length === 7) {
+      return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+    }
+    
+    // Si no coincide con ningún formato estándar, devolver el original
+    return phone;
+  };
+
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(prev => prev + 1);
@@ -181,10 +198,18 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   const isStepValid = () => {
     switch (currentStep) {
       case 0:
+        // Si el tipo es "other", la descripción es obligatoria
+        if (formData.type === 'other') {
+          return formData.name && formData.type && formData.description.trim();
+        }
         return formData.name && formData.type;
       case 1:
         return formData.address && formData.phone && formData.email;
       case 2:
+        // Si es 24/7, solo se requiere la moneda. Si no, se requieren las horas
+        if (formData.openingHours === '24/7') {
+          return formData.currency;
+        }
         return formData.openingHours && formData.closingHours && formData.currency;
       default:
         return false;
@@ -232,15 +257,24 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
 
             <div>
               <Label htmlFor="description">
-                Descripción
+                Descripción {formData.type === 'other' && <span className="text-red-500">*</span>}
               </Label>
               <Textarea
                 id="description"
-                placeholder="Describe tu negocio en pocas palabras... (opcional)"
+                placeholder={formData.type === 'other' 
+                  ? "Describe tu negocio en detalle (requerido para tipo 'Otro')" 
+                  : "Describe tu negocio en pocas palabras... (opcional)"
+                }
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
                 className="min-h-[80px]"
+                required={formData.type === 'other'}
               />
+              {formData.type === 'other' && !formData.description.trim() && (
+                <p className="text-sm text-red-500 mt-1">
+                  La descripción es obligatoria cuando seleccionas "Otro" como tipo de negocio
+                </p>
+              )}
             </div>
           </div>
         );
@@ -293,26 +327,51 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       case 2:
         return (
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="opening-hours">Hora de Apertura <span className="text-red-500">*</span></Label>
-                <Input
-                  id="opening-hours"
-                  type="time"
-                  value={formData.openingHours}
-                  onChange={(e) => handleInputChange('openingHours', e.target.value)}
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="open-24-7"
+                  checked={formData.openingHours === '24/7'}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      handleInputChange('openingHours', '24/7');
+                      handleInputChange('closingHours', '24/7');
+                    } else {
+                      handleInputChange('openingHours', '09:00');
+                      handleInputChange('closingHours', '18:00');
+                    }
+                  }}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
                 />
+                <Label htmlFor="open-24-7" className="text-sm font-medium text-gray-700">
+                  Abierto 24/7 (24 horas, 7 días a la semana)
+                </Label>
               </div>
 
-              <div>
-                <Label htmlFor="closing-hours">Hora de Cierre <span className="text-red-500">*</span></Label>
-                <Input
-                  id="closing-hours"
-                  type="time"
-                  value={formData.closingHours}
-                  onChange={(e) => handleInputChange('closingHours', e.target.value)}
-                />
-              </div>
+              {formData.openingHours !== '24/7' && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="opening-hours">Hora de Apertura <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="opening-hours"
+                      type="time"
+                      value={formData.openingHours}
+                      onChange={(e) => handleInputChange('openingHours', e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="closing-hours">Hora de Cierre <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="closing-hours"
+                      type="time"
+                      value={formData.closingHours}
+                      onChange={(e) => handleInputChange('closingHours', e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -343,8 +402,8 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                 <p>{businessTypes.find(t => t.value === formData.type)?.label || 'Tipo de Negocio'}</p>
                 <p>{formData.description || 'Descripción del negocio'}</p>
                 <p>{formData.address || 'Dirección'}</p>
-                <p>{formData.phone || 'Teléfono'} • {formData.email || 'Email'}</p>
-                <p>Horario: {formData.openingHours} - {formData.closingHours}</p>
+                <p>{formData.phone ? formatPhoneNumber(formData.phone) : 'Teléfono'} • {formData.email || 'Email'}</p>
+                <p>Horario: {formData.openingHours === '24/7' ? 'Abierto 24/7' : `${formData.openingHours} - ${formData.closingHours}`}</p>
                 <p>Moneda: {currencies.find(c => c.value === formData.currency)?.label || 'MXN - Peso Mexicano'}</p>
               </div>
             </div>
