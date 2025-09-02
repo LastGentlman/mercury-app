@@ -330,49 +330,86 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
         return (
           <div className="space-y-4">
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="open-24-7"
-                  checked={formData.openingHours === '24/7'}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      handleInputChange('openingHours', '24/7');
-                      handleInputChange('closingHours', '24/7');
-                    } else {
-                      handleInputChange('openingHours', '09:00');
-                      handleInputChange('closingHours', '18:00');
-                    }
-                  }}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                />
-                <Label htmlFor="open-24-7" className="text-sm font-medium text-gray-700">
-                  Abierto 24/7 (24 horas, 7 días a la semana)
-                </Label>
+              <div className="relative">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="open-24-7"
+                    checked={formData.openingHours === '24/7'}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        handleInputChange('openingHours', '24/7');
+                        handleInputChange('closingHours', '24/7');
+                      } else {
+                        handleInputChange('openingHours', '09:00');
+                        handleInputChange('closingHours', '18:00');
+                      }
+                    }}
+                    className="sr-only"
+                  />
+                  <label
+                    htmlFor="open-24-7"
+                    className={`relative flex items-center cursor-pointer transition-all duration-200 ${
+                      formData.openingHours === '24/7' 
+                        ? 'text-blue-600' 
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 border-2 rounded-lg mr-3 flex items-center justify-center transition-all duration-200 ${
+                      formData.openingHours === '24/7'
+                        ? 'border-blue-600 bg-blue-600'
+                        : 'border-gray-300 bg-white hover:border-gray-400'
+                    }`}>
+                      {formData.openingHours === '24/7' && (
+                        <Check className="w-4 h-4 text-white" />
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-white" />
+                      </div>
+                      <div>
+                        <span className="font-medium">Abierto 24/7</span>
+                        <p className="text-xs text-gray-500">24 horas, 7 días a la semana</p>
+                      </div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               {formData.openingHours !== '24/7' && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="opening-hours">Hora de Apertura <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="opening-hours"
-                      type="time"
-                      value={formData.openingHours}
-                      onChange={(e) => handleInputChange('openingHours', e.target.value)}
-                    />
+                <>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-gray-200" />
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-gray-500">O especifica horarios personalizados</span>
+                    </div>
                   </div>
+                  
+                                    <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="opening-hours">Hora de Apertura <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="opening-hours"
+                        type="time"
+                        value={formData.openingHours}
+                        onChange={(e) => handleInputChange('openingHours', e.target.value)}
+                      />
+                    </div>
 
-                  <div>
-                    <Label htmlFor="closing-hours">Hora de Cierre <span className="text-red-500">*</span></Label>
-                    <Input
-                      id="closing-hours"
-                      type="time"
-                      value={formData.closingHours}
-                      onChange={(e) => handleInputChange('closingHours', e.target.value)}
-                    />
+                    <div>
+                      <Label htmlFor="closing-hours">Hora de Cierre <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="closing-hours"
+                        type="time"
+                        value={formData.closingHours}
+                        onChange={(e) => handleInputChange('closingHours', e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
 

@@ -113,7 +113,14 @@ export class BusinessService {
 
     // Decodificar el token para obtener el user ID
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (!token) {
+        throw new Error('Token de autenticación requerido');
+      }
+      const tokenString = token as string;
+      const parts = tokenString.split('.');
+      if (parts.length < 2 || !parts[1]) throw new Error('Token inválido');
+
+      const payload = JSON.parse(atob(parts[1]));
       const userId = payload.sub;
       
       const { data: profile } = await supabase
@@ -198,7 +205,11 @@ export class BusinessService {
       if (!token) {
         throw new Error('Token de autenticación requerido');
       }
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const tokenString = token as string;
+      const parts = tokenString.split('.');
+      if (parts.length < 2 || !parts[1]) throw new Error('Token inválido');
+
+      const payload = JSON.parse(atob(parts[1]));
       const userId = payload.sub;
       
       const { error } = await supabase
