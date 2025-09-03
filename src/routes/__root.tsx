@@ -23,26 +23,29 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     // ✅ Global mobile scroll functionality
     useGlobalMobileScroll()
     
+    // Detect callback route to skip heavy UI
+    const isAuthCallback = globalThis.location?.pathname === '/auth/callback'
+    
     return (
       <>
-        <Header />
+        {!isAuthCallback && <Header />}
 
         {/* ✅ Offline Authentication Banner */}
-        <AutoConnectionBanner className="sticky top-0 z-50" />
+        {!isAuthCallback && <AutoConnectionBanner className="sticky top-0 z-50" />}
 
         <main className="min-h-screen">
           <Outlet />
         </main>
 
-        <BottomNavigation />
+        {!isAuthCallback && <BottomNavigation />}
         
-        <TanStackRouterDevtools />
-        <TanStackQueryLayout />
-        <PWAInstallButton />
-        <ConnectionStatus />
-        {import.meta.env.DEV && <OAuthDebugger />}
-        {import.meta.env.DEV && <ConnectionBannerDemo />}
-        {import.meta.env.DEV && <MobileScrollDebugger />}
+        {!isAuthCallback && <TanStackRouterDevtools />}
+        {!isAuthCallback && <TanStackQueryLayout />}
+        {!isAuthCallback && <PWAInstallButton />}
+        {!isAuthCallback && <ConnectionStatus />}
+        {import.meta.env.DEV && !isAuthCallback && <OAuthDebugger />}
+        {import.meta.env.DEV && !isAuthCallback && <ConnectionBannerDemo />}
+        {import.meta.env.DEV && !isAuthCallback && <MobileScrollDebugger />}
       </>
     )
   },

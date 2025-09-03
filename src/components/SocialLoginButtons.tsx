@@ -2,6 +2,7 @@ import React from 'react'
 import { OAuthModal } from './OAuthModal.tsx'
 import { useOAuthModal } from '../hooks/useOAuthModal.ts'
 import { AuthService } from '../services/auth-service.ts'
+import { perf } from '../utils/perf.ts'
 
 interface SocialLoginButtonsProps {
   className?: string
@@ -26,6 +27,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
     if (disabled) return
     
     try {
+      perf.mark(`oauth_button_click:${provider}`)
       // Iniciar OAuth directamente sin mostrar modal de confirmación
       await AuthService.socialLogin({
         provider,
@@ -44,6 +46,7 @@ export const SocialLoginButtons: React.FC<SocialLoginButtonsProps> = ({
   // 🎯 OPTIMIZACIÓN: Función para reintentar OAuth desde el modal
   const handleRetrySocialLogin = async (provider: 'google' | 'facebook') => {
     try {
+      perf.mark(`oauth_button_retry:${provider}`)
       await AuthService.socialLogin({
         provider,
         redirectTo: `${globalThis.location.origin}/auth/callback?source=retry`

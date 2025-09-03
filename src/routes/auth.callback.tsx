@@ -4,6 +4,7 @@ import { AuthService } from '../services/auth-service.ts'
 import { getSearchParams, getHash } from '../utils/browser.ts'
 import { logger } from '../utils/logger.ts'
 import type { AuthUser } from '../types/auth.ts'
+import { perf } from '../utils/perf.ts'
 
 export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
@@ -46,17 +47,18 @@ function detectOAuthParameters(): boolean {
 
 // ✅ OPTIMIZACIÓN 3: Enhanced Auth Check with Fragment Support
 async function directAuthCheck(): Promise<AuthUser | null> {
+  perf.mark('oauth_cb:start')
   logger.debug('🔍 Direct authentication check...', { component: 'AuthCallback' })
   
   // Check for OAuth parameters in both search and hash
   const hasOAuthParams = detectOAuthParameters()
+  perf.mark('oauth_cb:detected')
   
   if (hasOAuthParams) {
     logger.debug('🔑 OAuth parameters detected, processing...', { component: 'AuthCallback' })
     
-    // Give Supabase time to process URL parameters and hash fragments
-    // This is crucial for fragment-based OAuth flows
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    // Give Supabase minimal time to process URL parameters and hash fragments
+    await new Promise(resolve => setTimeout(resolve, 200))
     
     // Force Supabase to process the session from URL
     try {
@@ -80,30 +82,36 @@ async function directAuthCheck(): Promise<AuthUser | null> {
       logger.warn('⚠️ Supabase session processing failed:', { component: 'AuthCallback' })
     }
   }
+  perf.mark('oauth_cb:supabase_session_checked')
+  perf.measure('oauth_cb:to_supabase_session', 'oauth_cb:start', 'oauth_cb:supabase_session_checked')
   
-  // Try to get user from AuthService
+  // Try to get user from OAuth session only (avoid extra profile fetch here)
   try {
-    const user = await AuthService.getCurrentUser()
+    const user = await perf.timeAsync('oauth_cb:get_oauth_session', () => AuthService.getOAuthSession())
     if (user) {
-      logger.info('✅ User authenticated:', { email: user.email, component: 'AuthCallback' })
+      perf.mark('oauth_cb:user_ready')
+      perf.measure('oauth_cb:total_to_user', 'oauth_cb:start', 'oauth_cb:user_ready')
+      logger.info('✅ User authenticated (OAuth session):', { email: user.email, component: 'AuthCallback' })
       return user
     }
   } catch (_error) {
     logger.warn('⚠️ First attempt failed, trying fallback...', { component: 'AuthCallback' })
   }
   
-  // Enhanced fallback with longer delay for fragment-based auth
+  // Short fallback with minimal delay for fragment-based auth
   if (hasOAuthParams) {
     logger.debug('🔄 Enhanced fallback for OAuth parameters...', { component: 'AuthCallback' })
-    await new Promise(resolve => setTimeout(resolve, 1500))
+    await new Promise(resolve => setTimeout(resolve, 250))
   } else {
-    await new Promise(resolve => setTimeout(resolve, 800))
+    await new Promise(resolve => setTimeout(resolve, 150))
   }
   
   try {
-    const user = await AuthService.getCurrentUser()
+    const user = await perf.timeAsync('oauth_cb:get_oauth_session_retry', () => AuthService.getOAuthSession())
     if (user) {
-      logger.info('✅ User authenticated on retry:', { email: user.email, component: 'AuthCallback' })
+      perf.mark('oauth_cb:user_ready')
+      perf.measure('oauth_cb:total_to_user', 'oauth_cb:start', 'oauth_cb:user_ready')
+      logger.info('✅ User authenticated on retry (OAuth session):', { email: user.email, component: 'AuthCallback' })
       return user
     }
   } catch (error) {
@@ -136,6 +144,7 @@ export const OptimizedAuthCallback = () => {
     const handleAuth = async () => {
       try {
         logger.info('🚀 Starting optimized auth flow...', { component: 'AuthCallback' })
+        perf.mark('oauth_cb:component_mounted')
         
         // Log current URL state for debugging
         const currentUrl = globalThis.location.href
@@ -183,8 +192,9 @@ export const OptimizedAuthCallback = () => {
         // ✅ NAVIGATE ONCE - Prevent multiple navigation with multiple fallbacks
         if (!isNavigating.current) {
           isNavigating.current = true
+          perf.mark('oauth_cb:navigate_start')
           
-          // Primary navigation attempt
+          // Primary navigation attempt (no artificial delay)
           setTimeout(() => {
             logger.info('🎯 Attempting TanStack Router navigation to: /dashboard', { component: 'AuthCallback' })
             try {
@@ -193,7 +203,7 @@ export const OptimizedAuthCallback = () => {
               logger.error('❌ TanStack Router navigation failed, trying window.location:', navError as Error)
               globalThis.window.location.href = '/dashboard'
             }
-          }, 600)
+          }, 0)
           
           // Secondary fallback after 2 seconds
           setTimeout(() => {
@@ -315,6 +325,6 @@ export const OptimizedAuthCallback = () => {
   )
 }
 
-export default function AuthCallbackPage() {
+function AuthCallbackPage() {
   return <OptimizedAuthCallback />
 } 

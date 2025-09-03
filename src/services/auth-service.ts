@@ -17,6 +17,7 @@ import type {
 import { supabase } from '../utils/supabase.ts'
 import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors.ts'
 import { env } from '../env.ts'
+import { perf } from '../utils/perf.ts'
 
 /**
  * Gets the API base URL from environment
@@ -211,24 +212,30 @@ export class AuthService {
     }
 
     try {
+      perf.mark(`oauth_initiate:${provider}:start`)
       const callbackUrl = redirectTo || `${globalThis.location.origin}/auth/callback`
       console.log(`🚀 Iniciando login con ${provider} (Modal → Redirect)...`)
       console.log('📍 Callback URL:', callbackUrl)
+        
+      // ✅ Minimal scopes by default; enable extended scopes via env flag
+      const useExtendedScopes = provider === 'google' && env.VITE_GOOGLE_OAUTH_EXTENDED_SCOPES === 'true'
+      const scopes = provider === 'google'
+        ? (useExtendedScopes 
+            ? 'openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
+            : 'openid email profile')
+        : 'email'
+      const queryParams = provider === 'google' && useExtendedScopes ? {
+        access_type: 'offline',
+        prompt: 'consent',
+        include_granted_scopes: 'true',
+      } : {}
         
       const { error } = await supabase.auth.signInWithOAuth({
         provider: provider,
         options: {
           redirectTo: callbackUrl,
-          // ✅ SIN skipBrowserRedirect - dejamos que Supabase maneje el redirect
-          queryParams: provider === 'google' ? {
-            access_type: 'offline',
-            prompt: 'consent',
-            include_granted_scopes: 'true',
-            scope: 'openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
-          } : {},
-          scopes: provider === 'google' 
-            ? 'openid email profile https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email'
-            : 'email'
+          queryParams,
+          scopes,
         },
       })
 
@@ -623,7 +630,7 @@ export class AuthService {
     const data = await response.json()
     return { message: data.message }
   }
-
+  
 }
 
  
