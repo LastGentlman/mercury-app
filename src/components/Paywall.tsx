@@ -22,6 +22,9 @@ import { useAuth } from '../hooks/useAuth.ts';
 import { useAuthToken } from '../hooks/useStorageSync.ts';
 import { env } from '../env.ts';
 
+// Use proper Stripe types from the library
+import type { Stripe, StripeElements as _StripeElements, StripeElement } from '@stripe/stripe-js';
+
 interface PaywallProps {
   businessData: {
     name: string;
@@ -37,10 +40,6 @@ interface PaywallProps {
 }
 
 interface PaymentFormData {
-  cardNumber: string;
-  expMonth: string;
-  expYear: string;
-  cvc: string;
   billingName: string;
   billingEmail: string;
 }
@@ -88,13 +87,9 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
   const [selectedPlan, setSelectedPlan] = useState('yearly');
   const [isLoading, setIsLoading] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(true);
-  const [stripe, setStripe] = useState<any>(null);
-  const [elements, setElements] = useState<any>(null);
+  const [_stripe, setStripe] = useState<Stripe | null>(null);
+  const [cardElement, setCardElement] = useState<StripeElement | null>(null);
   const [paymentData, setPaymentData] = useState<PaymentFormData>({
-    cardNumber: '',
-    expMonth: '',
-    expYear: '',
-    cvc: '',
     billingName: user?.name || '',
     billingEmail: user?.email || ''
   });
@@ -112,6 +107,31 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
         const stripeInstance = await loadStripe(stripeKey);
         if (stripeInstance) {
           setStripe(stripeInstance);
+          
+          // Create card element
+          const elements = stripeInstance.elements();
+          const cardElement = elements.create('card', {
+            style: {
+              base: {
+                fontSize: '16px',
+                color: '#424770',
+                '::placeholder': {
+                  color: '#aab7c4',
+                },
+              },
+              invalid: {
+                color: '#9e2146',
+              },
+            },
+          });
+          
+          setCardElement(cardElement);
+          
+          // Mount the card element
+          const cardElementContainer = document.getElementById('card-element');
+          if (cardElementContainer) {
+            cardElement.mount(cardElementContainer);
+          }
         }
       } catch (error) {
         console.error('Error loading Stripe:', error);
@@ -133,16 +153,8 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
       notifications.error('El email de facturación es requerido');
       return false;
     }
-    if (!paymentData.cardNumber.replace(/\s/g, '')) {
-      notifications.error('El número de tarjeta es requerido');
-      return false;
-    }
-    if (!paymentData.expMonth || !paymentData.expYear) {
-      notifications.error('La fecha de expiración es requerida');
-      return false;
-    }
-    if (!paymentData.cvc) {
-      notifications.error('El código de seguridad es requerido');
+    if (!cardElement) {
+      notifications.error('El formulario de tarjeta no está listo');
       return false;
     }
     return true;
@@ -171,15 +183,7 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
           billingEmail: paymentData.billingEmail,
           currency: businessData.currency,
           taxRegime: '605', // Por defecto
-          paymentMethod: {
-            type: 'card',
-            card: {
-              number: paymentData.cardNumber.replace(/\s/g, ''),
-              exp_month: parseInt(paymentData.expMonth),
-              exp_year: parseInt(paymentData.expYear),
-              cvc: paymentData.cvc
-            }
-          }
+          // Payment method will be handled by Stripe Elements
         })
       });
 
@@ -200,21 +204,6 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
 
   const handleInputChange = (field: keyof PaymentFormData, value: string) => {
     setPaymentData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches && matches[0] || '';
-    const parts = [];
-    for (let i = 0, len = match.length; i < len; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    if (parts.length) {
-      return parts.join(' ');
-    } else {
-      return v;
-    }
   };
 
   const selectedPlanData = pricingPlans.find(p => p.id === selectedPlan);
@@ -369,74 +358,26 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
                     </div>
                   </div>
 
-                  {/* Tarjeta de Crédito */}
+                  {/* Stripe Card Element */}
                   <div>
-                    <Label htmlFor="cardNumber" className="flex items-center space-x-2">
+                    <Label className="flex items-center space-x-2">
                       <CreditCard className="w-4 h-4" />
-                      <span>Número de Tarjeta</span>
+                      <span>Información de Tarjeta</span>
                     </Label>
-                    <Input
-                      id="cardNumber"
-                      value={paymentData.cardNumber}
-                      onChange={(e) => handleInputChange('cardNumber', formatCardNumber(e.target.value))}
-                      placeholder="1234 5678 9012 3456"
-                      maxLength={19}
-                      className="font-mono"
-                    />
+                    <div 
+                      id="card-element" 
+                      className="border border-gray-300 rounded-md p-3 min-h-[40px] bg-white"
+                    >
+                      {stripeLoading && (
+                        <div className="flex items-center justify-center h-8">
+                          <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                          <span className="text-sm text-gray-500 ml-2">Cargando formulario de tarjeta...</span>
+                        </div>
+                      )}
+                    </div>
                     <p className="text-xs text-gray-500 mt-1">
-                      Ingresa el número de tu tarjeta sin espacios
+                      Ingresa los datos de tu tarjeta de crédito o débito
                     </p>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <Label htmlFor="expMonth">Mes de Expiración</Label>
-                      <Input
-                        id="expMonth"
-                        value={paymentData.expMonth}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 12)) {
-                            handleInputChange('expMonth', value);
-                          }
-                        }}
-                        placeholder="MM"
-                        maxLength={2}
-                        className="text-center"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="expYear">Año de Expiración</Label>
-                      <Input
-                        id="expYear"
-                        value={paymentData.expYear}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          if (value === '' || (parseInt(value) >= 23 && parseInt(value) <= 99)) {
-                            handleInputChange('expYear', value);
-                          }
-                        }}
-                        placeholder="YY"
-                        maxLength={2}
-                        className="text-center"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cvc">Código de Seguridad</Label>
-                      <Input
-                        id="cvc"
-                        value={paymentData.cvc}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/\D/g, '');
-                          if (value === '' || (parseInt(value) >= 0 && parseInt(value) <= 9999)) {
-                            handleInputChange('cvc', value);
-                          }
-                        }}
-                        placeholder="123"
-                        maxLength={4}
-                        className="text-center"
-                      />
-                    </div>
                   </div>
 
                   {/* Security Notice */}
