@@ -92,15 +92,17 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        let errorMessage = `Error ${response.status}`;
+        let message = `Error ${response.status}`;
         try {
           const text = await response.text();
           if (text) {
             const errorData = JSON.parse(text);
-            errorMessage = errorData.error || errorMessage;
+            const base = errorData.error || message;
+            const details = errorData.details ? `: ${String(errorData.details)}` : '';
+            message = `${base}${details}`;
           }
         } catch {}
-        throw new Error(errorMessage || 'Error al crear el negocio');
+        throw new Error(message || 'Error al crear el negocio');
       }
 
       const resultText = await response.text();
@@ -118,15 +120,17 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        let errorMessage = `Error ${response.status}`;
+        let message = `Error ${response.status}`;
         try {
           const text = await response.text();
           if (text) {
             const errorData = JSON.parse(text);
-            errorMessage = errorData.error || errorMessage;
+            const base = errorData.error || message;
+            const details = errorData.details ? `: ${String(errorData.details)}` : '';
+            message = `${base}${details}`;
           }
         } catch {}
-        throw new Error(errorMessage || 'Error al crear el negocio');
+        throw new Error(message || 'Error al crear el negocio');
       }
 
       const resultText = await response.text();
@@ -222,15 +226,17 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        let errorMessage = `Error ${response.status}`;
+        let message = `Error ${response.status}`;
         try {
           const text = await response.text();
           if (text) {
             const errorData = JSON.parse(text);
-            errorMessage = errorData.error || errorMessage;
+            const base = errorData.error || message;
+            const details = errorData.details ? `: ${String(errorData.details)}` : '';
+            message = `${base}${details}`;
           }
         } catch {}
-        throw new Error(errorMessage || 'Error al unirse al negocio');
+        throw new Error(message || 'Error al unirse al negocio');
       }
 
       const resultText = await response.text();
@@ -248,15 +254,17 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        let errorMessage = `Error ${response.status}`;
+        let message = `Error ${response.status}`;
         try {
           const text = await response.text();
           if (text) {
             const errorData = JSON.parse(text);
-            errorMessage = errorData.error || errorMessage;
+            const base = errorData.error || message;
+            const details = errorData.details ? `: ${String(errorData.details)}` : '';
+            message = `${base}${details}`;
           }
         } catch {}
-        throw new Error(errorMessage || 'Error al unirse al negocio');
+        throw new Error(message || 'Error al unirse al negocio');
       }
 
       const resultText = await response.text();
