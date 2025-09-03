@@ -436,7 +436,13 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
               <div className="space-y-1 text-sm text-blue-800">
                 <p><strong>{formData.name || 'Nombre del Negocio'}</strong></p>
                 <p>{businessTypes.find(t => t.value === formData.type)?.label || 'Tipo de Negocio'}</p>
-                <p>{formData.description || 'Descripción del negocio'}</p>
+                <p>
+                  {formData.description ? (
+                    formData.description
+                  ) : (
+                    <span className="text-gray-400 italic">— Sin descripción</span>
+                  )}
+                </p>
                 <p>{formData.address || 'Dirección'}</p>
                 <p>{formData.phone ? formatPhoneNumber(formData.phone) : 'Teléfono'} • {formData.email || 'Email'}</p>
                 <p>Horario: {formData.openingHours === '24/7' ? 'Abierto 24/7' : `${formData.openingHours} - ${formData.closingHours}`}</p>
