@@ -74,6 +74,37 @@ export function PhoneInput({
   // Estado para validación local
   const [localError, setLocalError] = useState<string | undefined>(error);
 
+  // Map de longitudes máximas locales por país (sin prefijo, solo dígitos)
+  const getMaxLocalLength = (code: string): number => {
+    switch (code) {
+      case 'MX': return 10;
+      case 'US':
+      case 'CA':
+      case 'DO':
+      case 'PR': return 10;
+      case 'GB': return 10;
+      case 'ES':
+      case 'FR':
+      case 'DE':
+      case 'AR':
+      case 'CO':
+      case 'PE':
+      case 'CL':
+      case 'BR':
+      case 'VE': return 9;
+      case 'EC': return 8;
+      case 'BO':
+      case 'UY':
+      case 'GT':
+      case 'SV':
+      case 'HN':
+      case 'NI':
+      case 'CR':
+      case 'PA': return 7;
+      default: return 10;
+    }
+  };
+
   // Extraer el número del teléfono completo (sin prefijo)
   const getPhoneNumber = (fullPhone: string | undefined) => {
     if (!fullPhone) return '';
@@ -91,17 +122,30 @@ export function PhoneInput({
   };
 
   // Manejar cambio en el número de teléfono
-  const handlePhoneChange = (phoneNumber: string) => {
-    const fullPhone = getFullPhone(phoneNumber);
+  const handlePhoneChange = (inputValue: string) => {
+    // Permitir solo dígitos y limitar por longitud local del país
+    const digitsOnly = inputValue.replace(/\D/g, '');
+    const maxLen = getMaxLocalLength(selectedCountry.code);
+    const limited = digitsOnly.slice(0, maxLen);
+
+    const fullPhone = getFullPhone(limited);
     onChange(fullPhone);
     
     // Validación en tiempo real si está habilitada
-    if (validateOnChange && phoneNumber) {
-      const validationResult = validatePhoneWithDetails(phoneNumber);
-      if (!validationResult.isValid) {
-        setLocalError(validationResult.reason || 'Formato inválido');
+    if (validateOnChange) {
+      if (digitsOnly.length > maxLen) {
+        setLocalError(`Muy largo (${digitsOnly.length} dígitos, máximo ${maxLen})`);
+        return;
+      }
+      if (limited) {
+        const validationResult = validatePhoneWithDetails(limited);
+        if (!validationResult.isValid) {
+          setLocalError(validationResult.reason || 'Formato inválido');
+        } else {
+          setLocalError(undefined);
+        }
       } else {
-        setLocalError(undefined);
+        setLocalError(required ? 'Número vacío' : undefined);
       }
     }
   };
@@ -112,8 +156,16 @@ export function PhoneInput({
     if (country) {
       setSelectedCountry(country);
       const currentNumber = getPhoneNumber(value);
-      const newFullPhone = getFullPhone(currentNumber);
+      const maxLen = getMaxLocalLength(country.code);
+      const sanitized = currentNumber.replace(/\D/g, '').slice(0, maxLen);
+      const newFullPhone = getFullPhone(sanitized);
       onChange(newFullPhone);
+
+      // Re-validar al cambiar país
+      if (validateOnChange && sanitized) {
+        const validationResult = validatePhoneWithDetails(sanitized);
+        setLocalError(validationResult.isValid ? undefined : validationResult.reason || 'Formato inválido');
+      }
     }
   };
 
@@ -133,6 +185,7 @@ export function PhoneInput({
   }, [error]);
 
   const phoneNumber = getPhoneNumber(value || '');
+  const maxLocalLength = getMaxLocalLength(selectedCountry.code);
 
   return (
     <div className={cn("space-y-2", className)}>
@@ -181,6 +234,10 @@ export function PhoneInput({
             (localError || error) && "border-red-500 focus:border-red-500"
           )}
           disabled={disabled}
+          maxLength={maxLocalLength}
+          aria-invalid={!!(localError || error)}
+          inputMode="numeric"
+          pattern="[0-9]*"
         />
       </div>
       
