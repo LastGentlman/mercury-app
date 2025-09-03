@@ -16,6 +16,7 @@ import { useAuthToken } from '../hooks/useStorageSync.ts';
 import { useCSRFRequest } from '../hooks/useCSRF.ts';
 import { BusinessService } from '../services/business-service.ts';
 import { getLocalPhoneNumber } from '../lib/validation/phone.ts';
+import { Paywall } from './Paywall.tsx';
 
 interface BusinessSetupProps {
   onBusinessSetup?: (businessId: string) => void;
@@ -81,6 +82,9 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   // Form state for joining existing business
   const [businessCode, setBusinessCode] = useState('');
 
+  // Agregar estado para la paywall
+  const [showPaywall, setShowPaywall] = useState(false);
+
   const steps = [
     {
       title: 'Información Básica',
@@ -136,26 +140,9 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       return;
     }
 
-    setIsLoading(true);
-    try {
-      // Convertir datos del formulario al formato de la API
-      const apiData = BusinessService.convertFormDataToAPI(formData);
-      
-      // Crear el negocio usando el servicio real
-      const business = await BusinessService.createBusiness(apiData, authToken || undefined, csrfRequest);
-      
-      // Actualizar el perfil del usuario con el businessId
-      await BusinessService.updateUserBusiness(business.id, authToken || undefined);
-      
-      notifications.success('¡Negocio creado exitosamente!');
-      setIsOpen(false);
-      onBusinessSetup?.(business.id);
-    } catch (error) {
-      console.error('Error creating business:', error);
-      notifications.error(error instanceof Error ? error.message : 'Error al crear el negocio');
-    } finally {
-      setIsLoading(false);
-    }
+    // En lugar de crear el negocio directamente, mostrar la paywall
+    setShowPaywall(true);
+    setIsOpen(false);
   };
 
   const handleJoinBusiness = async () => {
@@ -340,34 +327,45 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                     </div>
                   </div>
                   
-                  {/* Toggle Switch */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (formData.openingHours === '24/7') {
-                        handleInputChange('openingHours', '09:00');
-                        handleInputChange('closingHours', '18:00');
-                      } else {
-                        handleInputChange('openingHours', '24/7');
-                        handleInputChange('closingHours', '24/7');
-                      }
-                    }}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                  <div className="flex items-center space-x-3">
+                    {/* Status Indicator */}
+                    <span className={`text-sm font-medium ${
                       formData.openingHours === '24/7' 
-                        ? 'bg-blue-600' 
-                        : 'bg-gray-200'
-                    }`}
-                    role="switch"
-                    aria-checked={formData.openingHours === '24/7'}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        ? 'text-blue-600' 
+                        : 'text-gray-500'
+                    }`}>
+                      {formData.openingHours === '24/7' ? 'Activado' : 'Desactivado'}
+                    </span>
+                    
+                    {/* Toggle Switch */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (formData.openingHours === '24/7') {
+                          handleInputChange('openingHours', '09:00');
+                          handleInputChange('closingHours', '18:00');
+                        } else {
+                          handleInputChange('openingHours', '24/7');
+                          handleInputChange('closingHours', '24/7');
+                        }
+                      }}
+                      className={`relative inline-flex h-7 w-14 items-center rounded-full transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                         formData.openingHours === '24/7' 
-                          ? 'translate-x-6' 
-                          : 'translate-x-1'
+                          ? 'bg-blue-600 shadow-lg' 
+                          : 'bg-gray-300 hover:bg-gray-400'
                       }`}
-                    />
-                  </button>
+                      role="switch"
+                      aria-checked={formData.openingHours === '24/7'}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-all duration-200 ease-in-out ${
+                          formData.openingHours === '24/7' 
+                            ? 'translate-x-8' 
+                            : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
                 
                 <p className="text-sm text-gray-600 mt-2">
@@ -771,6 +769,17 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
           </button>
         </nav>
       </div>
+
+      {showPaywall && (
+        <Paywall
+          businessData={formData}
+          onSuccess={(businessId) => {
+            setShowPaywall(false);
+            onBusinessSetup?.(businessId);
+          }}
+          onClose={() => setShowPaywall(false)}
+        />
+      )}
     </div>
   );
 }

@@ -23,6 +23,7 @@ export const env = createEnv({
     VITE_ENABLE_SENTRY_DEV: z.string().optional(),
     VITE_GOOGLE_OAUTH_EXTENDED_SCOPES: z.string().optional(),
     VITE_OAUTH_PERF_LOGS: z.string().optional(),
+    VITE_STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   },
 
   /**
