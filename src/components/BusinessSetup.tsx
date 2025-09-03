@@ -15,6 +15,7 @@ import { useAuth } from '../hooks/useAuth.ts';
 import { useAuthToken } from '../hooks/useStorageSync.ts';
 import { useCSRFRequest } from '../hooks/useCSRF.ts';
 import { BusinessService } from '../services/business-service.ts';
+import { getLocalPhoneNumber } from '../lib/validation/phone.ts';
 
 interface BusinessSetupProps {
   onBusinessSetup?: (businessId: string) => void;
@@ -103,19 +104,17 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   };
 
   const formatPhoneNumber = (phone: string): string => {
-    // Remover todos los caracteres no numéricos
-    const cleaned = phone.replace(/\D/g, '');
-    
-    // Aplicar formato según la longitud
-    if (cleaned.length === 10) {
-      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
-    } else if (cleaned.length === 11) {
-      return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7)}`;
-    } else if (cleaned.length === 7) {
-      return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+    // Extraer número local (sin prefijos) y formatear con guiones para legibilidad
+    const local = getLocalPhoneNumber(phone).replace(/\D/g, '');
+    if (local.length === 10) {
+      return `${local.slice(0, 3)}-${local.slice(3, 6)}-${local.slice(6)}`;
     }
-    
-    // Si no coincide con ningún formato estándar, devolver el original
+    if (local.length === 11) {
+      return `${local.slice(0, 3)}-${local.slice(3, 7)}-${local.slice(7)}`;
+    }
+    if (local.length === 7) {
+      return `${local.slice(0, 3)}-${local.slice(3)}`;
+    }
     return phone;
   };
 
