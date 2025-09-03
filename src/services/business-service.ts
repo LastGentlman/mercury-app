@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabase.ts';
+import { BACKEND_URL } from '../config.ts';
 
 export interface BusinessFormData {
   name: string;
@@ -79,9 +80,9 @@ export class BusinessService {
       token = session.access_token;
     }
 
-    // Use CSRF request if provided, otherwise fall back to direct fetch
+    const endpoint = `${BACKEND_URL}/api/business/activate-trial`;
     if (csrfRequest) {
-      const response = await csrfRequest('/api/business/activate-trial', {
+      const response = await csrfRequest(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -91,15 +92,23 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear el negocio');
+        let errorMessage = `Error ${response.status}`;
+        try {
+          const text = await response.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch {}
+        throw new Error(errorMessage || 'Error al crear el negocio');
       }
 
-      const result = await response.json();
-      return result.business;
+      const resultText = await response.text();
+      const result = resultText ? JSON.parse(resultText) : {};
+      return (result as any).business;
     } else {
       // Fallback to direct fetch (for testing or when CSRF is not available)
-      const response = await fetch('/api/business/activate-trial', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,12 +118,20 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al crear el negocio');
+        let errorMessage = `Error ${response.status}`;
+        try {
+          const text = await response.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch {}
+        throw new Error(errorMessage || 'Error al crear el negocio');
       }
 
-      const result = await response.json();
-      return result.business;
+      const resultText = await response.text();
+      const result = resultText ? JSON.parse(resultText) : {};
+      return (result as any).business;
     }
   }
 
@@ -193,9 +210,9 @@ export class BusinessService {
       token = session.access_token;
     }
 
-    // Use CSRF request if provided, otherwise fall back to direct fetch
+    const endpoint = `${BACKEND_URL}/api/business/join`;
     if (csrfRequest) {
-      const response = await csrfRequest('/api/business/join', {
+      const response = await csrfRequest(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,15 +222,23 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al unirse al negocio');
+        let errorMessage = `Error ${response.status}`;
+        try {
+          const text = await response.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch {}
+        throw new Error(errorMessage || 'Error al unirse al negocio');
       }
 
-      const result = await response.json();
-      return result.business;
+      const resultText = await response.text();
+      const result = resultText ? JSON.parse(resultText) : {};
+      return (result as any).business;
     } else {
       // Fallback to direct fetch (for testing or when CSRF is not available)
-      const response = await fetch('/api/business/join', {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -223,12 +248,20 @@ export class BusinessService {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Error al unirse al negocio');
+        let errorMessage = `Error ${response.status}`;
+        try {
+          const text = await response.text();
+          if (text) {
+            const errorData = JSON.parse(text);
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch {}
+        throw new Error(errorMessage || 'Error al unirse al negocio');
       }
 
-      const result = await response.json();
-      return result.business;
+      const resultText = await response.text();
+      const result = resultText ? JSON.parse(resultText) : {};
+      return (result as any).business;
     }
   }
 
