@@ -332,46 +332,47 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
           <div className="space-y-4">
             <div className="space-y-4">
               <div className="relative">
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="open-24-7"
-                    checked={formData.openingHours === '24/7'}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        handleInputChange('openingHours', '24/7');
-                        handleInputChange('closingHours', '24/7');
-                      } else {
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2">
+                      <Clock className="w-5 h-5 text-blue-600" />
+                      <span className="font-medium text-gray-900">Abierto 24/7</span>
+                    </div>
+                  </div>
+                  
+                  {/* Toggle Switch */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (formData.openingHours === '24/7') {
                         handleInputChange('openingHours', '09:00');
                         handleInputChange('closingHours', '18:00');
+                      } else {
+                        handleInputChange('openingHours', '24/7');
+                        handleInputChange('closingHours', '24/7');
                       }
                     }}
-                    className="sr-only"
-                  />
-                  <label
-                    htmlFor="open-24-7"
-                    className={`relative flex items-center cursor-pointer transition-all duration-200 ${
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
                       formData.openingHours === '24/7' 
-                        ? 'text-blue-600' 
-                        : 'text-gray-500 hover:text-gray-700'
+                        ? 'bg-blue-600' 
+                        : 'bg-gray-200'
                     }`}
+                    role="switch"
+                    aria-checked={formData.openingHours === '24/7'}
                   >
-                    <div className={`w-6 h-6 border-2 rounded-lg mr-3 flex items-center justify-center transition-all duration-200 ${
-                      formData.openingHours === '24/7'
-                        ? 'border-blue-600 bg-blue-600'
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}>
-                      {formData.openingHours === '24/7' && (
-                        <Check className="w-4 h-4 text-white" />
-                      )}
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div>
-                        <span className="font-medium">Abierto 24/7</span>
-                      </div>
-                    </div>
-                  </label>
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        formData.openingHours === '24/7' 
+                          ? 'translate-x-6' 
+                          : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
                 </div>
+                
+                <p className="text-sm text-gray-600 mt-2">
+                  Activa esta opción si tu negocio está abierto las 24 horas del día, los 7 días de la semana
+                </p>
               </div>
 
               {formData.openingHours !== '24/7' && (
