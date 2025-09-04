@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SweetalertDemoRouteImport } from './routes/sweetalert-demo'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductsRouteImport } from './routes/products'
+import { Route as PaywallRouteImport } from './routes/paywall'
 import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-design-system-demo'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -34,6 +35,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const ProductsRoute = ProductsRouteImport.update({
   id: '/products',
   path: '/products',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaywallRoute = PaywallRouteImport.update({
+  id: '/paywall',
+  path: '/paywall',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EnhancedDesignSystemDemoRoute =
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/sweetalert-demo': typeof SweetalertDemoRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/sweetalert-demo': typeof SweetalertDemoRoute
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/sweetalert-demo': typeof SweetalertDemoRoute
@@ -128,6 +137,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/paywall'
     | '/products'
     | '/profile'
     | '/sweetalert-demo'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/paywall'
     | '/products'
     | '/profile'
     | '/sweetalert-demo'
@@ -154,6 +165,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/paywall'
     | '/products'
     | '/profile'
     | '/sweetalert-demo'
@@ -168,6 +180,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DesignSystemRoute: typeof DesignSystemRoute
   EnhancedDesignSystemDemoRoute: typeof EnhancedDesignSystemDemoRoute
+  PaywallRoute: typeof PaywallRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
   SweetalertDemoRoute: typeof SweetalertDemoRoute
@@ -194,6 +207,13 @@ declare module '@tanstack/react-router' {
       path: '/products'
       fullPath: '/products'
       preLoaderRoute: typeof ProductsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/paywall': {
+      id: '/paywall'
+      path: '/paywall'
+      fullPath: '/paywall'
+      preLoaderRoute: typeof PaywallRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/enhanced-design-system-demo': {
@@ -273,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DesignSystemRoute: DesignSystemRoute,
   EnhancedDesignSystemDemoRoute: EnhancedDesignSystemDemoRoute,
+  PaywallRoute: PaywallRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
   SweetalertDemoRoute: SweetalertDemoRoute,

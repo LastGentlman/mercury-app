@@ -15,7 +15,7 @@ function PaywallPage() {
     description: ''
   }
 
-  const handleSuccess = (businessId: string) => {
+  const handleSuccess = (_businessId: string) => {
     window.location.href = '/dashboard'
   }
 
