@@ -420,28 +420,18 @@ export class ProfileService {
    * Delete user account
    */
   static async deleteAccount(): Promise<void> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured')
-    }
-
-    const { data: { user } } = await supabase.auth.getUser()
+    // Get the auth token from localStorage (more reliable than Supabase session)
+    const authToken = localStorage.getItem('authToken')
     
-    if (!user) {
-      throw new Error('No authenticated user')
-    }
-
-    // Get the session for the authorization header
-    const { data: { session } } = await supabase.auth.getSession()
-    
-    if (!session?.access_token) {
-      throw new Error('No valid session found')
+    if (!authToken) {
+      throw new Error('No authenticated user - please log in again')
     }
 
     // Call the backend endpoint for account deletion
     const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/account`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${session.access_token}`,
+        'Authorization': `Bearer ${authToken}`,
         'Content-Type': 'application/json'
       }
     })
