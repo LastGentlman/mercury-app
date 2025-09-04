@@ -167,7 +167,7 @@ export class OfflineAuthManager {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 segundos timeout
 
-      const response = await fetch('/api/auth/verify-token', {
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL || 'http://localhost:3030'}/api/auth/verify-token`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
