@@ -524,8 +524,8 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                   </Button>
                 </DialogTrigger>
 
-                <DialogContent className="sm:max-w-[500px] bg-white">
-                  <DialogHeader>
+                <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white">
+                  <DialogHeader className="pb-4">
                     <DialogTitle>Configurar tu Negocio</DialogTitle>
                     <DialogDescription>
                       Elige cómo quieres comenzar con PedidoList
@@ -580,30 +580,33 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
           </div>
 
           {/* Navigation */}
-                      <div className="flex justify-between pt-4">
+                      <div className="flex flex-col sm:flex-row gap-3 pt-4 pb-2">
             <Button
               variant="outline"
               onClick={handlePrevious}
               disabled={currentStep === 0}
-                          size="sm"
+              size="sm"
+              className="w-full sm:w-auto order-2 sm:order-1"
             >
               Anterior
             </Button>
 
             {currentStep === steps.length - 1 ? (
               <Button
-                            onClick={handleCreateBusiness}
+                onClick={handleCreateBusiness}
                 disabled={!isStepValid() || isLoading}
-                            size="sm"
+                size="sm"
+                className="w-full sm:w-auto order-1 sm:order-2"
               >
-                            {isLoading ? 'Creando...' : 'Crear Negocio'}
-                            {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
+                {isLoading ? 'Creando...' : 'Crear Negocio'}
+                {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
               </Button>
             ) : (
               <Button
                 onClick={handleNext}
                 disabled={!isStepValid()}
-                            size="sm"
+                size="sm"
+                className="w-full sm:w-auto order-1 sm:order-2"
               >
                 Siguiente
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -697,7 +700,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                         </div>
                       </div>
 
-                      <DialogFooter className="pt-4">
+                      <DialogFooter className="pt-4 pb-2">
                         <Button
                           onClick={handleJoinBusiness}
                           disabled={isLoading || businessCode.length !== 11}

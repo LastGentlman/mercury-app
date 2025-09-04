@@ -156,14 +156,22 @@ export class AuthService {
       if (oauthUser) {
         // For OAuth users, get businessId from profile
         if (supabase) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('current_business_id')
-            .eq('id', oauthUser.id)
-            .single()
-          
-          if (profile?.current_business_id) {
-            oauthUser.businessId = profile.current_business_id
+          try {
+            const { data: profile, error } = await supabase
+              .from('profiles')
+              .select('current_business_id')
+              .eq('id', oauthUser.id)
+              .single()
+            
+            if (error) {
+              console.warn('Could not fetch business ID from profile:', error)
+              // Continue without business ID - it will be set later when needed
+            } else if (profile?.current_business_id) {
+              oauthUser.businessId = profile.current_business_id
+            }
+          } catch (profileError) {
+            console.warn('Error fetching profile for OAuth user:', profileError)
+            // Continue without business ID - it will be set later when needed
           }
         }
         return oauthUser

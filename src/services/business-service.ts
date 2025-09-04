@@ -169,11 +169,16 @@ export class BusinessService {
       const payload = JSON.parse(atob(parts[1]));
       const userId = payload.sub;
       
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('current_business_id')
         .eq('id', userId)
         .single();
+
+      if (profileError) {
+        console.warn('Could not fetch business ID from profile:', profileError);
+        return null;
+      }
 
       if (!profile?.current_business_id) {
         return null;
