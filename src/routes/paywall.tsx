@@ -1,12 +1,10 @@
-import { Paywall } from '../components/Paywall.tsx';
-import { useAuth } from '../hooks/useAuth.ts';
-import { useNavigate } from '@tanstack/react-router';
+import { createFileRoute } from '@tanstack/react-router'
+import { Paywall } from '../components/Paywall.tsx'
+import { useAuth } from '../hooks/useAuth.ts'
 
-export function PaywallPage() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
+function PaywallPage() {
+  const { user } = useAuth()
 
-  // Mock business data - in real app this would come from URL params or context
   const businessData = {
     name: 'Mi Negocio',
     email: user?.email || '',
@@ -15,17 +13,15 @@ export function PaywallPage() {
     currency: 'MXN',
     type: 'restaurant',
     description: ''
-  };
+  }
 
   const handleSuccess = (businessId: string) => {
-    // Redirect to dashboard after successful business creation
-    navigate({ to: '/dashboard' });
-  };
+    window.location.href = '/dashboard'
+  }
 
   const handleClose = () => {
-    // Go back to dashboard or home
-    navigate({ to: '/dashboard' });
-  };
+    window.location.href = '/dashboard'
+  }
 
   return (
     <Paywall
@@ -33,5 +29,9 @@ export function PaywallPage() {
       onSuccess={handleSuccess}
       onClose={handleClose}
     />
-  );
-} 
+  )
+}
+
+export const Route = createFileRoute('/paywall')({
+  component: PaywallPage,
+})
