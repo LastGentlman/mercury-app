@@ -137,34 +137,14 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
 
   const handleCreateBusiness = async () => {
     if (!formData.name || !formData.type || !formData.currency) {
-      notifications.error("Por favor completa todos los campos requeridos");
+      notifications.error('Por favor completa todos los campos requeridos');
       return;
     }
 
-    setIsLoading(true);
-    try {
-      // Convertir datos del formulario al formato de API
-      const businessData = BusinessService.convertFormDataToAPI(formData);
-      
-      // Crear el negocio usando el servicio
-      const business = await BusinessService.createBusiness(
-        businessData, 
-        authToken || undefined, 
-        csrfRequest
-      );
-
-      notifications.success("¡Negocio creado exitosamente!");
-      setIsOpen(false);
-      onBusinessSetup?.(business.id);
-      
-      // Redirigir al dashboard después de crear el negocio
-      navigate({ to: "/dashboard" });
-    } catch (error) {
-      console.error("Error creating business:", error);
-      notifications.error(error instanceof Error ? error.message : "Error al crear el negocio");
-    } finally {
-      setIsLoading(false);
-    }
+    // En lugar de crear el negocio directamente, redirigir al dashboard
+    setIsOpen(false);
+    // Por ahora redirigimos al dashboard, pero aquí iría la paywall
+    navigate({ to: '/dashboard' });
   };
 
   const handleJoinBusiness = async () => {
