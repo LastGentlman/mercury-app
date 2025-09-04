@@ -16,7 +16,7 @@ import { useAuthToken } from '../hooks/useStorageSync.ts';
 import { useCSRFRequest } from '../hooks/useCSRF.ts';
 import { BusinessService } from '../services/business-service.ts';
 import { getLocalPhoneNumber } from '../lib/validation/phone.ts';
-import { Paywall } from './Paywall.tsx';
+import { useNavigate } from '@tanstack/react-router';
 
 interface BusinessSetupProps {
   onBusinessSetup?: (businessId: string) => void;
@@ -82,8 +82,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
   // Form state for joining existing business
   const [businessCode, setBusinessCode] = useState('');
 
-  // Agregar estado para la paywall
-  const [showPaywall, setShowPaywall] = useState(false);
+  // No necesitamos estado para paywall, redirigiremos a la ruta
 
   const steps = [
     {
@@ -134,15 +133,18 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
     }
   };
 
+  const navigate = useNavigate();
+
   const handleCreateBusiness = async () => {
     if (!formData.name || !formData.type || !formData.currency) {
       notifications.error('Por favor completa todos los campos requeridos');
       return;
     }
 
-    // En lugar de crear el negocio directamente, mostrar la paywall
-    setShowPaywall(true);
+    // En lugar de crear el negocio directamente, redirigir al dashboard
     setIsOpen(false);
+    // Por ahora redirigimos al dashboard, pero aquí iría la paywall
+    navigate({ to: '/dashboard' });
   };
 
   const handleJoinBusiness = async () => {
@@ -770,16 +772,6 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
         </nav>
       </div>
 
-      {showPaywall && (
-        <Paywall
-          businessData={formData}
-          onSuccess={(businessId) => {
-            setShowPaywall(false);
-            onBusinessSetup?.(businessId);
-          }}
-          onClose={() => setShowPaywall(false)}
-        />
-      )}
     </div>
   );
 }

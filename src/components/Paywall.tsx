@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  CheckCircle, 
-  Clock, 
+  CheckCircle,
   CreditCard, 
   ArrowRight, 
   Gift,
@@ -200,7 +199,7 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
   // Si el negocio ya se creó, mostrar solo el mensaje de éxito
   if (businessCreated) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-gray-900 mb-3">
@@ -233,58 +232,64 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="p-4 border-b border-gray-200">
-          <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-900">
-              ¡Último paso!
-            </h2>
-            <p className="text-gray-600 text-sm mt-1">
-              Elige tu plan y comienza
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg sm:text-xl font-semibold text-gray-900">¡Último paso para tu negocio!</h1>
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-gray-700 text-sm underline"
+            >
+              Cancelar
+            </button>
           </div>
         </div>
+      </div>
 
-        <div className="p-4 space-y-6">
-          {/* Success Message */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <div className="flex items-start space-x-3">
-              <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-semibold text-green-900 mb-1">
-                  ¡Negocio configurado!
-                </h3>
-                <p className="text-green-700 text-xs mb-2">
-                  Ya tienes toda la información básica. Ahora elige tu plan.
-                </p>
-                <div className="flex flex-col space-y-1 text-xs text-green-600">
-                  <div className="flex items-center space-x-1">
-                    <Gift className="w-3 h-3" />
-                    <span>7 días gratis sin tarjeta</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <CreditCard className="w-3 h-3" />
-                    <span>+7 días más con pago</span>
-                  </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        {/* Success Message */}
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
+          <div className="flex items-start space-x-3">
+            <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <h3 className="text-sm font-semibold text-green-900 mb-1">
+                ¡Negocio configurado!
+              </h3>
+              <p className="text-green-700 text-xs mb-2">
+                Ya tienes toda la información básica. Ahora elige tu plan.
+              </p>
+              <div className="flex flex-col space-y-1 text-xs text-green-600">
+                <div className="flex items-center space-x-1">
+                  <Gift className="w-3 h-3" />
+                  <span>7 días gratis sin tarjeta</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <CreditCard className="w-3 h-3" />
+                  <span>+7 días más con pago</span>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Pricing Plans */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 text-center">
+        {/* Pricing Plans */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 text-center mb-2">
               Elige tu plan
-            </h3>
+            </h2>
+            <p className="text-gray-600 text-center mb-6 sm:mb-8 text-sm sm:text-base">
+              Continúa creciendo tu negocio con nuestras herramientas profesionales
+            </p>
             
             {/* Toggle Anual/Mensual */}
-            <div className="flex justify-center">
+            <div className="flex justify-center mb-6 sm:mb-8">
               <div className="bg-gray-100 rounded-lg p-1 flex w-full max-w-xs">
                 <button
                   onClick={() => setSelectedPlan('monthly')}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                     selectedPlan === 'monthly'
                       ? 'bg-white text-gray-900 shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900'
@@ -294,7 +299,7 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
                 </button>
                 <button
                   onClick={() => setSelectedPlan('yearly')}
-                  className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-colors ${
                     selectedPlan === 'yearly'
                       ? 'bg-white text-gray-900 shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900'
@@ -306,14 +311,14 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
             </div>
 
             {/* Selected Plan Display */}
-            <div className="space-y-4">
+            <div className="max-w-md mx-auto">
               {/* Plan Mensual */}
               {selectedPlan === 'monthly' && (
-                <div className="border-2 border-blue-500 bg-blue-50 rounded-xl p-4">
+                <div className="border-2 border-blue-500 bg-blue-50 rounded-xl p-4 sm:p-6">
                   <div className="text-center mb-4">
-                    <h4 className="text-lg font-bold text-gray-900 mb-2">Plan Mensual</h4>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Plan Mensual</h3>
                     <div className="mb-2">
-                      <span className="text-3xl font-bold text-gray-900">$275</span>
+                      <span className="text-3xl sm:text-4xl font-bold text-gray-900">$275</span>
                       <span className="text-gray-600 ml-1">/mes MXN</span>
                     </div>
                     <p className="text-xs text-gray-600">Flexibilidad total</p>
@@ -332,14 +337,14 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
               
               {/* Plan Anual */}
               {selectedPlan === 'yearly' && (
-                <div className="border-2 border-green-500 bg-green-50 rounded-xl p-4">
+                <div className="border-2 border-green-500 bg-green-50 rounded-xl p-4 sm:p-6">
                   <div className="text-center mb-4">
                     <div className="inline-block bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold mb-2">
                       MEJOR VALOR
                     </div>
-                    <h4 className="text-lg font-bold text-gray-900 mb-2">Plan Anual</h4>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Plan Anual</h3>
                     <div className="mb-1">
-                      <span className="text-3xl font-bold text-gray-900">$2,750</span>
+                      <span className="text-3xl sm:text-4xl font-bold text-gray-900">$2,750</span>
                       <span className="text-gray-600 ml-1">/año MXN</span>
                     </div>
                     <p className="text-xs text-gray-600 mb-1">Equivale a $229/mes</p>
@@ -358,16 +363,18 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
               )}
             </div>
           </div>
+        </div>
 
-          {/* Payment Form Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+        {/* Payment Form Section */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 sm:mb-8">
+          <div className="p-4 sm:p-8">
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-6">
               Información de Pago
             </h3>
             
-            <div className="space-y-4">
+            <div className="max-w-md mx-auto space-y-6">
               {/* Datos de Facturación */}
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="billingName" className="text-sm">Nombre de Facturación</Label>
                   <Input
@@ -437,38 +444,28 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
               )}
             </div>
           </div>
+        </div>
 
-          {/* CTA Section */}
-          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 text-white text-center">
-            <h3 className="text-lg font-bold mb-2">
-              ¿Listo para extender tu trial?
-            </h3>
-            <p className="text-blue-100 mb-4 text-sm">
-              Agrega tu método de pago y obtén 7 días adicionales gratis
-            </p>
-            <button 
-              onClick={handleStartTrial}
-              disabled={isLoading || stripeLoading}
-              className="w-full bg-white text-blue-600 hover:bg-gray-100 py-3 px-4 rounded-lg font-semibold transition-colors inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <CreditCard className="w-4 h-4" />
-              <span>Agregar Método de Pago</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-            <p className="text-xs text-blue-200 mt-3">
-              No se realizará ningún cargo hasta que termine tu período de prueba
-            </p>
-          </div>
-
-          {/* Cancel Button */}
-          <div className="text-center">
-            <button
-              onClick={onClose}
-              className="text-gray-500 hover:text-gray-700 text-sm underline"
-            >
-              Cancelar y volver
-            </button>
-          </div>
+        {/* CTA Section */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 sm:p-6 text-white text-center">
+          <h3 className="text-lg sm:text-xl font-bold mb-2">
+            ¿Listo para extender tu trial?
+          </h3>
+          <p className="text-blue-100 mb-4 text-sm sm:text-base">
+            Agrega tu método de pago y obtén 7 días adicionales gratis
+          </p>
+          <button 
+            onClick={handleStartTrial}
+            disabled={isLoading || stripeLoading}
+            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100 py-3 px-6 rounded-lg font-semibold transition-colors inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <CreditCard className="w-4 h-4" />
+            <span>Agregar Método de Pago</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+          <p className="text-xs text-blue-200 mt-3">
+            No se realizará ningún cargo hasta que termine tu período de prueba
+          </p>
         </div>
       </div>
     </div>
