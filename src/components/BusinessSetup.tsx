@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Store, Plus, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Mail } from 'lucide-react';
+import { Store, Plus, ArrowRight, Building2, Users, MapPin, LayoutDashboard, ClipboardList, User, Clock, Check, Mail, Sun } from 'lucide-react';
 import { Button } from './ui/index.ts';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from './ui/index.ts';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from './ui/index.ts';
@@ -324,7 +324,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="flex items-center space-x-2">
-                      <Clock className="w-5 h-5 text-blue-600" />
+                      <Sun className="w-5 h-5 text-blue-600" />
                       <span className="font-medium text-gray-900">Abierto 24/7</span>
                     </div>
                   </div>
@@ -370,9 +370,11 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
                   </div>
                 </div>
                 
-                <p className="text-sm text-gray-600 mt-2">
-                  Activa esta opción si tu negocio está abierto las 24 horas del día, los 7 días de la semana
-                </p>
+                {formData.openingHours === '24/7' && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    Activa esta opción si tu negocio está abierto las 24 horas del día, los 7 días de la semana
+                  </p>
+                )}
               </div>
 
               {formData.openingHours !== '24/7' && (
