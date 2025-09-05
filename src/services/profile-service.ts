@@ -420,8 +420,25 @@ export class ProfileService {
    * Delete user account
    */
   static async deleteAccount(): Promise<void> {
-    // Get the auth token from localStorage (more reliable than Supabase session)
-    const authToken = localStorage.getItem('authToken')
+    let authToken: string | null = null
+    
+    // Try to get auth token from localStorage first (traditional auth users)
+    authToken = localStorage.getItem('authToken')
+    
+    // If no localStorage token, try to get from Supabase session (OAuth users)
+    if (!authToken && supabase) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        if (error) {
+          console.error('Error getting Supabase session:', error)
+        } else if (session?.access_token) {
+          authToken = session.access_token
+          console.log('✅ Using Supabase session token for account deletion')
+        }
+      } catch (error) {
+        console.error('Error accessing Supabase session:', error)
+      }
+    }
     
     if (!authToken) {
       throw new Error('No authenticated user - please log in again')
