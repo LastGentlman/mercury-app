@@ -158,11 +158,8 @@ function ProfilePage() {
     weeklyReports: true
   })
 
-  // Collapsible sections state
-  const [collapsedSections, setCollapsedSections] = useState({
-    notifications: true, // Notifications starts collapsed
-    security: true // Security starts collapsed
-  })
+  // Collapsible sections state - only one can be open at a time
+  const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
   // Account deletion state
   const [deleteConfirmationText, setDeleteConfirmationText] = useState('')
@@ -216,12 +213,9 @@ function ProfilePage() {
     return true
   }
 
-  // Reset collapsed sections to default state
-  const resetCollapsedSections = () => {
-    setCollapsedSections({
-      notifications: true,
-      security: true
-    })
+  // Reset expanded section to default state
+  const resetExpandedSection = () => {
+    setExpandedSection(null)
   }
 
   // Initialize profile data when user or profile loads
@@ -657,7 +651,7 @@ function ProfilePage() {
         setShowSettingsDialog(open)
         if (!open) {
           // Reset sections to collapsed when dialog closes
-          resetCollapsedSections()
+          resetExpandedSection()
         }
       }}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
@@ -701,21 +695,21 @@ function ProfilePage() {
             <div>
               <button
                 type="button"
-                onClick={() => setCollapsedSections(prev => ({ ...prev, notifications: !prev.notifications }))}
+                onClick={() => setExpandedSection(expandedSection === 'notifications' ? null : 'notifications')}
                 className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors"
               >
                 <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <Bell className="h-4 w-4" />
                   Notificaciones Detalladas
                 </h3>
-                {collapsedSections.notifications ? (
-                  <ChevronRight className="h-4 w-4 text-gray-500" />
-                ) : (
+                {expandedSection === 'notifications' ? (
                   <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
                 )}
               </button>
               
-              {!collapsedSections.notifications && (
+              {expandedSection === 'notifications' && (
                 <div className="mt-3 space-y-3 pl-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -824,21 +818,21 @@ function ProfilePage() {
             <div>
               <button
                 type="button"
-                onClick={() => setCollapsedSections(prev => ({ ...prev, security: !prev.security }))}
+                onClick={() => setExpandedSection(expandedSection === 'security' ? null : 'security')}
                 className="w-full flex items-center justify-between text-left hover:bg-gray-50 p-2 rounded-lg transition-colors"
               >
                 <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                   <Lock className="h-4 w-4" />
                   Seguridad
                 </h3>
-                {collapsedSections.security ? (
-                  <ChevronRight className="h-4 w-4 text-gray-500" />
-                ) : (
+                {expandedSection === 'security' ? (
                   <ChevronDown className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 text-gray-500" />
                 )}
               </button>
               
-              {!collapsedSections.security && (
+              {expandedSection === 'security' && (
                 <div className="mt-3 space-y-3 pl-6">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
