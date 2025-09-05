@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { BACKEND_URL } from '../config.ts';
 import { generateUUID } from '../lib/utils.ts';
+import { supabase } from '../utils/supabase.ts';
 
 interface CSRFConfig {
   sessionId: string;
   token: string | null;
-  refreshToken: () => Promise<void>;
+  refreshToken: () => Promise<string | null>;
 }
 
 /**
@@ -26,9 +27,25 @@ export function useCSRF(): CSRFConfig {
   }, [sessionId]);
 
   // Obtener token CSRF del servidor
-  const refreshToken = async () => {
+  const refreshToken = async (): Promise<string | null> => {
     try {
-      const authToken = localStorage.getItem('authToken');
+      let authToken = localStorage.getItem('authToken');
+      
+      // Si no hay token en localStorage, intentar obtener de Supabase (OAuth users)
+      if (!authToken && supabase) {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession();
+          if (error) {
+            console.error('Error getting Supabase session for CSRF:', error);
+          } else if (session?.access_token) {
+            authToken = session.access_token;
+            console.log('✅ Using Supabase session token for CSRF request');
+          }
+        } catch (error) {
+          console.error('Error accessing Supabase session for CSRF:', error);
+        }
+      }
+      
       const headers: Record<string, string> = {
         'X-Session-ID': sessionId,
       };
@@ -58,14 +75,18 @@ export function useCSRF(): CSRFConfig {
         if (newToken) {
           console.log('✅ CSRF token received:', newToken.substring(0, 8) + '...')
           setToken(newToken);
+          return newToken;
         } else {
           console.warn('⚠️ No CSRF token in response headers')
+          return null;
         }
       } else {
         console.error('❌ CSRF token request failed:', response.status, response.statusText)
+        return null;
       }
     } catch (error) {
       console.error('❌ Error obteniendo token CSRF:', error);
+      return null;
     }
   };
 
@@ -111,9 +132,9 @@ export function useCSRFRequest() {
       } else {
         // Si no hay token, intentar obtener uno nuevo
         console.log('🔄 No CSRF token available, fetching new one...')
-        await refreshToken();
-        if (token) {
-          headers['X-CSRF-Token'] = token;
+        const newToken = await refreshToken();
+        if (newToken) {
+          headers['X-CSRF-Token'] = newToken;
           console.log('✅ Using new CSRF token for', options.method, url)
         } else {
           console.warn('⚠️ Still no CSRF token available after refresh')
@@ -139,11 +160,12 @@ export function useCSRFRequest() {
     if (response.status === 403 && 
         response.headers.get('X-CSRF-Expired') === 'true') {
       console.log('🔄 CSRF token expired, refreshing and retrying...')
-      await refreshToken();
+      const newToken = await refreshToken();
       
       // Reintentar con nuevo token
-      if (token) {
-        headers['X-CSRF-Token'] = token;
+      if (newToken) {
+        headers['X-CSRF-Token'] = newToken;
+        console.log('🔄 Retrying request with new CSRF token...');
         return fetch(url, {
           ...options,
           headers
