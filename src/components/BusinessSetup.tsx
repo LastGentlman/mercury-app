@@ -16,7 +16,6 @@ import { useAuthToken } from '../hooks/useStorageSync.ts';
 import { useCSRFRequest } from '../hooks/useCSRF.ts';
 import { BusinessService } from '../services/business-service.ts';
 import { getLocalPhoneNumber } from '../lib/validation/phone.ts';
-import { useNavigate } from '@tanstack/react-router';
 
 interface BusinessSetupProps {
   onBusinessSetup?: (businessId: string) => void;
@@ -134,7 +133,6 @@ export function BusinessSetup({ onBusinessSetup, isFullPage = false }: BusinessS
     }
   };
 
-  // const navigate = useNavigate(); // No se usa en la versión modal
 
   const handleCreateBusiness = async () => {
     if (!formData.name || !formData.type || !formData.currency) {
