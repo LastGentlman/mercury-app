@@ -1,9 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
-import { useNotifications } from '../hooks/useNotifications.ts'
 import { Dashboard } from '../components/Dashboard.tsx'
-import { BusinessSetup } from '../components/BusinessSetup.tsx'
+import { useEffect } from 'react'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
@@ -11,24 +10,38 @@ export const Route = createFileRoute('/dashboard')({
 
 function DashboardPage() {
   const { user } = useAuth()
-  const notifications = useNotifications()
+  const navigate = useNavigate()
 
-  // Si no hay businessId, mostrar la configuración del negocio
-  if (!user?.businessId) {
+  // Si no hay businessId, redirigir a la página de configuración
+  useEffect(() => {
+    if (user && !user.businessId) {
+      navigate({ to: '/setup' })
+    }
+  }, [user, navigate])
+
+  // Si no hay usuario autenticado, redirigir al login
+  useEffect(() => {
+    if (user === null) {
+      navigate({ to: '/auth' })
+    }
+  }, [user, navigate])
+
+  // Mostrar loading mientras se verifica el estado del usuario
+  if (user === undefined) {
     return (
-      <ProtectedRoute>
-        <BusinessSetup 
-          onBusinessSetup={(_businessId: string) => {
-            // El negocio ya fue creado y el perfil actualizado en BusinessSetup
-            // Solo necesitamos invalidar la query del usuario para que se actualice
-            notifications.success('Negocio configurado exitosamente. Redirigiendo...');
-            setTimeout(() => {
-              globalThis.location.reload();
-            }, 1000);
-          }}
-        />
-      </ProtectedRoute>
-    );
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando dashboard...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Si el usuario no está autenticado o no tiene negocio, no mostrar nada
+  // (las redirecciones se manejan en los useEffect)
+  if (!user || !user.businessId) {
+    return null
   }
 
   return (

@@ -20,6 +20,7 @@ import { useNavigate } from '@tanstack/react-router';
 
 interface BusinessSetupProps {
   onBusinessSetup?: (businessId: string) => void;
+  isFullPage?: boolean; // Nueva prop para indicar si es página completa o modal
 }
 
 interface BusinessFormData {
@@ -57,7 +58,7 @@ const currencies = [
   { value: 'BRL', label: 'Real Brasileño (BRL)', symbol: 'R$' }
 ];
 
-export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
+export function BusinessSetup({ onBusinessSetup, isFullPage = false }: BusinessSetupProps) {
   const { user } = useAuth();
   const { value: authToken } = useAuthToken();
   const [isOpen, setIsOpen] = useState(false);
@@ -133,7 +134,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
     }
   };
 
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // No se usa en la versión modal
 
   const handleCreateBusiness = async () => {
     if (!formData.name || !formData.type || !formData.currency) {
@@ -157,8 +158,7 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
       setIsOpen(false);
       onBusinessSetup?.(business.id);
       
-      // Redirigir al dashboard después de crear el negocio
-      navigate({ to: "/dashboard" });
+      // El callback onBusinessSetup manejará la redirección
     } catch (error) {
       console.error("Error creating business:", error);
       notifications.error(error instanceof Error ? error.message : "Error al crear el negocio");
@@ -480,6 +480,299 @@ export function BusinessSetup({ onBusinessSetup }: BusinessSetupProps) {
     }
   };
 
+  // Si es página completa, mostrar directamente el contenido del modal
+  if (isFullPage) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
+        {/* Main Content */}
+        <div className="flex-1 flex items-center justify-center p-4 pb-20 md:pb-4">
+          <div className="w-full max-w-2xl">
+            {/* Logo and Title */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-32 h-32 bg-blue-100 rounded-full mb-6">
+                <Store className="w-16 h-16 text-blue-600" strokeWidth={1.5} />
+              </div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">PedidoList</h1>
+              <p className="text-gray-600">Configuración de tu Negocio</p>
+            </div>
+
+            {/* Main Card */}
+            <Card className="shadow-xl border-0">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-2xl">Configuración Requerida</CardTitle>
+                <CardDescription className="text-base mt-2">
+                  Para comenzar a recibir pedidos y administrar clientes, primero crea o vincula tu negocio.
+                </CardDescription>
+              </CardHeader>
+
+              <CardContent className="pb-6">
+                <Tabs defaultValue="create" className="mt-4">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="create">Crear Nuevo</TabsTrigger>
+                    <TabsTrigger value="join">Unirse a Existente</TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="create" className="space-y-4">
+                    {/* Progress Steps */}
+                    <div className="flex items-center justify-center mb-6">
+                      {steps.map((_, index) => (
+                        <div key={index} className="flex items-center">
+                          <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all ${
+                            index <= currentStep 
+                              ? 'bg-blue-600 border-blue-600 text-white' 
+                              : 'border-gray-300 text-gray-400'
+                          }`}>
+                            {index < currentStep ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <span className="text-xs font-medium">{index + 1}</span>
+                            )}
+                          </div>
+                          {index < steps.length - 1 && (
+                            <div className={`w-12 h-0.5 mx-2 transition-all ${
+                              index < currentStep ? 'bg-blue-600' : 'bg-gray-300'
+                            }`} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Step Header */}
+                    <div className="mb-4">
+                      <div className="flex items-center space-x-2 mb-1">
+                        {React.createElement(steps[currentStep]?.icon || Store, { className: "w-5 h-5 text-blue-600" })}
+                        <h3 className="font-semibold text-gray-900">
+                          {steps[currentStep]?.title || 'Configuración'}
+                        </h3>
+                      </div>
+                      <p className="text-sm text-gray-600">{steps[currentStep]?.description || 'Configurando tu negocio'}</p>
+                    </div>
+
+                    {/* Step Content */}
+                    <div className="space-y-4">
+                      {renderStepContent()}
+                    </div>
+
+                    {/* Navigation */}
+                    <div className="flex flex-col sm:flex-row gap-3 pt-4 pb-2">
+                      <Button
+                        variant="outline"
+                        onClick={handlePrevious}
+                        disabled={currentStep === 0}
+                        size="sm"
+                        className="w-full sm:w-auto order-2 sm:order-1"
+                      >
+                        Anterior
+                      </Button>
+
+                      {currentStep === steps.length - 1 ? (
+                        <Button
+                          onClick={handleCreateBusiness}
+                          disabled={!isStepValid() || isLoading}
+                          size="sm"
+                          className="w-full sm:w-auto order-1 sm:order-2"
+                        >
+                          {isLoading ? 'Creando...' : 'Crear Negocio'}
+                          {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={handleNext}
+                          disabled={!isStepValid()}
+                          size="sm"
+                          className="w-full sm:w-auto order-1 sm:order-2"
+                        >
+                          Siguiente
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="join" className="space-y-4">
+                    <div className="pt-4">
+                      <div className="text-center mb-6">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-3">
+                          <Users className="w-8 h-8 text-green-600" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                          Unirse con Código
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          Ingresa el código de invitación que recibiste del administrador del negocio
+                        </p>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="business-code">Código de Invitación</Label>
+                        <div className="mt-1">
+                          <Input
+                            id="business-code"
+                            placeholder="ABC-123-XYZ"
+                            value={businessCode}
+                            onChange={(e) => {
+                              // Limpiar y formatear código: solo A-Z, 0-9, agregar guiones automáticamente
+                              let cleanCode = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                              
+                              // Limitar a 9 caracteres (sin contar guiones)
+                              cleanCode = cleanCode.slice(0, 9);
+                              
+                              // Agregar guiones automáticamente
+                              if (cleanCode.length > 3 && cleanCode.length <= 6) {
+                                cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3);
+                              } else if (cleanCode.length > 6) {
+                                cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3, 6) + '-' + cleanCode.slice(6);
+                              }
+                              
+                              setBusinessCode(cleanCode);
+                            }}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter' && businessCode.length === 11) {
+                                handleJoinBusiness();
+                              }
+                            }}
+                            onPaste={(e) => {
+                              e.preventDefault();
+                              const pastedText = e.clipboardData.getData('text');
+                              let cleanCode = pastedText.toUpperCase().replace(/[^A-Z0-9]/g, '');
+                              cleanCode = cleanCode.slice(0, 9);
+                              if (cleanCode.length > 3 && cleanCode.length <= 6) {
+                                cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3);
+                              } else if (cleanCode.length > 6) {
+                                cleanCode = cleanCode.slice(0, 3) + '-' + cleanCode.slice(3, 6) + '-' + cleanCode.slice(6);
+                              }
+                              setBusinessCode(cleanCode);
+                            }}
+                            className="text-center font-mono text-xl tracking-wider"
+                            maxLength={11}
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 text-center">
+                          Formato: XXX-XXX-XXX (expira en 24 horas)
+                        </p>
+                      </div>
+
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4 mt-4">
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                              <Check className="w-3 h-3 text-green-600" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="text-sm font-medium text-green-900 mb-1">
+                              Código Válido
+                            </h4>
+                            <p className="text-xs text-green-700">
+                              {businessCode.length === 11 
+                                ? 'El código tiene el formato correcto y está listo para usar.'
+                                : 'Ingresa un código de 9 caracteres para continuar.'
+                              }
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 pb-2">
+                      <Button
+                        onClick={handleJoinBusiness}
+                        disabled={isLoading || businessCode.length !== 11}
+                        className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+                      >
+                        {isLoading ? (
+                          <div className="flex items-center">
+                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                            Uniéndose al negocio...
+                          </div>
+                        ) : (
+                          <>
+                            Unirse al Negocio
+                            <ArrowRight className="w-4 h-4 ml-2" />
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    <div className="text-center pt-2">
+                      <p className="text-xs text-gray-500">
+                        ¿No tienes un código? Solicítalo al administrador del negocio
+                      </p>
+                    </div>
+                  </TabsContent>
+                </Tabs>
+              </CardContent>
+            </Card>
+
+            {/* Footer */}
+            <div className="mt-8 text-center">
+              <p className="text-sm text-gray-500">
+                ¿Necesitas ayuda? {' '}
+                <a href="#" className="text-blue-600 hover:underline">
+                  Contacta soporte
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-40">
+          <nav className="grid grid-cols-5 h-16">
+            {/* Dashboard */}
+            <button 
+              type="button" 
+              className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <LayoutDashboard className="w-5 h-5 mb-1" />
+              <span>Dashboard</span>
+            </button>
+
+            {/* Orders */}
+            <button 
+              type="button" 
+              className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <ClipboardList className="w-5 h-5 mb-1" />
+              <span>Pedidos</span>
+            </button>
+
+            {/* Central Add Button */}
+            <div className="flex items-center justify-center">
+              <button
+                type="button"
+                className="w-12 h-12 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-blue-700 transition-colors opacity-50 cursor-not-allowed"
+                disabled
+                aria-label="Agregar nuevo elemento"
+              >
+                <Plus className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Clients */}
+            <button 
+              type="button" 
+              className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <Users className="w-5 h-5 mb-1" />
+              <span>Clientes</span>
+            </button>
+
+            {/* Profile */}
+            <button 
+              type="button" 
+              className="flex flex-col items-center justify-center text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <User className="w-5 h-5 mb-1" />
+              <span>Perfil</span>
+            </button>
+          </nav>
+        </div>
+      </div>
+    );
+  }
+
+  // Versión modal (comportamiento original)
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
       {/* Main Content */}

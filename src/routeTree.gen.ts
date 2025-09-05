@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SweetalertDemoRouteImport } from './routes/sweetalert-demo'
+import { Route as SetupRouteImport } from './routes/setup'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PaywallRouteImport } from './routes/paywall'
@@ -25,6 +26,11 @@ import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 const SweetalertDemoRoute = SweetalertDemoRouteImport.update({
   id: '/sweetalert-demo',
   path: '/sweetalert-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetupRoute = SetupRouteImport.update({
+  id: '/setup',
+  path: '/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ProfileRoute = ProfileRouteImport.update({
@@ -95,6 +101,7 @@ export interface FileRoutesByFullPath {
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
+  '/setup': typeof SetupRoute
   '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
+  '/setup': typeof SetupRoute
   '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
+  '/setup': typeof SetupRoute
   '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/paywall'
     | '/products'
     | '/profile'
+    | '/setup'
     | '/sweetalert-demo'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/paywall'
     | '/products'
     | '/profile'
+    | '/setup'
     | '/sweetalert-demo'
     | '/auth/callback'
   id:
@@ -168,6 +179,7 @@ export interface FileRouteTypes {
     | '/paywall'
     | '/products'
     | '/profile'
+    | '/setup'
     | '/sweetalert-demo'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
@@ -183,6 +195,7 @@ export interface RootRouteChildren {
   PaywallRoute: typeof PaywallRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
+  SetupRoute: typeof SetupRoute
   SweetalertDemoRoute: typeof SweetalertDemoRoute
 }
 
@@ -193,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/sweetalert-demo'
       fullPath: '/sweetalert-demo'
       preLoaderRoute: typeof SweetalertDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/setup': {
+      id: '/setup'
+      path: '/setup'
+      fullPath: '/setup'
+      preLoaderRoute: typeof SetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/profile': {
@@ -296,6 +316,7 @@ const rootRouteChildren: RootRouteChildren = {
   PaywallRoute: PaywallRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
+  SetupRoute: SetupRoute,
   SweetalertDemoRoute: SweetalertDemoRoute,
 }
 export const routeTree = rootRouteImport
