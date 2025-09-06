@@ -16,6 +16,19 @@ import { ProfileService, type UpdateProfileRequest, type UserSettings } from '..
 export function useProfile() {
   const queryClient = useQueryClient()
 
+  // Delete account mutation - defined first to use in query enabled conditions
+  const deleteAccount = useMutation({
+    mutationFn: ProfileService.deleteAccount,
+    onSuccess: () => {
+      // Clear all cache
+      queryClient.clear()
+      console.log('✅ Account deleted successfully')
+    },
+    onError: (error) => {
+      console.error('❌ Error deleting account:', error)
+    }
+  })
+
   // Fetch profile data
   const {
     data: profile,
@@ -26,7 +39,9 @@ export function useProfile() {
     queryKey: ['profile'],
     queryFn: ProfileService.getProfile,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2
+    retry: 2,
+    // 🔒 NEW: Disable query during account deletion to prevent auth errors
+    enabled: !deleteAccount.isPending
   })
 
   // Fetch profile stats
@@ -38,7 +53,9 @@ export function useProfile() {
     queryKey: ['profile-stats'],
     queryFn: ProfileService.getProfileStats,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: 2
+    retry: 2,
+    // 🔒 NEW: Disable query during account deletion to prevent auth errors
+    enabled: !deleteAccount.isPending
   })
 
   // Update profile mutation
@@ -96,18 +113,6 @@ export function useProfile() {
     }
   })
 
-  // Delete account mutation
-  const deleteAccount = useMutation({
-    mutationFn: ProfileService.deleteAccount,
-    onSuccess: () => {
-      // Clear all cache
-      queryClient.clear()
-      console.log('✅ Account deleted successfully')
-    },
-    onError: (error) => {
-      console.error('❌ Error deleting account:', error)
-    }
-  })
 
   // Utility functions
   const refreshProfile = useCallback(async () => {

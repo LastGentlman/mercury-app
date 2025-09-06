@@ -130,7 +130,9 @@ export class ProfileService {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        throw new Error('No authenticated user')
+        // 🔒 NEW: Don't throw error during account deletion, just return null
+        console.log('No authenticated user - returning null (likely during account deletion)')
+        return null
       }
 
       // Get profile from profiles table
@@ -367,7 +369,14 @@ export class ProfileService {
       const { data: { user } } = await supabase.auth.getUser()
       
       if (!user) {
-        throw new Error('No authenticated user')
+        // 🔒 NEW: Don't throw error during account deletion, just return empty stats
+        console.log('No authenticated user - returning empty stats (likely during account deletion)')
+        return {
+          ordersToday: 0,
+          satisfaction: 0,
+          totalOrders: 0,
+          averageOrderValue: 0
+        }
       }
 
       // In a real app, you would fetch this from your orders/analytics tables

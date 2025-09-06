@@ -11,6 +11,7 @@ import { Label } from './ui/index.ts';
 import { useNotifications } from '../hooks/useNotifications.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useAuthToken } from '../hooks/useStorageSync.ts';
+import { useCSRFRequest } from '../hooks/useCSRF.ts';
 import { env } from '../env.ts';
 
 // Use proper Stripe types from the library
@@ -70,6 +71,7 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
   const { user } = useAuth();
   const { value: authToken } = useAuthToken();
   const notifications = useNotifications();
+  const { csrfRequest } = useCSRFRequest();
   
   const [selectedPlan, setSelectedPlan] = useState('yearly');
   const [isLoading, setIsLoading] = useState(false);
@@ -155,8 +157,8 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
 
     setIsLoading(true);
     try {
-      // Crear negocio con trial gratuito (7 días)
-      const response = await fetch('/api/business/activate-trial', {
+      // Crear negocio con trial gratuito (7 días) usando CSRF
+      const response = await csrfRequest('/api/business/activate-trial', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -176,7 +178,8 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
       });
 
       if (!response.ok) {
-        throw new Error('Error al crear el negocio');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Error al crear el negocio');
       }
 
       await response.json();
@@ -186,7 +189,7 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
       // onSuccess(result.business.id);
     } catch (error) {
       console.error('Error creating business:', error);
-      notifications.error('Error al crear el negocio. Intenta de nuevo.');
+      notifications.error(error instanceof Error ? error.message : 'Error al crear el negocio. Intenta de nuevo.');
     } finally {
       setIsLoading(false);
     }
