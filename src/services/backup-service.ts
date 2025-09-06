@@ -4,8 +4,8 @@
  * Handles backup operations from the frontend
  */
 
-import { BACKEND_URL } from '../config/api.ts'
-import { csrfRequest } from '../utils/csrf.ts'
+import { BACKEND_URL } from '../config.ts'
+import { supabase } from '../utils/supabase.ts'
 
 export interface BackupInfo {
   id: string
@@ -55,14 +55,32 @@ export interface RestoreBackupResponse {
 
 export class BackupService {
   /**
+   * Get authentication token
+   */
+  private static async getAuthToken(): Promise<string> {
+    if (!supabase) {
+      throw new Error('Supabase client not configured');
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      throw new Error('No active session');
+    }
+    return session.access_token;
+  }
+
+  /**
    * Create a new backup
    */
   static async createBackup(request: CreateBackupRequest = {}): Promise<CreateBackupResponse> {
     try {
-      const response = await csrfRequest(`${BACKEND_URL}/api/backup/create`, {
+      const token = await this.getAuthToken();
+      
+      const response = await fetch(`${BACKEND_URL}/api/backup/create`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(request)
       })
@@ -84,8 +102,13 @@ export class BackupService {
    */
   static async listBackups(): Promise<BackupInfo[]> {
     try {
-      const response = await csrfRequest(`${BACKEND_URL}/api/backup/list`, {
-        method: 'GET'
+      const token = await this.getAuthToken();
+      
+      const response = await fetch(`${BACKEND_URL}/api/backup/list`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
 
       if (!response.ok) {
@@ -106,10 +129,13 @@ export class BackupService {
    */
   static async restoreBackup(request: RestoreBackupRequest): Promise<RestoreBackupResponse> {
     try {
-      const response = await csrfRequest(`${BACKEND_URL}/api/backup/restore`, {
+      const token = await this.getAuthToken();
+      
+      const response = await fetch(`${BACKEND_URL}/api/backup/restore`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(request)
       })
@@ -131,8 +157,13 @@ export class BackupService {
    */
   static async getBackupStatus(): Promise<BackupStatus> {
     try {
-      const response = await csrfRequest(`${BACKEND_URL}/api/backup/status`, {
-        method: 'GET'
+      const token = await this.getAuthToken();
+      
+      const response = await fetch(`${BACKEND_URL}/api/backup/status`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
 
       if (!response.ok) {
@@ -153,8 +184,13 @@ export class BackupService {
    */
   static async cleanupOldBackups(): Promise<{ success: boolean; message: string }> {
     try {
-      const response = await csrfRequest(`${BACKEND_URL}/api/backup/cleanup`, {
-        method: 'DELETE'
+      const token = await this.getAuthToken();
+      
+      const response = await fetch(`${BACKEND_URL}/api/backup/cleanup`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       })
 
       if (!response.ok) {
