@@ -143,11 +143,13 @@ export class ProfileService {
         .single()
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        throw error
+        console.error('Error fetching profile:', error)
+        return null
       }
 
       // If profile doesn't exist, create one
       if (!profile) {
+        console.log('Profile not found, creating new profile for user:', user.email)
         const authUser: AuthUser = {
           id: user.id,
           email: user.email || '',
@@ -155,7 +157,12 @@ export class ProfileService {
           avatar_url: user.user_metadata?.avatar_url,
           provider: (user.app_metadata?.provider as AuthProvider) || 'email'
         }
-        return await this.createProfile(authUser)
+        try {
+          return await this.createProfile(authUser)
+        } catch (createError) {
+          console.error('Error creating profile:', createError)
+          return null
+        }
       }
 
       return profile

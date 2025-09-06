@@ -163,7 +163,31 @@ export class AuthService {
               .eq('id', oauthUser.id)
               .single()
             
-            if (error) {
+            if (error && error.code === 'PGRST116') {
+              // Profile doesn't exist, create it
+              console.log('Profile not found for OAuth user, creating one...')
+              try {
+                const { data: newProfile, error: createError } = await supabase
+                  .from('profiles')
+                  .insert({
+                    id: oauthUser.id,
+                    email: oauthUser.email,
+                    name: oauthUser.name,
+                    avatar_url: oauthUser.avatar_url,
+                    created_at: new Date().toISOString()
+                  })
+                  .select('current_business_id')
+                  .single()
+                
+                if (createError) {
+                  console.warn('Could not create profile for OAuth user:', createError)
+                } else if (newProfile?.current_business_id) {
+                  oauthUser.businessId = newProfile.current_business_id
+                }
+              } catch (createProfileError) {
+                console.warn('Error creating profile for OAuth user:', createProfileError)
+              }
+            } else if (error) {
               console.warn('Could not fetch business ID from profile:', error)
               // Continue without business ID - it will be set later when needed
             } else if (profile?.current_business_id) {
