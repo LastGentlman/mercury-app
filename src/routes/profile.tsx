@@ -36,9 +36,7 @@ import {
   EyeOff,
   Database,
   Download,
-  Upload,
-  Clock,
-  HardDrive
+  Clock
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
@@ -109,16 +107,6 @@ function ProfilePage() {
     isProfileLoading
   } = useProfile()
   
-  const {
-    backups,
-    backupStatus,
-    isCreating,
-    isRestoring,
-    isCleaning,
-    createBackup,
-    restoreBackup,
-    cleanupBackups
-  } = useBackup()
   const fileInputRef = useRef<HTMLInputElement>(null)
   
   // Local state
@@ -135,7 +123,18 @@ function ProfilePage() {
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false)
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false)
   const [showBackupDialog, setShowBackupDialog] = useState(false)
-  const [showRestoreDialog, setShowRestoreDialog] = useState(false)
+
+  // Initialize backup hook after state declarations
+  const {
+    backups,
+    backupStatus,
+    isCreating,
+    isRestoring,
+    isCleaning,
+    createBackup,
+    restoreBackup,
+    cleanupBackups
+  } = useBackup(showBackupDialog) // Only load backup data when dialog is open
 
   // 🔒 NEW: Set password dialog state for OAuth users
   const [showSetPasswordDialog, setShowSetPasswordDialog] = useState(false)
@@ -1437,7 +1436,7 @@ function ProfilePage() {
           
           <div className="space-y-6">
             {/* Backup Status */}
-            {backupStatus && (
+            {backupStatus ? (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h3 className="text-sm font-semibold text-blue-800 mb-3">Estado de Backups</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
@@ -1467,6 +1466,13 @@ function ProfilePage() {
                     </span>
                   </div>
                 )}
+              </div>
+            ) : (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
+                  <span className="text-sm text-gray-600">Cargando estado de backups...</span>
+                </div>
               </div>
             )}
 
@@ -1519,7 +1525,14 @@ function ProfilePage() {
             {/* Backup List */}
             <div>
               <h3 className="text-sm font-semibold text-gray-900 mb-3">Backups Disponibles</h3>
-              {backups.length === 0 ? (
+              {backups === undefined ? (
+                <div className="text-center py-8 text-gray-500">
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                    <span className="text-sm">Cargando backups...</span>
+                  </div>
+                </div>
+              ) : backups.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <Database className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p>No hay backups disponibles</p>

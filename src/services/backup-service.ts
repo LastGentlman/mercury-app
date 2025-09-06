@@ -58,15 +58,25 @@ export class BackupService {
    * Get authentication token
    */
   private static async getAuthToken(): Promise<string> {
-    if (!supabase) {
-      throw new Error('Supabase client not configured');
+    // Try Supabase first if available
+    if (supabase) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          return session.access_token;
+        }
+      } catch (error) {
+        console.warn('Supabase auth failed, trying fallback:', error);
+      }
     }
 
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      throw new Error('No active session');
+    // Fallback to localStorage token
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      return token;
     }
-    return session.access_token;
+
+    throw new Error('No authentication token available');
   }
 
   /**
@@ -86,13 +96,22 @@ export class BackupService {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create backup')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `Failed to create backup (${response.status})`)
       }
 
       return await response.json()
     } catch (error) {
       console.error('Error creating backup:', error)
+      // Provide more user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('No authentication token')) {
+          throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
+        }
+        if (error.message.includes('Failed to fetch')) {
+          throw new Error('Error de conexión. Verifica tu conexión a internet.')
+        }
+      }
       throw error
     }
   }
@@ -112,14 +131,23 @@ export class BackupService {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to list backups')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `Failed to list backups (${response.status})`)
       }
 
       const data = await response.json()
       return data.backups || []
     } catch (error) {
       console.error('Error listing backups:', error)
+      // Provide more user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('No authentication token')) {
+          throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
+        }
+        if (error.message.includes('Failed to fetch')) {
+          throw new Error('Error de conexión. Verifica tu conexión a internet.')
+        }
+      }
       throw error
     }
   }
@@ -167,14 +195,23 @@ export class BackupService {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to get backup status')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `Failed to get backup status (${response.status})`)
       }
 
       const data = await response.json()
       return data.status
     } catch (error) {
       console.error('Error getting backup status:', error)
+      // Provide more user-friendly error messages
+      if (error instanceof Error) {
+        if (error.message.includes('No authentication token')) {
+          throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
+        }
+        if (error.message.includes('Failed to fetch')) {
+          throw new Error('Error de conexión. Verifica tu conexión a internet.')
+        }
+      }
       throw error
     }
   }

@@ -7,10 +7,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import BackupService, { type BackupInfo, type BackupStatus, type CreateBackupRequest, type RestoreBackupRequest } from '../services/backup-service.ts'
 
-export function useBackup() {
+export function useBackup(enabled: boolean = false) {
   const queryClient = useQueryClient()
 
-  // Fetch backup list
+  // Fetch backup list - only when enabled
   const {
     data: backups,
     isLoading: isBackupsLoading,
@@ -19,11 +19,19 @@ export function useBackup() {
   } = useQuery({
     queryKey: ['backups'],
     queryFn: BackupService.listBackups,
+    enabled, // Only run when explicitly enabled
     staleTime: 2 * 60 * 1000, // 2 minutes
-    retry: 2
+    retry: (failureCount, error) => {
+      // Don't retry if it's an authentication error
+      if (error instanceof Error && error.message.includes('No estás autenticado')) {
+        return false
+      }
+      return failureCount < 2
+    },
+    retryDelay: 1000
   })
 
-  // Fetch backup status
+  // Fetch backup status - only when enabled
   const {
     data: backupStatus,
     isLoading: isStatusLoading,
@@ -31,8 +39,16 @@ export function useBackup() {
   } = useQuery({
     queryKey: ['backup-status'],
     queryFn: BackupService.getBackupStatus,
+    enabled, // Only run when explicitly enabled
     staleTime: 1 * 60 * 1000, // 1 minute
-    retry: 2
+    retry: (failureCount, error) => {
+      // Don't retry if it's an authentication error
+      if (error instanceof Error && error.message.includes('No estás autenticado')) {
+        return false
+      }
+      return failureCount < 2
+    },
+    retryDelay: 1000
   })
 
   // Create backup mutation
