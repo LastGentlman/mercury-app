@@ -250,7 +250,7 @@ function ProfilePage() {
     try {
       await restoreBackup.mutateAsync({ backupId })
       showSuccess('Backup restaurado', 'Los datos han sido restaurados exitosamente')
-      setShowRestoreDialog(false)
+      setShowBackupDialog(false)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Error al restaurar backup'
       showError('Error', errorMessage)
