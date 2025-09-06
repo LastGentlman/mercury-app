@@ -8,6 +8,7 @@ import { Card, CardContent } from './ui/index.ts';
 import { CreateOrderDialog } from './CreateOrderDialog.tsx';
 import { OrderCard } from './orders/OrderCard.tsx';
 import { OrderDetails } from './orders/OrderDetails.tsx';
+import { TrialExtensionBanner } from './TrialExtensionBanner.tsx';
 
 interface DashboardProps {
   businessId: string;
@@ -72,6 +73,9 @@ export function Dashboard({ businessId }: DashboardProps) {
 
   return (
     <div className="space-y-6">
+      {/* Trial Extension Banner */}
+      <TrialExtensionBanner />
+      
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

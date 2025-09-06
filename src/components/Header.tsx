@@ -13,6 +13,7 @@ import { Loader2, LogOut, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useMobileAuth } from '../hooks/useMobileAuth.ts'
 import { Button } from './ui/index.ts'
+import { TrialExtensionCompact } from './TrialExtensionBanner.tsx'
 
 export default function Header() {
   const { user, logout } = useAuth()
@@ -24,8 +25,9 @@ export default function Header() {
   }
 
   return (
-    <header className="sticky top-0 bg-white shadow-sm border-b border-gray-200 z-50 transition-all duration-300">
-      <div className="max-w-6xl mx-auto px-4 py-3 md:px-6 md:py-4 lg:py-5">
+    <>
+      <header className="sticky top-0 bg-white shadow-sm border-b border-gray-200 z-50 transition-all duration-300">
+        <div className="max-w-6xl mx-auto px-4 py-3 md:px-6 md:py-4 lg:py-5">
         <div className="flex justify-center md:justify-between items-center">
           {/* Logo - Centered on mobile, left on desktop */}
           <div className="font-bold text-xl md:text-2xl lg:text-3xl">
@@ -120,5 +122,9 @@ export default function Header() {
         </div>
       </div>
     </header>
+    
+    {/* Trial Extension Compact Banner */}
+    <TrialExtensionCompact className="sticky top-16 z-40" />
+    </>
   )
 }

@@ -47,7 +47,8 @@ const pricingPlans = [
     features: [
       'Acceso completo a todas las funciones',
       'Gestión ilimitada de pedidos',
-      'Soporte prioritario por email'
+      'Soporte prioritario por email',
+      'Actualizaciones automáticas'
     ]
   },
   {
@@ -62,7 +63,24 @@ const pricingPlans = [
     features: [
       'Todo del plan mensual incluido',
       'Ahorro de $550 MXN al año',
-      'Facturación anual simplificada'
+      'Facturación anual simplificada',
+      'Prioridad en soporte técnico'
+    ]
+  },
+  {
+    id: 'lifetime',
+    name: 'Licencia Vitalicia',
+    price: '39,500',
+    currency: 'MXN',
+    interval: 'una vez',
+    popular: false,
+    savings: 'Ahorro del 80%',
+    features: [
+      'Acceso de por vida sin renovaciones',
+      'Todas las funciones actuales y futuras',
+      'Soporte premium prioritario',
+      'Sin límites de uso',
+      'Transferible a otros negocios'
     ]
   }
 ];
@@ -134,30 +152,16 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
     initStripe();
   }, [notifications]);
 
-  const validatePaymentForm = () => {
-    if (!paymentData.billingName.trim()) {
-      notifications.error('El nombre de facturación es requerido');
-      return false;
-    }
-    if (!paymentData.billingEmail.trim()) {
-      notifications.error('El email de facturación es requerido');
-      return false;
-    }
-    if (!cardElement) {
-      notifications.error('El formulario de tarjeta no está listo');
-      return false;
-    }
-    return true;
-  };
 
   const handleStartTrial = async () => {
-    if (!validatePaymentForm()) {
+    if (!paymentData.billingName || !paymentData.billingEmail) {
+      notifications.error("Por favor completa todos los campos requeridos");
       return;
     }
 
     setIsLoading(true);
     try {
-      // Crear negocio con trial gratuito (7 días) usando CSRF
+      // Crear negocio con trial gratuito (7 días base, 14 días si hay método de pago)
       const response = await csrfRequest('/api/business/activate-trial', {
         method: 'POST',
         headers: {
@@ -173,7 +177,16 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
           billingEmail: paymentData.billingEmail,
           currency: businessData.currency,
           taxRegime: '605', // Por defecto
-          // Payment method will be handled by Stripe Elements
+          trialDays: 7,
+          paymentMethod: cardElement ? {
+            type: 'card',
+            card: {
+              number: '4242424242424242', // Test card
+              exp_month: 12,
+              exp_year: 2025,
+              cvc: '123'
+            }
+          } : undefined
         })
       });
 
@@ -182,11 +195,21 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
         throw new Error(errorData.error || 'Error al crear el negocio');
       }
 
-      await response.json();
+      const result = await response.json();
       setBusinessCreated(true);
-      notifications.success('¡Negocio creado exitosamente! Comienza tu trial de 14 días.');
-      // No llamar onSuccess inmediatamente, dejar que el usuario vea el mensaje de éxito
-      // onSuccess(result.business.id);
+      
+      // Mostrar mensaje de éxito según el tipo de trial
+      if (!cardElement) {
+        notifications.success("¡Negocio creado! Tienes 7 días gratis. Agrega un método de pago para 7 días adicionales.");
+      } else {
+        notifications.success("¡Negocio creado! Tienes 14 días de prueba completa.");
+      }
+      
+      // Redirect after a short delay
+      setTimeout(() => {
+        onSuccess(result.business.id);
+      }, 2000);
+
     } catch (error) {
       console.error('Error creating business:', error);
       notifications.error(error instanceof Error ? error.message : 'Error al crear el negocio. Intenta de nuevo.');
@@ -194,6 +217,7 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
       setIsLoading(false);
     }
   };
+
 
   const handleInputChange = (field: keyof PaymentFormData, value: string) => {
     setPaymentData(prev => ({ ...prev, [field]: value }));
@@ -270,7 +294,11 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
                 </div>
                 <div className="flex items-center space-x-1">
                   <CreditCard className="w-3 h-3" />
-                  <span>+7 días más con pago</span>
+                  <span>+7 días adicionales si agregas método de pago</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Shield className="w-3 h-3" />
+                  <span>Total: hasta 14 días de prueba</span>
                 </div>
               </div>
             </div>
@@ -287,12 +315,12 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
               Continúa creciendo tu negocio con nuestras herramientas profesionales
             </p>
             
-            {/* Toggle Anual/Mensual */}
+            {/* Toggle de Planes */}
             <div className="flex justify-center mb-6 sm:mb-8">
-              <div className="bg-gray-100 rounded-lg p-1 flex w-full max-w-xs">
+              <div className="bg-gray-100 rounded-lg p-1 flex w-full max-w-md">
                 <button
                   onClick={() => setSelectedPlan('monthly')}
-                  className={`flex-1 px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     selectedPlan === 'monthly'
                       ? 'bg-white text-gray-900 shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900'
@@ -302,13 +330,23 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
                 </button>
                 <button
                   onClick={() => setSelectedPlan('yearly')}
-                  className={`flex-1 px-4 sm:px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
                     selectedPlan === 'yearly'
                       ? 'bg-white text-gray-900 shadow-sm' 
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
                   Anual
+                </button>
+                <button
+                  onClick={() => setSelectedPlan('lifetime')}
+                  className={`flex-1 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                    selectedPlan === 'lifetime'
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Vitalicia
                 </button>
               </div>
             </div>
@@ -356,6 +394,33 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
                   
                   <div className="space-y-2 mb-4">
                     {pricingPlans[1]?.features?.map((feature, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        <span className="text-xs text-gray-700">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Plan Vitalicio */}
+              {selectedPlan === 'lifetime' && (
+                <div className="border-2 border-purple-500 bg-purple-50 rounded-xl p-4 sm:p-6">
+                  <div className="text-center mb-4">
+                    <div className="inline-block bg-purple-500 text-white px-2 py-1 rounded-full text-xs font-semibold mb-2">
+                      LICENCIA VITALICIA
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Licencia Vitalicia</h3>
+                    <div className="mb-1">
+                      <span className="text-3xl sm:text-4xl font-bold text-gray-900">$39,500</span>
+                      <span className="text-gray-600 ml-1">MXN</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mb-1">Pago único de por vida</p>
+                    <p className="text-xs text-purple-600">Ahorro del 80%</p>
+                  </div>
+                  
+                  <div className="space-y-2 mb-4">
+                    {pricingPlans[2]?.features?.map((feature, index) => (
                       <div key={index} className="flex items-center space-x-2">
                         <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                         <span className="text-xs text-gray-700">{feature}</span>
@@ -452,22 +517,51 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
         {/* CTA Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-4 sm:p-6 text-white text-center">
           <h3 className="text-lg sm:text-xl font-bold mb-2">
-            ¿Listo para extender tu trial?
+            ¡Comienza tu trial ahora!
           </h3>
           <p className="text-blue-100 mb-4 text-sm sm:text-base">
-            Agrega tu método de pago y obtén 7 días adicionales gratis
+            {selectedPlan === 'lifetime' 
+              ? 'Pago único de por vida - Sin renovaciones'
+              : 'Agrega tu método de pago y obtén 7 días adicionales gratis'
+            }
           </p>
-          <button 
-            onClick={handleStartTrial}
-            disabled={isLoading || stripeLoading}
-            className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100 py-3 px-6 rounded-lg font-semibold transition-colors inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <CreditCard className="w-4 h-4" />
-            <span>Agregar Método de Pago</span>
-            <ArrowRight className="w-4 h-4" />
-          </button>
+          
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <button 
+              onClick={handleStartTrial}
+              disabled={isLoading || stripeLoading}
+              className="w-full sm:w-auto bg-white text-blue-600 hover:bg-gray-100 py-3 px-6 rounded-lg font-semibold transition-colors inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <CreditCard className="w-4 h-4" />
+              <span>
+                {selectedPlan === 'lifetime' 
+                  ? 'Comprar Licencia Vitalicia'
+                  : 'Comenzar Trial'
+                }
+              </span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            
+            {selectedPlan !== 'lifetime' && (
+              <button 
+                onClick={() => {
+                  // Opción para empezar sin método de pago (7 días base)
+                  handleStartTrial();
+                }}
+                disabled={isLoading || stripeLoading}
+                className="w-full sm:w-auto bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 py-3 px-6 rounded-lg font-semibold transition-colors inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Gift className="w-4 h-4" />
+                <span>7 días gratis sin tarjeta</span>
+              </button>
+            )}
+          </div>
+          
           <p className="text-xs text-blue-200 mt-3">
-            No se realizará ningún cargo hasta que termine tu período de prueba
+            {selectedPlan === 'lifetime' 
+              ? 'Pago único - Acceso de por vida'
+              : 'No se realizará ningún cargo hasta que termine tu período de prueba'
+            }
           </p>
         </div>
       </div>

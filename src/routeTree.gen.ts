@@ -14,6 +14,7 @@ import { Route as SetupRouteImport } from './routes/setup'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PaywallRouteImport } from './routes/paywall'
+import { Route as ExtendTrialRouteImport } from './routes/extend-trial'
 import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-design-system-demo'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -46,6 +47,11 @@ const ProductsRoute = ProductsRouteImport.update({
 const PaywallRoute = PaywallRouteImport.update({
   id: '/paywall',
   path: '/paywall',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExtendTrialRoute = ExtendTrialRouteImport.update({
+  id: '/extend-trial',
+  path: '/extend-trial',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EnhancedDesignSystemDemoRoute =
@@ -98,6 +104,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/extend-trial': typeof ExtendTrialRoute
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/extend-trial': typeof ExtendTrialRoute
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
   '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
+  '/extend-trial': typeof ExtendTrialRoute
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/extend-trial'
     | '/paywall'
     | '/products'
     | '/profile'
@@ -161,6 +171,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/extend-trial'
     | '/paywall'
     | '/products'
     | '/profile'
@@ -176,6 +187,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/design-system'
     | '/enhanced-design-system-demo'
+    | '/extend-trial'
     | '/paywall'
     | '/products'
     | '/profile'
@@ -192,6 +204,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DesignSystemRoute: typeof DesignSystemRoute
   EnhancedDesignSystemDemoRoute: typeof EnhancedDesignSystemDemoRoute
+  ExtendTrialRoute: typeof ExtendTrialRoute
   PaywallRoute: typeof PaywallRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
@@ -234,6 +247,13 @@ declare module '@tanstack/react-router' {
       path: '/paywall'
       fullPath: '/paywall'
       preLoaderRoute: typeof PaywallRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/extend-trial': {
+      id: '/extend-trial'
+      path: '/extend-trial'
+      fullPath: '/extend-trial'
+      preLoaderRoute: typeof ExtendTrialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/enhanced-design-system-demo': {
@@ -313,6 +333,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DesignSystemRoute: DesignSystemRoute,
   EnhancedDesignSystemDemoRoute: EnhancedDesignSystemDemoRoute,
+  ExtendTrialRoute: ExtendTrialRoute,
   PaywallRoute: PaywallRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
