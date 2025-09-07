@@ -8,11 +8,9 @@ import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
 import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
 import { AutoConnectionBanner, ConnectionBannerDemo } from '../components/ConnectionBanner.tsx'
 import { MobileScrollDebugger } from '../components/MobileScrollDebugger.tsx'
-import { MobileScrollVisualDebugger } from '../components/MobileScrollVisualDebugger.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 import { useGlobalMobileScroll } from '../hooks/useGlobalMobileScroll.ts'
-import { useMobileScrollTest } from '../hooks/useMobileScrollTest.ts'
 
 import type { QueryClient } from '@tanstack/react-query'
 
@@ -24,9 +22,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
   component: () => {
     // ✅ Global mobile scroll functionality
     useGlobalMobileScroll()
-    
-    // 🧪 Test hook for mobile debugging
-    useMobileScrollTest()
     
     // Detect callback route to skip heavy UI
     const isAuthCallback = globalThis.location?.pathname === '/auth/callback'
@@ -51,7 +46,6 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         {import.meta.env.DEV && !isAuthCallback && <OAuthDebugger />}
         {import.meta.env.DEV && !isAuthCallback && <ConnectionBannerDemo />}
         {import.meta.env.DEV && !isAuthCallback && <MobileScrollDebugger />}
-        {import.meta.env.DEV && !isAuthCallback && <MobileScrollVisualDebugger />}
       </>
     )
   },

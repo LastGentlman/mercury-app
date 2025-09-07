@@ -5,13 +5,6 @@ export const useGlobalMobileScroll = () => {
   const lastScrollTimeRef = useRef(0)
 
   useEffect(() => {
-    // Log that the hook is loading
-    console.log('🎯 useGlobalMobileScroll hook loaded!', {
-      windowWidth: globalThis.window.innerWidth,
-      isMobile: globalThis.window.innerWidth <= 768,
-      userAgent: globalThis.navigator.userAgent,
-      timestamp: new Date().toISOString()
-    })
     const calculateOptimalOffset = () => {
       const viewportHeight = globalThis.window.innerHeight
       const viewportWidth = globalThis.window.innerWidth
@@ -56,40 +49,15 @@ export const useGlobalMobileScroll = () => {
     const handleFocusIn = (event: FocusEvent) => {
       const target = event.target as HTMLElement
       
-      // Debug logging for all focus events
-      if (import.meta.env.DEV) {
-        console.log('🎯 Focus event detected:', {
-          tagName: target.tagName,
-          id: target.id,
-          windowWidth: globalThis.window.innerWidth,
-          isMobile: globalThis.window.innerWidth <= 768
-        })
-      }
-      
       // Only for inputs, textareas and selects
-      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-        if (import.meta.env.DEV) {
-          console.log('🎯 Skipping non-input element:', target.tagName)
-        }
-        return
-      }
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
       
       // Only on mobile (768px or less)
-      if (globalThis.window.innerWidth > 768) {
-        if (import.meta.env.DEV) {
-          console.log('🎯 Skipping desktop view:', globalThis.window.innerWidth + 'px')
-        }
-        return
-      }
+      if (globalThis.window.innerWidth > 768) return
       
       // Prevent multiple scrolls in quick succession
       const now = Date.now()
-      if (now - lastScrollTimeRef.current < 500) {
-        if (import.meta.env.DEV) {
-          console.log('🎯 Skipping - too soon since last scroll')
-        }
-        return
-      }
+      if (now - lastScrollTimeRef.current < 500) return
       lastScrollTimeRef.current = now
       
       // Check if element is already visible in viewport
@@ -101,45 +69,18 @@ export const useGlobalMobileScroll = () => {
       const optimalOffset = calculateOptimalOffset()
       
       // If element is already visible and not too close to bottom, don't scroll
-      if (isVisible && rect.bottom < viewportHeight - 200) {
-        if (import.meta.env.DEV) {
-          console.log('🎯 Skipping - element already visible')
-        }
-        return
-      }
+      if (isVisible && rect.bottom < viewportHeight - 200) return
       
       // Prevent scroll if already scrolling
-      if (isScrollingRef.current) {
-        if (import.meta.env.DEV) {
-          console.log('🎯 Skipping - already scrolling')
-        }
-        return
-      }
+      if (isScrollingRef.current) return
       
       isScrollingRef.current = true
-      
-      if (import.meta.env.DEV) {
-        console.log('🎯 Proceeding with scroll for:', target.tagName, target.id)
-      }
       
       // Use requestAnimationFrame for better timing
       const scrollToElement = () => {
         try {
           const rect = target.getBoundingClientRect()
           const scrollTop = globalThis.window.pageYOffset + rect.top - optimalOffset
-          
-          // Debug logging in development
-          if (import.meta.env.DEV) {
-            console.log('🎯 Mobile Scroll Debug:', {
-              element: target.tagName,
-              id: target.id,
-              rectTop: rect.top,
-              pageYOffset: globalThis.window.pageYOffset,
-              optimalOffset,
-              finalScrollTop: Math.max(0, scrollTop),
-              viewportHeight: globalThis.window.innerHeight
-            })
-          }
           
           globalThis.window.scrollTo({
             top: Math.max(0, scrollTop),
@@ -163,9 +104,6 @@ export const useGlobalMobileScroll = () => {
         if (globalThis.window.innerWidth <= 768 && document.activeElement === target) {
           requestAnimationFrame(scrollToElement)
         } else {
-          if (import.meta.env.DEV) {
-            console.log('🎯 Skipping scroll - conditions changed during delay')
-          }
           isScrollingRef.current = false
         }
       }, 400) // Increased delay for better keyboard handling
@@ -181,17 +119,11 @@ export const useGlobalMobileScroll = () => {
       isScrollingRef.current = false
     }
 
-    // Log event listener attachment
-    console.log('🎯 Attaching event listeners for mobile scroll')
-    
     globalThis.window.document.addEventListener('focusin', handleFocusIn)
     globalThis.window.addEventListener('resize', handleResize)
     globalThis.window.addEventListener('scroll', handleScroll, { passive: true })
     
-    console.log('🎯 Event listeners attached successfully')
-    
     return () => {
-      console.log('🎯 Removing event listeners for mobile scroll')
       globalThis.window.document.removeEventListener('focusin', handleFocusIn)
       globalThis.window.removeEventListener('resize', handleResize)
       globalThis.window.removeEventListener('scroll', handleScroll)
