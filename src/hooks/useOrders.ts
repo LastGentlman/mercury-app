@@ -38,11 +38,11 @@ export function useOrders(businessId: string) {
     refetchOnWindowFocus: false, // Prevent refetch on window focus
     refetchOnMount: true, // Only refetch on mount
     retry: (failureCount, error) => {
-      // Don't retry on 401 errors
-      if (error?.message?.includes('Unauthorized')) {
+      // Don't retry on 401 or 500 errors
+      if (error?.message?.includes('Unauthorized') || error?.message?.includes('500')) {
         return false;
       }
-      return failureCount < 2;
+      return failureCount < 1; // Reduced retry count
     },
   });
 
