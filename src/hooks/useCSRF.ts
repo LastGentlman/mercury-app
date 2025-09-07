@@ -37,13 +37,24 @@ export function useCSRF(): CSRFConfig {
           const { data: { session }, error } = await supabase.auth.getSession();
           if (error) {
             console.error('Error getting Supabase session for CSRF:', error);
+            return null; // ✅ FIX: Return null if no valid session
           } else if (session?.access_token) {
             authToken = session.access_token;
             console.log('✅ Using Supabase session token for CSRF request');
+          } else {
+            console.log('⚠️ No valid Supabase session found for CSRF request');
+            return null; // ✅ FIX: Return null if no access token
           }
         } catch (error) {
           console.error('Error accessing Supabase session for CSRF:', error);
+          return null; // ✅ FIX: Return null on error
         }
+      }
+      
+      // ✅ FIX: If still no auth token, don't make the request
+      if (!authToken) {
+        console.log('⚠️ No auth token available for CSRF request');
+        return null;
       }
       
       const headers: Record<string, string> = {
@@ -112,16 +123,38 @@ export function useCSRFRequest() {
     url: string, 
     options: RequestInit = {}
   ): Promise<Response> => {
-    const authToken = localStorage.getItem('authToken');
+    let authToken = localStorage.getItem('authToken');
+    
+    // ✅ FIX: If no auth token in localStorage, try to get from Supabase session
+    if (!authToken && supabase) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (!error && session?.access_token) {
+          authToken = session.access_token;
+          console.log('✅ Using Supabase session token for request');
+        }
+      } catch (error) {
+        console.error('Error getting Supabase session for request:', error);
+      }
+    }
+    
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       'X-Session-ID': sessionId,
       ...(options.headers as Record<string, string>)
     };
     
-    // Solo incluir Authorization si hay un token de autenticación
+    // ✅ FIX: Only include Authorization if we have a valid token
     if (authToken) {
       headers['Authorization'] = `Bearer ${authToken}`;
+    } else {
+      console.log('⚠️ No auth token available for request to:', url);
+      // Return a mock 401 response to prevent the request from being made
+      return new Response(JSON.stringify({ error: 'No authentication token available' }), {
+        status: 401,
+        statusText: 'Unauthorized',
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     // Agregar token CSRF para métodos que modifican datos

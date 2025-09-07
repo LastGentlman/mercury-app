@@ -32,6 +32,8 @@ export class AuthService {
   // ✅ Singleton pattern to prevent multiple auth state listeners
   private static authStateSubscription: { data: { subscription: { unsubscribe: () => void } } } | null = null
   private static authStateCallbacks: Set<(event: string, session: unknown) => void> = new Set()
+  private static lastOAuthCheck: number = 0
+  private static oAuthCheckThrottle: number = 1000 // 1 second throttle
 
   /**
    * Gets current user session from Supabase OAuth - Versión mejorada
@@ -41,6 +43,14 @@ export class AuthService {
       console.log('⚠️ Supabase no configurado, saltando OAuth session check')
       return null
     }
+
+    // ✅ FIX: Throttle OAuth session checks to prevent infinite loops
+    const now = Date.now()
+    if (now - this.lastOAuthCheck < this.oAuthCheckThrottle) {
+      console.log('⏳ OAuth session check throttled')
+      return null
+    }
+    this.lastOAuthCheck = now
 
     try {
       console.log('🔍 Verificando sesión OAuth...')
@@ -54,6 +64,12 @@ export class AuthService {
 
       if (!session?.user) {
         console.log('ℹ️ No hay sesión OAuth activa')
+        return null
+      }
+      
+      // ✅ FIX: Check if session is valid and not expired
+      if (session.expires_at && new Date(session.expires_at * 1000) < new Date()) {
+        console.log('⚠️ OAuth session expired')
         return null
       }
 
