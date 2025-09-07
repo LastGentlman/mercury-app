@@ -15,6 +15,12 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   // ✅ FIX: More robust redirect logic with better conditions
   useEffect(() => {
+    console.log('🔍 ProtectedRoute useEffect triggered:', {
+      isLoading,
+      isAuthenticated,
+      isRedirectInProgress: isRedirectInProgress()
+    })
+
     // Only redirect if we're sure the user is not authenticated and not loading
     if (!isLoading && !isAuthenticated && !isRedirectInProgress()) {
       console.log('🔒 ProtectedRoute: User not authenticated, redirecting to auth...')
@@ -26,6 +32,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           completeRedirect()
         }, 50)
       }
+    } else {
+      console.log('⏳ ProtectedRoute: Skipping redirect - loading, authenticated, or redirect in progress')
     }
   }, [isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 

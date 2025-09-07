@@ -14,31 +14,22 @@ function DashboardPage() {
   const navigate = useNavigate()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
-  // ✅ FIX: Prevent multiple redirects by using a single useEffect with proper conditions
+  // ✅ SIMPLIFIED: Let ProtectedRoute handle all redirects, dashboard only handles business setup
   useEffect(() => {
-    // Don't do anything while loading or if redirect is in progress
-    if (isLoading || isRedirectInProgress()) {
-      return
-    }
+    console.log('🔍 Dashboard useEffect triggered:', {
+      isLoading,
+      isAuthenticated,
+      user: user ? { id: user.id, email: user.email, businessId: user.businessId } : null,
+      isRedirectInProgress: isRedirectInProgress()
+    })
 
-    // If user is authenticated but has no business, redirect to setup
-    if (isAuthenticated && user && !user.businessId) {
-      console.log('🔄 User authenticated but no business, redirecting to setup...')
+    // Only handle business setup redirect, let ProtectedRoute handle auth redirects
+    if (!isLoading && !isRedirectInProgress() && isAuthenticated && user && !user.businessId) {
+      console.log('🔄 Dashboard: User authenticated but no business, redirecting to setup...')
       if (startRedirect(5000)) {
         navigate({ to: '/setup' })
         completeRedirect()
       }
-      return
-    }
-
-    // If user is not authenticated, redirect to auth
-    if (!isAuthenticated && user === null) {
-      console.log('❌ No user found, redirecting to auth...')
-      if (startRedirect(3000)) {
-        navigate({ to: '/auth', replace: true })
-        completeRedirect()
-      }
-      return
     }
   }, [user, isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
