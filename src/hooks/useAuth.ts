@@ -16,7 +16,7 @@
  * ```
  */
 
-import { useEffect, useCallback } from 'react'
+import { useEffect, useCallback, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { 
   AuthHookReturn, 
@@ -270,8 +270,9 @@ export function useAuth(): AuthHookReturn {
   /**
    * Listen for OAuth state changes with improved loop prevention
    */
+  const lastEventTimeRef = useRef(0)
+  
   useEffect(() => {
-    let lastEventTime = 0
     const eventThrottle = 2000 // 2 seconds throttle
     
     const { data: { subscription } } = AuthService.onAuthStateChange(
@@ -279,11 +280,11 @@ export function useAuth(): AuthHookReturn {
         const now = Date.now()
         
         // Throttle events to prevent rapid fire
-        if (now - lastEventTime < eventThrottle) {
+        if (now - lastEventTimeRef.current < eventThrottle) {
           console.log(`⏳ OAuth event throttled: ${event}`)
           return
         }
-        lastEventTime = now
+        lastEventTimeRef.current = now
         
         if (event === 'SIGNED_IN' && session) {
           console.log('✅ OAuth sign in detected')

@@ -34,6 +34,8 @@ export class AuthService {
   private static authStateCallbacks: Set<(event: string, session: unknown) => void> = new Set()
   private static lastOAuthCheck: number = 0
   private static oAuthCheckThrottle: number = 1000 // 1 second throttle
+  private static lastAuthEventTime: number = 0
+  private static authEventThrottle: number = 2000 // 2 seconds throttle
 
   /**
    * Gets current user session from Supabase OAuth - Versión mejorada
@@ -483,6 +485,15 @@ export class AuthService {
       console.log('👂 Configurando listener de auth state changes...')
       
       this.authStateSubscription = supabase.auth.onAuthStateChange((event, session) => {
+        const now = Date.now()
+        
+        // ✅ Throttle auth state change events to prevent rapid fire
+        if (now - this.lastAuthEventTime < this.authEventThrottle) {
+          console.log(`⏳ Auth state change throttled: ${event}`)
+          return
+        }
+        this.lastAuthEventTime = now
+        
         console.log(`🔄 Auth state cambió: ${event}`, {
           hasSession: !!session,
           userEmail: session?.user?.email,
