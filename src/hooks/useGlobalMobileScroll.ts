@@ -5,6 +5,13 @@ export const useGlobalMobileScroll = () => {
   const lastScrollTimeRef = useRef(0)
 
   useEffect(() => {
+    // Log that the hook is loading
+    console.log('🎯 useGlobalMobileScroll hook loaded!', {
+      windowWidth: globalThis.window.innerWidth,
+      isMobile: globalThis.window.innerWidth <= 768,
+      userAgent: globalThis.navigator.userAgent,
+      timestamp: new Date().toISOString()
+    })
     const calculateOptimalOffset = () => {
       const viewportHeight = globalThis.window.innerHeight
       const viewportWidth = globalThis.window.innerWidth
@@ -174,11 +181,17 @@ export const useGlobalMobileScroll = () => {
       isScrollingRef.current = false
     }
 
+    // Log event listener attachment
+    console.log('🎯 Attaching event listeners for mobile scroll')
+    
     globalThis.window.document.addEventListener('focusin', handleFocusIn)
     globalThis.window.addEventListener('resize', handleResize)
     globalThis.window.addEventListener('scroll', handleScroll, { passive: true })
     
+    console.log('🎯 Event listeners attached successfully')
+    
     return () => {
+      console.log('🎯 Removing event listeners for mobile scroll')
       globalThis.window.document.removeEventListener('focusin', handleFocusIn)
       globalThis.window.removeEventListener('resize', handleResize)
       globalThis.window.removeEventListener('scroll', handleScroll)
