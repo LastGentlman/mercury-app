@@ -37,6 +37,11 @@ import { useOfflineAuth } from './useOfflineAuth.ts'
 export function useAuth(): AuthHookReturn {
   const queryClient = useQueryClient()
   
+  // ✅ Exponer queryClient globalmente para que los servicios puedan invalidar queries
+  if (typeof window !== 'undefined') {
+    (window as any).queryClient = queryClient;
+  }
+  
   // Use secure storage sync for auth token
   const { value: _authToken, setValue: setAuthToken, isLoading: isTokenLoading } = useAuthToken()
   

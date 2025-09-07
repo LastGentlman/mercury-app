@@ -152,11 +152,17 @@ export function BusinessSetup({ onBusinessSetup, isFullPage = false }: BusinessS
         csrfRequest
       );
 
+      // ✅ Actualizar el perfil del usuario con el businessId
+      await BusinessService.updateUserBusiness(business.id, authToken || undefined);
+
       notifications.success("¡Negocio creado exitosamente!");
       setIsOpen(false);
-      onBusinessSetup?.(business.id);
       
-      // El callback onBusinessSetup manejará la redirección
+      // ✅ Pequeño delay para permitir que la query se actualice
+      setTimeout(() => {
+        onBusinessSetup?.(business.id);
+      }, 100);
+      
     } catch (error) {
       console.error("Error creating business:", error);
       notifications.error(error instanceof Error ? error.message : "Error al crear el negocio");
@@ -189,12 +195,17 @@ export function BusinessSetup({ onBusinessSetup, isFullPage = false }: BusinessS
       // Unirse al negocio usando el servicio real
       const business = await BusinessService.joinBusiness(businessCode, authToken || undefined, csrfRequest);
       
-      // Actualizar el perfil del usuario con el businessId
+      // ✅ Actualizar el perfil del usuario con el businessId
       await BusinessService.updateUserBusiness(business.id, authToken || undefined);
 
       notifications.success('¡Te has unido al negocio exitosamente!');
       setIsOpen(false);
-      onBusinessSetup?.(business.id);
+      
+      // ✅ Pequeño delay para permitir que la query se actualice
+      setTimeout(() => {
+        onBusinessSetup?.(business.id);
+      }, 100);
+      
     } catch (error) {
       console.error('Error joining business:', error);
       notifications.error(error instanceof Error ? error.message : 'Código de negocio inválido o expirado');

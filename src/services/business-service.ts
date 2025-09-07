@@ -1,6 +1,13 @@
 import { supabase } from '../utils/supabase.ts';
 import { BACKEND_URL } from '../config.ts';
 
+// ✅ Extender el tipo Window para incluir queryClient
+declare global {
+  interface Window {
+    queryClient?: any;
+  }
+}
+
 export interface BusinessFormData {
   name: string;
   type: string;
@@ -325,6 +332,12 @@ export class BusinessService {
 
       if (error) {
         throw new Error('Error al actualizar el perfil del usuario');
+      }
+
+      // ✅ Invalidar la query del usuario para que se actualice inmediatamente
+      // Esto evita el loop en BusinessSetup
+      if (typeof window !== 'undefined' && window.queryClient) {
+        window.queryClient.invalidateQueries({ queryKey: ['auth-user'] });
       }
     } catch (error) {
       console.error('Error decoding token or updating profile:', error);
