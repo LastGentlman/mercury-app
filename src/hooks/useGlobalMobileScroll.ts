@@ -49,15 +49,40 @@ export const useGlobalMobileScroll = () => {
     const handleFocusIn = (event: FocusEvent) => {
       const target = event.target as HTMLElement
       
+      // Debug logging for all focus events
+      if (import.meta.env.DEV) {
+        console.log('🎯 Focus event detected:', {
+          tagName: target.tagName,
+          id: target.id,
+          windowWidth: globalThis.window.innerWidth,
+          isMobile: globalThis.window.innerWidth <= 768
+        })
+      }
+      
       // Only for inputs, textareas and selects
-      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+        if (import.meta.env.DEV) {
+          console.log('🎯 Skipping non-input element:', target.tagName)
+        }
+        return
+      }
       
       // Only on mobile (768px or less)
-      if (globalThis.window.innerWidth > 768) return
+      if (globalThis.window.innerWidth > 768) {
+        if (import.meta.env.DEV) {
+          console.log('🎯 Skipping desktop view:', globalThis.window.innerWidth + 'px')
+        }
+        return
+      }
       
       // Prevent multiple scrolls in quick succession
       const now = Date.now()
-      if (now - lastScrollTimeRef.current < 500) return
+      if (now - lastScrollTimeRef.current < 500) {
+        if (import.meta.env.DEV) {
+          console.log('🎯 Skipping - too soon since last scroll')
+        }
+        return
+      }
       lastScrollTimeRef.current = now
       
       // Check if element is already visible in viewport
@@ -69,12 +94,26 @@ export const useGlobalMobileScroll = () => {
       const optimalOffset = calculateOptimalOffset()
       
       // If element is already visible and not too close to bottom, don't scroll
-      if (isVisible && rect.bottom < viewportHeight - 200) return
+      if (isVisible && rect.bottom < viewportHeight - 200) {
+        if (import.meta.env.DEV) {
+          console.log('🎯 Skipping - element already visible')
+        }
+        return
+      }
       
       // Prevent scroll if already scrolling
-      if (isScrollingRef.current) return
+      if (isScrollingRef.current) {
+        if (import.meta.env.DEV) {
+          console.log('🎯 Skipping - already scrolling')
+        }
+        return
+      }
       
       isScrollingRef.current = true
+      
+      if (import.meta.env.DEV) {
+        console.log('🎯 Proceeding with scroll for:', target.tagName, target.id)
+      }
       
       // Use requestAnimationFrame for better timing
       const scrollToElement = () => {
@@ -113,7 +152,15 @@ export const useGlobalMobileScroll = () => {
       
       // Delay to allow virtual keyboard to appear first
       setTimeout(() => {
-        requestAnimationFrame(scrollToElement)
+        // Double-check that we're still on mobile and element is still focused
+        if (globalThis.window.innerWidth <= 768 && document.activeElement === target) {
+          requestAnimationFrame(scrollToElement)
+        } else {
+          if (import.meta.env.DEV) {
+            console.log('🎯 Skipping scroll - conditions changed during delay')
+          }
+          isScrollingRef.current = false
+        }
       }, 400) // Increased delay for better keyboard handling
     }
 
