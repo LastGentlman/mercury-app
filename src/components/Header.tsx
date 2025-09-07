@@ -8,7 +8,7 @@
  * 5. **Visual Hierarchy**: Logo debe ser el único elemento de marca visible
  */
 
-import { Link } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
 import { Loader2, LogOut, User } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useMobileAuth } from '../hooks/useMobileAuth.ts'
@@ -18,6 +18,12 @@ import { TrialExtensionCompact } from './TrialExtensionBanner.tsx'
 export default function Header() {
   const { user, logout } = useAuth()
   const { shouldHideHeader, isAuthenticated, isLoading } = useMobileAuth()
+  const location = useLocation()
+  
+  // Determine button text and route based on current location
+  const isOnAuthPage = location.pathname === '/auth'
+  const buttonText = isOnAuthPage ? 'Home' : 'Acceso'
+  const buttonRoute = isOnAuthPage ? '/' : '/auth'
 
   // Early return if header should be hidden
   if (shouldHideHeader) {
@@ -106,9 +112,9 @@ export default function Header() {
                 </div>
               ) : (
                 <div className="flex items-center space-x-3">
-                  <Link to="/auth">
+                  <Link to={buttonRoute}>
                     <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm">
-                      Acceso
+                      {buttonText}
                     </Button>
                   </Link>
                 </div>
