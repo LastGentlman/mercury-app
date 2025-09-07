@@ -19,7 +19,14 @@ export interface CreateBusinessRequest {
   businessPhone?: string;
   businessAddress?: string;
   billingName: string;
-  billingAddress?: string;
+  billingAddress: {
+    line1: string;
+    line2?: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+  };
   taxId?: string;
   taxRegime: string;
   currency: string;
@@ -335,6 +342,14 @@ export class BusinessService {
       billingName: formData.name, // Usar el nombre del negocio como facturación
       taxRegime: '605', // Régimen fiscal por defecto
       currency: formData.currency,
+      // Crear billingAddress como objeto con campos requeridos
+      billingAddress: {
+        line1: formData.address || 'Dirección no especificada',
+        city: 'Ciudad',
+        state: 'Estado',
+        postal_code: '00000',
+        country: 'México'
+      }
     };
 
     if (formData.phone) {
@@ -342,7 +357,6 @@ export class BusinessService {
     }
     if (formData.address) {
       result.businessAddress = formData.address;
-      result.billingAddress = formData.address;
     }
 
     return result;
