@@ -6,6 +6,8 @@ describe('RedirectManager', () => {
     // Reset the redirect manager state before each test
     redirectManager.reset()
     redirectManager.resetRedirectCount()
+    // Also reset the last redirect time to ensure throttling tests work
+    ;(redirectManager as any).lastRedirectTime = 0
     vi.clearAllMocks()
   })
 
@@ -62,8 +64,11 @@ describe('RedirectManager', () => {
     it('should prevent infinite loops with max redirect count', () => {
       // Simulate multiple redirects
       for (let i = 0; i < 5; i++) {
-        redirectManager.startRedirect(1000)
+        const result = redirectManager.startRedirect(1000)
+        expect(result).toBe(true) // Each redirect should succeed
         redirectManager.completeRedirect()
+        // Reset the last redirect time to allow the next redirect
+        ;(redirectManager as any).lastRedirectTime = 0
       }
       
       // The 6th redirect should be rejected
@@ -77,6 +82,8 @@ describe('RedirectManager', () => {
       // Simulate some redirects
       redirectManager.startRedirect(1000)
       redirectManager.completeRedirect()
+      // Reset the last redirect time to allow the next redirect
+      ;(redirectManager as any).lastRedirectTime = 0
       redirectManager.startRedirect(1000)
       redirectManager.completeRedirect()
       
