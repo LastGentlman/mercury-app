@@ -68,29 +68,8 @@ export default function MinimalistLanding({ isPWA, isAuthenticated, debugInfo }:
       <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-green-50/20 to-transparent rounded-full blur-3xl" />
       
       <div className="relative z-10">
-        {/* Minimal header */}
-        <header className="px-6 py-8">
-          <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <div className="text-2xl font-bold tracking-tight text-gray-900">
-              PedidoList
-            </div>
-            <div className="flex items-center gap-4">
-              <Link to="/auth">
-                <button className="text-gray-600 hover:text-gray-900 transition-colors">
-                  Iniciar sesión
-                </button>
-              </Link>
-              <Link to="/auth">
-                <Button className="bg-gray-900 text-white px-6 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105">
-                  Comenzar
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </header>
-
         {/* Hero section - Ultra minimal */}
-        <section className="px-6 pt-20 pb-32">
+        <section className="px-6 pt-32 pb-32">
           <div className="max-w-4xl mx-auto text-center">
             <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
               <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-gray-900 tracking-tight mb-8 leading-none">
@@ -293,19 +272,6 @@ export default function MinimalistLanding({ isPWA, isAuthenticated, debugInfo }:
           </div>
         </section>
 
-        {/* Minimal footer */}
-        <footer className="px-6 py-12 border-t border-gray-100">
-          <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <div className="text-2xl font-bold text-gray-900">
-              PedidoList
-            </div>
-            <div className="flex items-center gap-8 text-sm text-gray-500">
-              <a href="#" className="hover:text-gray-900 transition-colors">Privacidad</a>
-              <a href="#" className="hover:text-gray-900 transition-colors">Términos</a>
-              <a href="#" className="hover:text-gray-900 transition-colors">Soporte</a>
-            </div>
-          </div>
-        </footer>
 
         {/* Debug info in development */}
         {debugInfo && import.meta.env.DEV && (

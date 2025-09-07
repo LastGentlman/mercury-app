@@ -11,6 +11,7 @@ import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
+import { useRedirectManager } from '../utils/redirectManager.ts'
 
 export const Route = createFileRoute('/auth')({
   component: RouteComponent,
@@ -34,23 +35,21 @@ function RouteComponent() {
   const [isRedirecting, setIsRedirecting] = useState(false)
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading } = useAuth()
+  const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
-  // 🎯 OPTIMIZACIÓN: Manejo suave de redirección para evitar parpadeo
+  // 🎯 OPTIMIZACIÓN: Redirección inmediata sin delays artificiales
   useEffect(() => {
-    if (isAuthenticated && !isRedirecting) {
-      console.log('✅ Usuario autenticado, iniciando redirección suave...')
+    if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress()) {
+      console.log('✅ Usuario autenticado, redirigiendo inmediatamente...')
       setIsRedirecting(true)
+      startRedirect(5000) // 5 second timeout
       
-      // Wait for user data to be fully loaded before redirecting
-      const timer = setTimeout(() => {
-        // Use navigate instead of location.href to avoid race conditions
-        navigate({ to: '/dashboard', replace: true })
-      }, 500) // Increased delay to ensure user data is loaded
-      
-      return () => clearTimeout(timer)
+      // Redirect immediately - no artificial delay
+      navigate({ to: '/dashboard', replace: true })
+      completeRedirect()
     }
     return undefined
-  }, [isAuthenticated, isRedirecting])
+  }, [isAuthenticated, isRedirecting, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
   // 🎯 OPTIMIZACIÓN: Mostrar loading state consistente
   if (isLoading || isRedirecting) {

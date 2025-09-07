@@ -3,33 +3,39 @@ import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Dashboard } from '../components/Dashboard.tsx'
 import { useEffect } from 'react'
+import { useRedirectManager } from '../utils/redirectManager.ts'
 
 export const Route = createFileRoute('/dashboard')({
   component: DashboardPage,
 })
 
 function DashboardPage() {
-  const { user } = useAuth()
+  const { user, isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
+  const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
   // Si no hay businessId, redirigir a la página de configuración
   useEffect(() => {
-    if (user && !user.businessId) {
+    if (user && !user.businessId && !isRedirectInProgress()) {
+      startRedirect(5000)
       navigate({ to: '/setup' })
+      completeRedirect()
     }
-  }, [user, navigate])
+  }, [user, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
   // Si no hay usuario autenticado, redirigir al login
   useEffect(() => {
-    // Only redirect if user is explicitly null (not undefined/loading)
-    if (user === null) {
+    // Only redirect if we're sure the user is not authenticated and not loading
+    if (!isLoading && !isAuthenticated && user === null && !isRedirectInProgress()) {
       console.log('❌ No user found, redirecting to auth...')
+      startRedirect(5000)
       navigate({ to: '/auth', replace: true })
+      completeRedirect()
     }
-  }, [user, navigate])
+  }, [user, isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
   // Mostrar loading mientras se verifica el estado del usuario
-  if (user === undefined) {
+  if (isLoading || user === undefined) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

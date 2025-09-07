@@ -107,10 +107,8 @@ export function useAuth(): AuthHookReturn {
       
       queryClient.setQueryData(['auth-user'], userData)
       
-      // Wait a bit then refetch to ensure consistency
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['auth-user'] })
-      }, 200) // Increased delay to ensure data consistency
+      // Invalidate immediately for consistency - no artificial delay
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
       
       console.log('✅ Login successful, user state updated')
     },

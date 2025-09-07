@@ -1,6 +1,8 @@
 import { useEffect } from 'react'
+import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Loader2 } from 'lucide-react'
+import { useRedirectManager } from '../utils/redirectManager.ts'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -8,13 +10,17 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isAuthenticated, isLoading } = useAuth()
+  const navigate = useNavigate()
+  const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      // 🔒 SECURITY: Use window.location for immediate redirect
-      globalThis.location.href = '/auth'
+    if (!isLoading && !isAuthenticated && !isRedirectInProgress()) {
+      // 🔒 SECURITY: Use TanStack Router navigation for consistency
+      startRedirect(5000)
+      navigate({ to: '/auth', replace: true })
+      completeRedirect()
     }
-  }, [isAuthenticated, isLoading])
+  }, [isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
   if (isLoading) {
     return (
