@@ -9,6 +9,7 @@ import { CreateOrderDialog } from './CreateOrderDialog.tsx';
 import { OrderCard } from './orders/OrderCard.tsx';
 import { OrderDetails } from './orders/OrderDetails.tsx';
 import { TrialExtensionBanner } from './TrialExtensionBanner.tsx';
+import SaaSDashboard from './SaaSDashboard.tsx';
 
 interface DashboardProps {
   businessId: string;
@@ -20,6 +21,7 @@ export function Dashboard({ businessId }: DashboardProps) {
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = React.useState(false);
+  const [showSaaSDashboard, setShowSaaSDashboard] = React.useState(false);
 
   // Use dashboard stats if available, otherwise fall back to local calculation
   const stats = React.useMemo(() => {
@@ -71,6 +73,27 @@ export function Dashboard({ businessId }: DashboardProps) {
     );
   }
 
+  // Mostrar el dashboard SaaS si está activado
+  if (showSaaSDashboard) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold">Dashboard SaaS</h1>
+            <p className="text-gray-600">Métricas y análisis de negocio</p>
+          </div>
+          <Button 
+            onClick={() => setShowSaaSDashboard(false)}
+            variant="outline"
+          >
+            Volver al Dashboard de Pedidos
+          </Button>
+        </div>
+        <SaaSDashboard />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Trial Extension Banner */}
@@ -89,13 +112,23 @@ export function Dashboard({ businessId }: DashboardProps) {
             })}
           </p>
         </div>
-        <Button 
-          onClick={() => setShowCreateDialog(true)}
-          className="bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nuevo Pedido
-        </Button>
+        <div className="flex gap-3">
+          <Button 
+            onClick={() => setShowSaaSDashboard(true)}
+            variant="outline"
+            className="border-purple-200 text-purple-700 hover:bg-purple-50"
+          >
+            <TrendingUp className="w-4 h-4 mr-2" />
+            Dashboard SaaS
+          </Button>
+          <Button 
+            onClick={() => setShowCreateDialog(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Pedido
+          </Button>
+        </div>
       </div>
 
       {/* Enhanced Stats Cards */}

@@ -107,13 +107,8 @@ export default function Header() {
               ) : (
                 <div className="flex items-center space-x-3">
                   <Link to="/auth">
-                    <button className="text-gray-600 hover:text-gray-900 transition-colors text-sm font-medium">
-                      Iniciar sesión
-                    </button>
-                  </Link>
-                  <Link to="/auth">
                     <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm">
-                      Comenzar
+                      Acceso
                     </Button>
                   </Link>
                 </div>
