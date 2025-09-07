@@ -37,18 +37,21 @@ function RouteComponent() {
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading } = useAuth()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
-  // 🎯 OPTIMIZACIÓN: Redirección inmediata sin delays artificiales
+  // ✅ FIX: Improved redirect logic to prevent loops
   useEffect(() => {
+    // Only redirect if user is authenticated, not already redirecting, not loading, and no redirect in progress
     if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress()) {
       console.log('✅ Usuario autenticado, redirigiendo inmediatamente...')
       setIsRedirecting(true)
-      startRedirect(5000) // 5 second timeout
       
-      // Redirect immediately - no artificial delay
-      navigate({ to: '/dashboard', replace: true })
-      completeRedirect()
+      if (startRedirect(5000)) {
+        // Use setTimeout to ensure state updates are processed
+        setTimeout(() => {
+          navigate({ to: '/dashboard', replace: true })
+          completeRedirect()
+        }, 100)
+      }
     }
-    return undefined
   }, [isAuthenticated, isRedirecting, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
   // 🎯 OPTIMIZACIÓN: Mostrar loading state consistente

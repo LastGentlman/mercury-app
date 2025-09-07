@@ -14,23 +14,31 @@ function DashboardPage() {
   const navigate = useNavigate()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
-  // Si no hay businessId, redirigir a la página de configuración
+  // ✅ FIX: Prevent multiple redirects by using a single useEffect with proper conditions
   useEffect(() => {
-    if (user && !user.businessId && !isRedirectInProgress()) {
-      startRedirect(5000)
-      navigate({ to: '/setup' })
-      completeRedirect()
+    // Don't do anything while loading or if redirect is in progress
+    if (isLoading || isRedirectInProgress()) {
+      return
     }
-  }, [user, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
-  // Si no hay usuario autenticado, redirigir al login
-  useEffect(() => {
-    // Only redirect if we're sure the user is not authenticated and not loading
-    if (!isLoading && !isAuthenticated && user === null && !isRedirectInProgress()) {
+    // If user is authenticated but has no business, redirect to setup
+    if (isAuthenticated && user && !user.businessId) {
+      console.log('🔄 User authenticated but no business, redirecting to setup...')
+      if (startRedirect(5000)) {
+        navigate({ to: '/setup' })
+        completeRedirect()
+      }
+      return
+    }
+
+    // If user is not authenticated, redirect to auth
+    if (!isAuthenticated && user === null) {
       console.log('❌ No user found, redirecting to auth...')
-      startRedirect(3000) // Reduced timeout
-      navigate({ to: '/auth', replace: true })
-      completeRedirect()
+      if (startRedirect(3000)) {
+        navigate({ to: '/auth', replace: true })
+        completeRedirect()
+      }
+      return
     }
   }, [user, isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 

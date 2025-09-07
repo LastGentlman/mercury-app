@@ -13,12 +13,19 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const navigate = useNavigate()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
+  // ✅ FIX: More robust redirect logic with better conditions
   useEffect(() => {
+    // Only redirect if we're sure the user is not authenticated and not loading
     if (!isLoading && !isAuthenticated && !isRedirectInProgress()) {
-      // 🔒 SECURITY: Use TanStack Router navigation for consistency
-      startRedirect(3000) // Reduced timeout for faster response
-      navigate({ to: '/auth', replace: true })
-      completeRedirect()
+      console.log('🔒 ProtectedRoute: User not authenticated, redirecting to auth...')
+      
+      if (startRedirect(3000)) {
+        // Use setTimeout to prevent race conditions
+        setTimeout(() => {
+          navigate({ to: '/auth', replace: true })
+          completeRedirect()
+        }, 50)
+      }
     }
   }, [isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 

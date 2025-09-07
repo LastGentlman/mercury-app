@@ -8,6 +8,7 @@ import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
 import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
 import { AutoConnectionBanner, ConnectionBannerDemo } from '../components/ConnectionBanner.tsx'
 import { MobileScrollDebugger } from '../components/MobileScrollDebugger.tsx'
+import { RedirectDebugger } from '../components/RedirectDebugger.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 import { useGlobalMobileScroll } from '../hooks/useGlobalMobileScroll.ts'
@@ -46,6 +47,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         {import.meta.env.DEV && !isAuthCallback && <OAuthDebugger />}
         {import.meta.env.DEV && !isAuthCallback && <ConnectionBannerDemo />}
         {import.meta.env.DEV && !isAuthCallback && <MobileScrollDebugger />}
+        {import.meta.env.DEV && <RedirectDebugger />}
       </>
     )
   },

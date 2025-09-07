@@ -5,6 +5,7 @@ import { getSearchParams, getHash } from '../utils/browser.ts'
 import { logger } from '../utils/logger.ts'
 import type { AuthUser } from '../types/auth.ts'
 import { perf } from '../utils/perf.ts'
+import { useRedirectManager } from '../utils/redirectManager.ts'
 
 export const Route = createFileRoute('/auth/callback')({
   component: AuthCallbackPage,
@@ -125,6 +126,7 @@ async function directAuthCheck(): Promise<AuthUser | null> {
 // ✅ OPTIMIZACIÓN 4: Zero Re-render Callback Component  
 export const OptimizedAuthCallback = () => {
   const navigate = useNavigate()
+  const { resetRedirectCount } = useRedirectManager()
   
   // ✅ SINGLE STATE = SINGLE RE-RENDER SOURCE
   const [state, setState] = useState<AuthCallbackState>({
@@ -193,6 +195,9 @@ export const OptimizedAuthCallback = () => {
         if (!isNavigating.current) {
           isNavigating.current = true
           perf.mark('oauth_cb:navigate_start')
+          
+          // Reset redirect count on successful authentication
+          resetRedirectCount()
           
           // Primary navigation attempt (no artificial delay)
           setTimeout(() => {

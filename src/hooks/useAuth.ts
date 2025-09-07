@@ -278,7 +278,10 @@ export function useAuth(): AuthHookReturn {
           // ✅ FIX: Only invalidate if we don't already have user data to prevent infinite loop
           const currentUser = queryClient.getQueryData(['auth-user'])
           if (!currentUser) {
+            console.log('🔄 Invalidating auth-user query due to OAuth sign in')
             queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+          } else {
+            console.log('ℹ️ User data already exists, skipping query invalidation')
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('✅ OAuth sign out detected')
