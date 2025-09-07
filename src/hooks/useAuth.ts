@@ -268,11 +268,23 @@ export function useAuth(): AuthHookReturn {
   }, [])
 
   /**
-   * Listen for OAuth state changes
+   * Listen for OAuth state changes with improved loop prevention
    */
   useEffect(() => {
+    let lastEventTime = 0
+    const eventThrottle = 2000 // 2 seconds throttle
+    
     const { data: { subscription } } = AuthService.onAuthStateChange(
       (event, session) => {
+        const now = Date.now()
+        
+        // Throttle events to prevent rapid fire
+        if (now - lastEventTime < eventThrottle) {
+          console.log(`⏳ OAuth event throttled: ${event}`)
+          return
+        }
+        lastEventTime = now
+        
         if (event === 'SIGNED_IN' && session) {
           console.log('✅ OAuth sign in detected')
           // ✅ FIX: Only invalidate if we don't already have user data to prevent infinite loop

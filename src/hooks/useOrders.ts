@@ -14,20 +14,36 @@ export function useOrders(businessId: string) {
   const { isOnline } = useOfflineSync();
   const { csrfRequest } = useCSRFRequest();
 
-  // Obtener pedidos
+  // Obtener pedidos con mejor control de caché
   const { data: orders = [], isLoading, error } = useQuery({
     queryKey: ['orders', businessId],
     queryFn: async () => {
       if (isOnline) {
         const response = await csrfRequest(`/api/orders?businessId=${businessId}`);
-        if (!response.ok) throw new Error('Error fetching orders');
+        if (!response.ok) {
+          if (response.status === 401) {
+            console.log('⚠️ Unauthorized request to orders API, user may need to re-authenticate');
+            throw new Error('Unauthorized - please log in again');
+          }
+          throw new Error('Error fetching orders');
+        }
         return response.json();
       } else {
         // Fallback a datos offline
         return await db.getOrdersByBusinessAndDate(businessId, new Date().toISOString().split('T')[0] || '');
       }
     },
-    staleTime: 30000, // 30 segundos
+    staleTime: 5 * 60 * 1000, // 5 minutos - increased to reduce API calls
+    gcTime: 10 * 60 * 1000, // 10 minutos cache time
+    refetchOnWindowFocus: false, // Prevent refetch on window focus
+    refetchOnMount: true, // Only refetch on mount
+    retry: (failureCount, error) => {
+      // Don't retry on 401 errors
+      if (error?.message?.includes('Unauthorized')) {
+        return false;
+      }
+      return failureCount < 2;
+    },
   });
 
   // ✅ ACTUALIZADO: Crear pedido usando tipos unificados

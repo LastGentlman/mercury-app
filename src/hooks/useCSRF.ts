@@ -20,14 +20,27 @@ export function useCSRF(): CSRFConfig {
   });
   
   const [token, setToken] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastRefreshTime, setLastRefreshTime] = useState(0);
 
   // Guardar sessionId en localStorage
   useEffect(() => {
     localStorage.setItem('sessionId', sessionId);
   }, [sessionId]);
 
-  // Obtener token CSRF del servidor
+  // Obtener token CSRF del servidor con throttling
   const refreshToken = async (): Promise<string | null> => {
+    const now = Date.now();
+    const refreshThrottle = 5000; // 5 seconds throttle
+    
+    // Prevent rapid successive calls
+    if (isRefreshing || (now - lastRefreshTime < refreshThrottle)) {
+      console.log('⏳ CSRF token refresh throttled');
+      return token; // Return existing token if available
+    }
+    
+    setIsRefreshing(true);
+    setLastRefreshTime(now);
     try {
       let authToken = localStorage.getItem('authToken');
       
@@ -98,12 +111,17 @@ export function useCSRF(): CSRFConfig {
     } catch (error) {
       console.error('❌ Error obteniendo token CSRF:', error);
       return null;
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
-  // Obtener token inicial
+  // Obtener token inicial solo una vez
   useEffect(() => {
-    refreshToken();
+    // Only fetch initial token if we don't have one and we're not already refreshing
+    if (!token && !isRefreshing) {
+      refreshToken();
+    }
   }, []);
 
   return {
