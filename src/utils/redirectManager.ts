@@ -18,9 +18,9 @@ class RedirectManager {
 
   /**
    * Start a redirect operation
-   * @param timeoutMs - Timeout in milliseconds (default: 5000)
+   * @param timeoutMs - Timeout in milliseconds (default: 3000)
    */
-  startRedirect(timeoutMs: number = 5000): void {
+  startRedirect(timeoutMs: number = 3000): void {
     if (this.isRedirecting) {
       console.warn('⚠️ Redirect already in progress, ignoring new redirect request')
       return
@@ -34,7 +34,7 @@ class RedirectManager {
       clearTimeout(this.redirectTimeout)
     }
 
-    // Set timeout to reset redirect state
+    // Set timeout to reset redirect state (reduced default timeout)
     this.redirectTimeout = setTimeout(() => {
       this.reset()
     }, timeoutMs)

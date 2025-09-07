@@ -12,12 +12,14 @@ import './styles.css'
 import { AppErrorBoundary } from './components/AppErrorBoundary.tsx'
 import { GlobalLoadingProvider } from './components/GlobalLoadingProvider.tsx'
 
-// ✅ Configuración de React Query
+// ✅ Configuración de React Query optimizada para performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      gcTime: 10 * 60 * 1000,   // 10 minutos (antes cacheTime)
+      staleTime: 2 * 60 * 1000, // 2 minutos (reduced for faster updates)
+      gcTime: 5 * 60 * 1000,   // 5 minutos (reduced cache time)
+      refetchOnWindowFocus: false, // Prevent unnecessary refetches
+      refetchOnMount: true, // Always refetch on mount for fresh data
       retry: (failureCount, error) => {
         // No retry para errores 4xx
         if (error instanceof Error && error.message.includes('4')) {

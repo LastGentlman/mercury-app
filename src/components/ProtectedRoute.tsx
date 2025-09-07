@@ -16,7 +16,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   useEffect(() => {
     if (!isLoading && !isAuthenticated && !isRedirectInProgress()) {
       // 🔒 SECURITY: Use TanStack Router navigation for consistency
-      startRedirect(5000)
+      startRedirect(3000) // Reduced timeout for faster response
       navigate({ to: '/auth', replace: true })
       completeRedirect()
     }

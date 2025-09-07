@@ -28,7 +28,7 @@ function DashboardPage() {
     // Only redirect if we're sure the user is not authenticated and not loading
     if (!isLoading && !isAuthenticated && user === null && !isRedirectInProgress()) {
       console.log('❌ No user found, redirecting to auth...')
-      startRedirect(5000)
+      startRedirect(3000) // Reduced timeout
       navigate({ to: '/auth', replace: true })
       completeRedirect()
     }
