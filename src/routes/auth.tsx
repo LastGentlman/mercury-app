@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Button } from '../components/ui/index.ts'
@@ -17,6 +17,7 @@ export const Route = createFileRoute('/auth')({
 })
 
 function RouteComponent() {
+  const navigate = useNavigate()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -40,10 +41,11 @@ function RouteComponent() {
       console.log('✅ Usuario autenticado, iniciando redirección suave...')
       setIsRedirecting(true)
       
-      // Pequeño delay para mostrar transición suave
+      // Wait for user data to be fully loaded before redirecting
       const timer = setTimeout(() => {
-        globalThis.location.href = '/dashboard'
-      }, 300)
+        // Use navigate instead of location.href to avoid race conditions
+        navigate({ to: '/dashboard', replace: true })
+      }, 500) // Increased delay to ensure user data is loaded
       
       return () => clearTimeout(timer)
     }
@@ -100,6 +102,8 @@ function RouteComponent() {
       // 🎯 OPTIMIZACIÓN: Redirección más suave sin setTimeout
       console.log('✅ Login exitoso, redirigiendo a dashboard...')
       setIsRedirecting(true)
+      
+      // The redirect will be handled by the useEffect above
       
     } catch (error) {
       console.error('Login error:', error)

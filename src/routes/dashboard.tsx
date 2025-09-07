@@ -21,8 +21,10 @@ function DashboardPage() {
 
   // Si no hay usuario autenticado, redirigir al login
   useEffect(() => {
+    // Only redirect if user is explicitly null (not undefined/loading)
     if (user === null) {
-      navigate({ to: '/auth' })
+      console.log('❌ No user found, redirecting to auth...')
+      navigate({ to: '/auth', replace: true })
     }
   }, [user, navigate])
 
@@ -33,6 +35,7 @@ function DashboardPage() {
         <div className="text-center">
           <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-gray-600">Cargando dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">Verificando autenticación...</p>
         </div>
       </div>
     )
