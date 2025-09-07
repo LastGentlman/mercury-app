@@ -12,6 +12,9 @@ const STATIC_ASSETS = [
   '/logo512.png'
 ];
 
+// ✅ Fix: Ensure index.html is properly handled
+const INDEX_HTML_URL = '/index.html';
+
 // ✅ URLs que deben ir directo a la red (optimized for auth)
 const NETWORK_ONLY_URLS = [
   '/api/auth/',
@@ -434,7 +437,7 @@ async function networkFirst(request) {
     
     // ✅ Fallback final
     if (request.mode === 'navigate') {
-      return caches.match('/') || new Response('Offline', { 
+      return caches.match(INDEX_HTML_URL) || caches.match('/') || new Response('Offline', { 
         status: 503,
         headers: { 'Content-Type': 'text/html' }
       });

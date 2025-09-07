@@ -91,6 +91,7 @@ export function useDashboardStats() {
     },
     enabled: !!user?.businessId && isOnline, // ✅ RE-ENABLED with mock data from backend
     refetchInterval: false, // Disable auto-refetch to prevent loops
+    refetchOnMount: false, // ✅ FIX: Disable refetch on mount to prevent loops
     staleTime: 5 * 60 * 1000, // 5 minutes - increased to reduce API calls
     gcTime: 10 * 60 * 1000, // 10 minutes cache time
     refetchOnWindowFocus: false, // Prevent refetch on window focus

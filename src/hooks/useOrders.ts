@@ -33,10 +33,12 @@ export function useOrders(businessId: string) {
         return await db.getOrdersByBusinessAndDate(businessId, new Date().toISOString().split('T')[0] || '');
       }
     },
+    enabled: !!businessId, // ✅ FIX: Only run query when businessId is available
     staleTime: 5 * 60 * 1000, // 5 minutos - increased to reduce API calls
     gcTime: 10 * 60 * 1000, // 10 minutos cache time
     refetchOnWindowFocus: false, // Prevent refetch on window focus
-    refetchOnMount: true, // Only refetch on mount
+    refetchOnMount: false, // ✅ FIX: Disable refetch on mount to prevent loops
+    refetchInterval: false, // ✅ FIX: Disable auto-refetch to prevent loops
     retry: (failureCount, error) => {
       // Don't retry on 401 or 500 errors
       if (error?.message?.includes('Unauthorized') || error?.message?.includes('500')) {

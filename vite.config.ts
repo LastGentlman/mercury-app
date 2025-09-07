@@ -42,6 +42,11 @@ export default defineConfig({
           '!**/mock*/**'
         ],
         
+        // ✅ Fix: Ensure index.html is properly precached
+        additionalManifestEntries: [
+          { url: '/index.html', revision: null }
+        ],
+        
         // ✅ Configuración de runtime caching simplificada
         runtimeCaching: [
           {
