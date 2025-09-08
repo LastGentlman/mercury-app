@@ -49,7 +49,7 @@ function RouteComponent() {
         setTimeout(() => {
           navigate({ to: '/dashboard', replace: true })
           completeRedirect()
-        }, 100)
+        }, 500)
       }
     }
   }, [isAuthenticated, isRedirecting, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
