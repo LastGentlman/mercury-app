@@ -169,7 +169,34 @@ export class AuthService {
    */
   static async getCurrentUser(): Promise<AuthUser | null> {
     try {
-      // First check OAuth session
+      // ✅ FIX: Check traditional auth FIRST to prevent OAuth verification loops
+      const authToken = localStorage.getItem('authToken')
+      if (authToken) {
+        // Traditional auth user - skip OAuth check entirely
+        const response = await fetch(`${getApiUrl()}/api/auth/me`, {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Token invalid, remove it and fall back to OAuth check
+            localStorage.removeItem('authToken')
+          } else {
+            throw new Error('Failed to get user')
+          }
+        } else {
+          const userData = await response.json()
+          return {
+            ...userData,
+            provider: 'email' as const
+          }
+        }
+      }
+
+      // Only check OAuth session if no traditional auth token
       const oauthUser = await this.getOAuthSession()
       if (oauthUser) {
         // For OAuth users, get businessId from profile
@@ -219,31 +246,8 @@ export class AuthService {
         return oauthUser
       }
 
-      // Then check traditional auth
-      const authToken = localStorage.getItem('authToken')
-      if (!authToken) return null
-
-      const response = await fetch(`${getApiUrl()}/api/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          // Token invalid, remove it
-          localStorage.removeItem('authToken')
-          return null
-        }
-        throw new Error('Failed to get user')
-      }
-
-      const userData = await response.json()
-      return {
-        ...userData,
-        provider: 'email' as const
-      }
+      // No auth found
+      return null
     } catch (error) {
       console.error('Error getting current user:', error)
       return null
