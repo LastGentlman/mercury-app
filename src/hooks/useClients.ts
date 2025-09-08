@@ -25,7 +25,7 @@ export function useClients() {
       if (!response.ok) throw new Error('Error fetching clients');
       return response.json();
     },
-    enabled: !!user?.businessId
+    enabled: !!user?.businessId && !!user?.id // ✅ FIX: Ensure both user and businessId are available
   });
 
   // Create client
@@ -115,7 +115,7 @@ export function useClients() {
       if (!response.ok) throw new Error('Error fetching client stats');
       return response.json();
     },
-    enabled: !!user?.businessId
+    enabled: !!user?.businessId && !!user?.id // ✅ FIX: Ensure both user and businessId are available
   });
 
   return {
