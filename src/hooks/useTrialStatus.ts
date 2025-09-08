@@ -91,15 +91,15 @@ export function useTrialStatus() {
       const trialEndsAt = business.trial_ends_at;
       const daysRemaining = trialEndsAt ? calculateDaysRemaining(trialEndsAt) : 0;
       const isDay6OrLater = daysRemaining <= 1; // Día 6 o menos
-      const canExtend = isTrialing && !business.settings?.paymentMethodAdded;
-      const hasPaymentMethod = business.settings?.paymentMethodAdded || false;
+      const canExtend = isTrialing && !(business.settings as any)?.paymentMethodAdded;
+      const hasPaymentMethod = (business.settings as any)?.paymentMethodAdded || false;
 
       setTrialStatus({
         isTrialing,
         daysRemaining,
         isDay6OrLater,
         canExtend,
-        trialEndsAt,
+        trialEndsAt: trialEndsAt || null,
         hasPaymentMethod,
         isLoading: false,
         error: null

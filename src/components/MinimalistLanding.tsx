@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, Zap, Shield, Infinity, Smartphone, Globe, Navigation } from 'lucide-react'
 import { Button } from './ui/index'

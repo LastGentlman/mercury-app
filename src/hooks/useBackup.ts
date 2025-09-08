@@ -5,7 +5,7 @@
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import BackupService, { type BackupInfo, type BackupStatus, type CreateBackupRequest, type RestoreBackupRequest } from '../services/backup-service.ts'
+import BackupService, { type CreateBackupRequest, type RestoreBackupRequest } from '../services/backup-service.ts'
 
 export function useBackup(enabled: boolean = false) {
   const queryClient = useQueryClient()

@@ -29,7 +29,7 @@ export interface HeartbeatStatus {
 export class OfflineAwareHeartbeat {
   private config: HeartbeatConfig
   private status: HeartbeatStatus
-  private intervalId: number | null = null
+  private intervalId: ReturnType<typeof setInterval> | null = null
   private isMounted = true
 
   constructor(config: Partial<HeartbeatConfig> = {}) {
