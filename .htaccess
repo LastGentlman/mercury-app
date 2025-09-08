@@ -10,6 +10,12 @@
   RewriteRule . /index.html [L]
 </IfModule>
 
+# Proper MIME types for JavaScript modules
+<IfModule mod_mime.c>
+  AddType application/javascript .js
+  AddType text/css .css
+</IfModule>
+
 # Security headers
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options nosniff
