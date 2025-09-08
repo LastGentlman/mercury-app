@@ -98,7 +98,8 @@ export function useAuth(): AuthHookReturn {
     mutationFn: async (credentials: LoginCredentials): Promise<LoginResponse> => {
       return await AuthService.login(credentials)
     },
-    onSuccess: (response) => {
+    onSuccess: (response: LoginResponse) => {
+      console.log('✅ Login successful, response:', response)
       // Store auth token
       setAuthToken(response.session.access_token)
       
@@ -115,7 +116,7 @@ export function useAuth(): AuthHookReturn {
       
       console.log('✅ Login successful, user state updated')
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('❌ Login failed:', error)
       setAuthToken(null)
       localStorage.removeItem('authToken')
@@ -129,7 +130,7 @@ export function useAuth(): AuthHookReturn {
     mutationFn: async (credentials: RegisterCredentials): Promise<RegistrationResponse> => {
       return await AuthService.register(credentials)
     },
-    onSuccess: (response) => {
+    onSuccess: (response: RegistrationResponse) => {
       // Store auth token if no email confirmation required
       if (!response.emailConfirmationRequired && response.user) {
         queryClient.setQueryData(['auth-user'], response.user)
@@ -137,7 +138,7 @@ export function useAuth(): AuthHookReturn {
       
       console.log('✅ Registration successful')
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('❌ Registration failed:', error)
     }
   })
@@ -163,11 +164,11 @@ export function useAuth(): AuthHookReturn {
       localStorage.removeItem('authToken')
       
       // 🔒 SECURITY: Redirect to auth page immediately
-      globalThis.location.href = '/auth'
+      window.location.href = '/auth'
       
       console.log('✅ Logout successful, redirected to auth page')
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('❌ Logout failed:', error)
       // ✅ Clear offline authentication data even on error
       offlineActions.clearOfflineData()
@@ -178,7 +179,7 @@ export function useAuth(): AuthHookReturn {
       localStorage.removeItem('authToken')
       
       // 🔒 SECURITY: Redirect to auth page even on error
-      globalThis.location.href = '/auth'
+      window.location.href = '/auth'
     }
   })
 
@@ -192,7 +193,7 @@ export function useAuth(): AuthHookReturn {
     onSuccess: () => {
       console.log('✅ Confirmation email sent')
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('❌ Failed to resend confirmation email:', error)
     }
   })
@@ -204,10 +205,10 @@ export function useAuth(): AuthHookReturn {
     mutationFn: async ({ currentEmail, newEmail }: { currentEmail: string; newEmail: string }): Promise<{ newEmail: string }> => {
       return await AuthService.changeEmail(currentEmail, newEmail)
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { newEmail: string }) => {
       console.log('✅ Email changed successfully:', data.newEmail)
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('❌ Failed to change email:', error)
     }
   })
@@ -227,13 +228,13 @@ export function useAuth(): AuthHookReturn {
     }): Promise<{ message: string }> => {
       return await AuthService.changePassword({ currentPassword, newPassword, confirmPassword })
     },
-    onSuccess: (data) => {
+    onSuccess: (data: { message: string }) => {
       console.log('✅ Password changed successfully:', data.message)
       // Clear user data and redirect to login
       queryClient.clear()
-      globalThis.location.href = '/auth'
+      window.location.href = '/auth'
     },
-    onError: (error) => {
+    onError: (error: unknown) => {
       console.error('❌ Failed to change password:', error)
     }
   })
@@ -246,7 +247,7 @@ export function useAuth(): AuthHookReturn {
       // El modal maneja toda la UX, aquí solo iniciamos el redirect
       await AuthService.socialLogin({
         provider: 'google',
-        redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback?source=modal`
+        redirectTo: `${globalThis.location?.origin || (import.meta as any)?.env?.VITE_APP_URL || 'http://localhost:3000'}/auth/callback?source=modal`
       })
       // El usuario será redirigido, no necesitamos manejar más estado
     } catch (error) {
@@ -259,7 +260,7 @@ export function useAuth(): AuthHookReturn {
     try {
       await AuthService.socialLogin({
         provider: 'facebook',
-        redirectTo: `${globalThis.location?.origin || import.meta.env.VITE_APP_URL || 'http://localhost:3000'}/auth/callback?source=modal`
+        redirectTo: `${globalThis.location?.origin || (import.meta as any)?.env?.VITE_APP_URL || 'http://localhost:3000'}/auth/callback?source=modal`
       })
     } catch (error) {
       console.error('❌ Facebook login failed:', error)
