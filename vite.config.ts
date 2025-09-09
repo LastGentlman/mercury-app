@@ -15,7 +15,10 @@ export default defineConfig({
     // ✅ TanStack Router con configuración estable
     tanstackRouter({ 
       autoCodeSplitting: true,
-      generatedRouteTree: './src/routeTree.gen.ts'
+      generatedRouteTree: './src/routeTree.gen.ts',
+      // Configure chunk naming to match our descriptive naming
+      routeFileIgnorePrefix: '-',
+      routesDirectory: './src/routes'
     }),
     
     // ✅ React plugin con configuración explícita
@@ -153,16 +156,60 @@ export default defineConfig({
     
     rollupOptions: {
       output: {
-        // ✅ Single entry point with better naming
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/app-[hash].js',
-        assetFileNames: 'assets/[name]-[hash].[ext]',
+        // ✅ Descriptive naming without unnecessary hashes
+        chunkFileNames: (chunkInfo) => {
+          const name = chunkInfo.name || 'chunk'
+          
+          // Map chunk names to descriptive names
+          if (name.includes('index') || name.includes('root')) {
+            return 'assets/root.js'
+          }
+          if (name.includes('dashboard')) {
+            return 'assets/dashboard.js'
+          }
+          if (name.includes('auth')) {
+            return 'assets/auth.js'
+          }
+          if (name.includes('clients')) {
+            return 'assets/clients.js'
+          }
+          if (name.includes('products')) {
+            return 'assets/products.js'
+          }
+          if (name.includes('profile')) {
+            return 'assets/profile.js'
+          }
+          if (name.includes('setup')) {
+            return 'assets/setup.js'
+          }
+          if (name.includes('paywall')) {
+            return 'assets/paywall.js'
+          }
+          if (name.includes('design-system')) {
+            return 'assets/design-system.js'
+          }
+          if (name.includes('extend-trial')) {
+            return 'assets/extend-trial.js'
+          }
+          
+          // For other chunks, use descriptive name without hash
+          const cleanName = name.replace(/index/g, 'app').replace(/[^a-zA-Z0-9-]/g, '-')
+          return `assets/${cleanName}.js`
+        },
+        entryFileNames: 'assets/app.js',
+        assetFileNames: (assetInfo) => {
+          // Only add hash for assets that might change frequently
+          if (assetInfo.name?.endsWith('.css')) {
+            return 'assets/[name]-[hash].[ext]'
+          }
+          return 'assets/[name].[ext]'
+        },
         
         // ✅ Separación de vendors para mejor caching
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'router-vendor': ['@tanstack/react-router'],
-          'query-vendor': ['@tanstack/react-query']
+          'react': ['react', 'react-dom'],
+          'router': ['@tanstack/react-router'],
+          'query': ['@tanstack/react-query']
         }
       }
     }
