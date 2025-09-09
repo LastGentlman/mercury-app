@@ -153,9 +153,9 @@ export default defineConfig({
     
     rollupOptions: {
       output: {
-        // ✅ Nombres de chunks deterministas
+        // ✅ Single entry point with better naming
         chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/app-[hash].js',
         assetFileNames: 'assets/[name]-[hash].[ext]',
         
         // ✅ Separación de vendors para mejor caching
