@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate, Outlet } from '@tanstack/react-router'
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Button } from '../components/ui/index.ts'
@@ -49,7 +49,17 @@ function RouteComponent() {
     
     // Only redirect if user is authenticated, not already redirecting, not loading, and no redirect in progress
     // ✅ FIX: Don't redirect if we're on OAuth callback route (let OptimizedAuthCallback handle it)
-    const isOAuthCallback = globalThis.location?.pathname === '/auth/callback'
+    const isOAuthCallback = globalThis.location?.pathname === '/auth/callback' || 
+                           globalThis.location?.pathname?.includes('/auth/callback')
+    console.log('🔍 Auth route redirect check:', {
+      isAuthenticated,
+      isRedirecting,
+      isLoading,
+      isRedirectInProgress: isRedirectInProgress(),
+      isOAuthCallback,
+      currentPath: globalThis.location?.pathname,
+      shouldRedirect: isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress() && !isOAuthCallback
+    })
     if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress() && !isOAuthCallback) {
       console.log('✅ Usuario autenticado, redirigiendo inmediatamente...', {
         isAuthenticated,
@@ -110,8 +120,17 @@ function RouteComponent() {
   }
 
   // 🎯 OPTIMIZACIÓN: No renderizar nada si ya está autenticado
-  if (isAuthenticated) {
+  // ✅ FIX: Also check if we're on OAuth callback route
+  const isOAuthCallback = globalThis.location?.pathname === '/auth/callback' || 
+                         globalThis.location?.pathname?.includes('/auth/callback')
+  
+  if (isAuthenticated && !isOAuthCallback) {
     return null
+  }
+  
+  // ✅ FIX: If we're on OAuth callback route, render the Outlet for child routes
+  if (isOAuthCallback) {
+    return <Outlet />
   }
 
   const handleInputChange = (field: string, value: string) => {

@@ -139,6 +139,14 @@ export const OptimizedAuthCallback = () => {
   const hasStarted = useRef(false)
   const isNavigating = useRef(false)
   
+  // ✅ DEBUG: Log component mount
+  console.log('🎯 OptimizedAuthCallback component mounted!', {
+    url: globalThis.location.href,
+    pathname: globalThis.location.pathname,
+    search: globalThis.location.search,
+    hash: globalThis.location.hash
+  })
+  
   useEffect(() => {
     if (hasStarted.current) return
     hasStarted.current = true
