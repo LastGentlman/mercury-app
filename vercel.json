@@ -3,6 +3,28 @@
   "env": {
     "VITE_PWA_DISABLED": "true"
   },
+  "redirects": [
+    {
+      "source": "/registerSW.js",
+      "destination": "/404",
+      "permanent": false
+    },
+    {
+      "source": "/sw.js",
+      "destination": "/404",
+      "permanent": false
+    },
+    {
+      "source": "/dev-email-confirm.js",
+      "destination": "/404",
+      "permanent": false
+    },
+    {
+      "source": "/debug-auth-callback.js",
+      "destination": "/404",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/(.*)",
@@ -20,6 +42,42 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/registerSW.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/dev-email-confirm.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/debug-auth-callback.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     },
