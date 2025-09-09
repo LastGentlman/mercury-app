@@ -65,7 +65,10 @@ export class AuthService {
       }
 
       if (!session?.user) {
-        console.log('ℹ️ No hay sesión OAuth activa')
+        // Only log this if we're specifically checking OAuth (not during traditional auth flow)
+        if (!localStorage.getItem('authToken')) {
+          console.log('ℹ️ No hay sesión OAuth activa')
+        }
         return null
       }
       
@@ -189,6 +192,7 @@ export class AuthService {
           }
         } else {
           const userData = await response.json()
+          console.log('✅ Traditional auth user found:', { email: userData.email, provider: 'email' })
           return {
             ...userData,
             provider: 'email' as const
@@ -197,6 +201,7 @@ export class AuthService {
       }
 
       // Only check OAuth session if no traditional auth token
+      console.log('🔍 No traditional auth token found, checking OAuth session...')
       const oauthUser = await this.getOAuthSession()
       if (oauthUser) {
         // For OAuth users, get businessId from profile

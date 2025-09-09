@@ -36,7 +36,7 @@ function RouteComponent() {
   const redirectAttemptsRef = useRef(0)
   const MAX_REDIRECT_ATTEMPTS = 3
 
-  const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading } = useAuth()
+  const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading, user } = useAuth()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
   // ✅ FIX: Improved redirect logic with circuit breaker
@@ -49,7 +49,13 @@ function RouteComponent() {
     
     // Only redirect if user is authenticated, not already redirecting, not loading, and no redirect in progress
     if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress()) {
-      console.log('✅ Usuario autenticado, redirigiendo inmediatamente...')
+      console.log('✅ Usuario autenticado, redirigiendo inmediatamente...', {
+        isAuthenticated,
+        isRedirecting,
+        isLoading,
+        isRedirectInProgress: isRedirectInProgress(),
+        user: user ? { id: user.id, email: user.email, provider: user.provider } : null
+      })
       redirectAttemptsRef.current++
       setIsRedirecting(true)
       
@@ -65,7 +71,7 @@ function RouteComponent() {
             setIsRedirecting(false)
             redirectAttemptsRef.current--
           }
-        }, 500) // Increased from 100ms to 500ms
+        }, 100) // Reduced delay for faster redirect
         
         // Cleanup timer on unmount
         return () => clearTimeout(redirectTimer)

@@ -77,10 +77,11 @@ export function useAuth(): AuthHookReturn {
     },
     enabled: !isTokenLoading, // Wait for token to load from storage
     retry: 1,
-    staleTime: 2 * 60 * 1000, // 2 minutes (reduced for faster updates)
-    gcTime: 5 * 60 * 1000, // 5 minutes cache time
+    staleTime: 5 * 60 * 1000, // 5 minutes (increased to prevent unnecessary refetches)
+    gcTime: 10 * 60 * 1000, // 10 minutes cache time (increased)
     refetchOnWindowFocus: false, // Prevent unnecessary refetches
     refetchOnMount: true, // Always refetch on mount for fresh data
+    refetchOnReconnect: false, // Prevent refetch on network reconnect
   })
 
   /**
