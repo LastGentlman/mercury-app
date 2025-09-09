@@ -1,4 +1,8 @@
 {
+  "buildCommand": "npm run build:no-pwa",
+  "env": {
+    "VITE_PWA_DISABLED": "true"
+  },
   "rewrites": [
     {
       "source": "/(.*)",

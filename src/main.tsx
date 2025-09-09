@@ -189,10 +189,7 @@ if (import.meta.hot) {
   import.meta.hot.accept()
 }
 
-// Importar testing de seguridad solo en desarrollo
-if (import.meta.env.DEV) {
-  import('./utils/security-test.ts')
-}
+// Security testing removed for production
 
 import reportWebVitals from './reportWebVitals.ts'
 reportWebVitals()

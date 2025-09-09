@@ -160,6 +160,11 @@ export default defineConfig({
         chunkFileNames: (chunkInfo) => {
           const name = chunkInfo.name || 'chunk'
           
+          // Skip test and demo files
+          if (name.includes('test') || name.includes('demo') || name.includes('api-test')) {
+            return `assets/${name}.js`
+          }
+          
           // Map chunk names to descriptive names
           if (name.includes('index') || name.includes('root')) {
             return 'assets/root.js'

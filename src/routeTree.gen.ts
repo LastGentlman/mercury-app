@@ -9,26 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SweetalertDemoRouteImport } from './routes/sweetalert-demo'
 import { Route as SetupRouteImport } from './routes/setup'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as ProductsRouteImport } from './routes/products'
 import { Route as PaywallRouteImport } from './routes/paywall'
 import { Route as ExtendTrialRouteImport } from './routes/extend-trial'
-import { Route as EnhancedDesignSystemDemoRouteImport } from './routes/enhanced-design-system-demo'
 import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ApiTestRouteImport } from './routes/api-test'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
-const SweetalertDemoRoute = SweetalertDemoRouteImport.update({
-  id: '/sweetalert-demo',
-  path: '/sweetalert-demo',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
@@ -54,12 +46,6 @@ const ExtendTrialRoute = ExtendTrialRouteImport.update({
   path: '/extend-trial',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EnhancedDesignSystemDemoRoute =
-  EnhancedDesignSystemDemoRouteImport.update({
-    id: '/enhanced-design-system-demo',
-    path: '/enhanced-design-system-demo',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const DesignSystemRoute = DesignSystemRouteImport.update({
   id: '/design-system',
   path: '/design-system',
@@ -80,11 +66,6 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiTestRoute = ApiTestRouteImport.update({
-  id: '/api-test',
-  path: '/api-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -98,129 +79,101 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
-  '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/extend-trial': typeof ExtendTrialRoute
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/setup': typeof SetupRoute
-  '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
-  '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/extend-trial': typeof ExtendTrialRoute
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/setup': typeof SetupRoute
-  '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/api-test': typeof ApiTestRoute
   '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
   '/design-system': typeof DesignSystemRoute
-  '/enhanced-design-system-demo': typeof EnhancedDesignSystemDemoRoute
   '/extend-trial': typeof ExtendTrialRoute
   '/paywall': typeof PaywallRoute
   '/products': typeof ProductsRoute
   '/profile': typeof ProfileRoute
   '/setup': typeof SetupRoute
-  '/sweetalert-demo': typeof SweetalertDemoRoute
   '/auth/callback': typeof AuthCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/api-test'
     | '/auth'
     | '/clients'
     | '/dashboard'
     | '/design-system'
-    | '/enhanced-design-system-demo'
     | '/extend-trial'
     | '/paywall'
     | '/products'
     | '/profile'
     | '/setup'
-    | '/sweetalert-demo'
     | '/auth/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api-test'
     | '/auth'
     | '/clients'
     | '/dashboard'
     | '/design-system'
-    | '/enhanced-design-system-demo'
     | '/extend-trial'
     | '/paywall'
     | '/products'
     | '/profile'
     | '/setup'
-    | '/sweetalert-demo'
     | '/auth/callback'
   id:
     | '__root__'
     | '/'
-    | '/api-test'
     | '/auth'
     | '/clients'
     | '/dashboard'
     | '/design-system'
-    | '/enhanced-design-system-demo'
     | '/extend-trial'
     | '/paywall'
     | '/products'
     | '/profile'
     | '/setup'
-    | '/sweetalert-demo'
     | '/auth/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ApiTestRoute: typeof ApiTestRoute
   AuthRoute: typeof AuthRouteWithChildren
   ClientsRoute: typeof ClientsRoute
   DashboardRoute: typeof DashboardRoute
   DesignSystemRoute: typeof DesignSystemRoute
-  EnhancedDesignSystemDemoRoute: typeof EnhancedDesignSystemDemoRoute
   ExtendTrialRoute: typeof ExtendTrialRoute
   PaywallRoute: typeof PaywallRoute
   ProductsRoute: typeof ProductsRoute
   ProfileRoute: typeof ProfileRoute
   SetupRoute: typeof SetupRoute
-  SweetalertDemoRoute: typeof SweetalertDemoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sweetalert-demo': {
-      id: '/sweetalert-demo'
-      path: '/sweetalert-demo'
-      fullPath: '/sweetalert-demo'
-      preLoaderRoute: typeof SweetalertDemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/setup': {
       id: '/setup'
       path: '/setup'
@@ -256,13 +209,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ExtendTrialRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/enhanced-design-system-demo': {
-      id: '/enhanced-design-system-demo'
-      path: '/enhanced-design-system-demo'
-      fullPath: '/enhanced-design-system-demo'
-      preLoaderRoute: typeof EnhancedDesignSystemDemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/design-system': {
       id: '/design-system'
       path: '/design-system'
@@ -289,13 +235,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api-test': {
-      id: '/api-test'
-      path: '/api-test'
-      fullPath: '/api-test'
-      preLoaderRoute: typeof ApiTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -327,18 +266,15 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ApiTestRoute: ApiTestRoute,
   AuthRoute: AuthRouteWithChildren,
   ClientsRoute: ClientsRoute,
   DashboardRoute: DashboardRoute,
   DesignSystemRoute: DesignSystemRoute,
-  EnhancedDesignSystemDemoRoute: EnhancedDesignSystemDemoRoute,
   ExtendTrialRoute: ExtendTrialRoute,
   PaywallRoute: PaywallRoute,
   ProductsRoute: ProductsRoute,
   ProfileRoute: ProfileRoute,
   SetupRoute: SetupRoute,
-  SweetalertDemoRoute: SweetalertDemoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
