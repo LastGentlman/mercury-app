@@ -48,7 +48,9 @@ function RouteComponent() {
     }
     
     // Only redirect if user is authenticated, not already redirecting, not loading, and no redirect in progress
-    if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress()) {
+    // ✅ FIX: Don't redirect if we're on OAuth callback route (let OptimizedAuthCallback handle it)
+    const isOAuthCallback = globalThis.location?.pathname === '/auth/callback'
+    if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress() && !isOAuthCallback) {
       console.log('✅ Usuario autenticado, redirigiendo inmediatamente...', {
         isAuthenticated,
         isRedirecting,

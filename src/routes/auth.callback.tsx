@@ -182,6 +182,7 @@ export const OptimizedAuthCallback = () => {
         }
         
         logger.info('✅ Authentication successful:', { email: user.email, component: 'AuthCallback' })
+        console.log('🎯 OAuth callback: User authenticated successfully, proceeding with redirect...')
         
         // ✅ BATCH UPDATE #3: Success
         setState(prev => ({
@@ -202,10 +203,13 @@ export const OptimizedAuthCallback = () => {
           // Primary navigation attempt (no artificial delay)
           setTimeout(() => {
             logger.info('🎯 Attempting TanStack Router navigation to: /dashboard', { component: 'AuthCallback' })
+            console.log('🚀 OAuth callback: Starting navigation to dashboard...')
             try {
               navigate({ to: '/dashboard' })
+              console.log('✅ OAuth callback: TanStack Router navigation successful')
             } catch (navError) {
               logger.error('❌ TanStack Router navigation failed, trying window.location:', navError as Error)
+              console.log('⚠️ OAuth callback: TanStack Router failed, using window.location fallback')
               globalThis.window.location.href = '/dashboard'
             }
           }, 0)
