@@ -162,8 +162,8 @@ export function useAuth(): AuthHookReturn {
       // Also clear localStorage directly for immediate effect
       localStorage.removeItem('authToken')
       
-      // 🔒 SECURITY: Redirect to auth page immediately
-      globalThis.location.href = '/auth'
+      // 🔒 SECURITY: Use window.location.href for hard redirect to prevent loops
+      window.location.href = '/auth'
       
       console.log('✅ Logout successful, redirected to auth page')
     },
@@ -177,8 +177,8 @@ export function useAuth(): AuthHookReturn {
       queryClient.setQueryData(['auth-user'], null)
       localStorage.removeItem('authToken')
       
-      // 🔒 SECURITY: Redirect to auth page even on error
-      globalThis.location.href = '/auth'
+      // 🔒 SECURITY: Use window.location.href for hard redirect to prevent loops
+      window.location.href = '/auth'
     }
   })
 
@@ -231,7 +231,7 @@ export function useAuth(): AuthHookReturn {
       console.log('✅ Password changed successfully:', data.message)
       // Clear user data and redirect to login
       queryClient.clear()
-      globalThis.location.href = '/auth'
+      window.location.href = '/auth'
     },
     onError: (error) => {
       console.error('❌ Failed to change password:', error)
@@ -268,26 +268,36 @@ export function useAuth(): AuthHookReturn {
   }, [])
 
   /**
-   * Listen for OAuth state changes with improved loop prevention
+   * Listen for OAuth state changes with circuit breaker
    */
   const lastEventTimeRef = useRef(0)
+  const redirectAttemptsRef = useRef(0)
+  const MAX_REDIRECT_ATTEMPTS = 3
   
   useEffect(() => {
-    const eventThrottle = 2000 // 2 seconds throttle
+    const eventThrottle = 5000 // 5 seconds throttle increased
     
     const { data: { subscription } } = AuthService.onAuthStateChange(
       (event, session) => {
         const now = Date.now()
         
-        // Throttle events to prevent rapid fire
+        // Circuit breaker for redirects
+        if (redirectAttemptsRef.current >= MAX_REDIRECT_ATTEMPTS) {
+          console.error('❌ Max OAuth redirect attempts reached, ignoring events')
+          return
+        }
+        
+        // Enhanced throttle events to prevent rapid fire
         if (now - lastEventTimeRef.current < eventThrottle) {
-          console.log(`⏳ OAuth event throttled: ${event}`)
+          console.log(`⏳ OAuth event throttled: ${event} (${eventThrottle}ms throttle)`)
           return
         }
         lastEventTimeRef.current = now
         
         if (event === 'SIGNED_IN' && session) {
           console.log('✅ OAuth sign in detected')
+          redirectAttemptsRef.current++
+          
           // ✅ FIX: Only invalidate if we don't already have user data to prevent infinite loop
           const currentUser = queryClient.getQueryData(['auth-user'])
           if (!currentUser) {
@@ -298,6 +308,7 @@ export function useAuth(): AuthHookReturn {
           }
         } else if (event === 'SIGNED_OUT') {
           console.log('✅ OAuth sign out detected')
+          redirectAttemptsRef.current = 0 // Reset on logout
           queryClient.setQueryData(['auth-user'], null)
         }
       }

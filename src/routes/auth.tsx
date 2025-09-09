@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Button } from '../components/ui/index.ts'
 import { Input } from '../components/ui/input.tsx'
@@ -33,25 +33,50 @@ function RouteComponent() {
   const [showResendEmail, setShowResendEmail] = useState(false)
   const [lastRegisteredEmail, setLastRegisteredEmail] = useState<string>('')
   const [isRedirecting, setIsRedirecting] = useState(false)
+  const redirectAttemptsRef = useRef(0)
+  const MAX_REDIRECT_ATTEMPTS = 3
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading } = useAuth()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
-  // ✅ FIX: Improved redirect logic to prevent loops
+  // ✅ FIX: Improved redirect logic with circuit breaker
   useEffect(() => {
+    // Circuit breaker for redirects
+    if (redirectAttemptsRef.current >= MAX_REDIRECT_ATTEMPTS) {
+      console.error('❌ Max redirect attempts reached, stopping redirects')
+      return
+    }
+    
     // Only redirect if user is authenticated, not already redirecting, not loading, and no redirect in progress
     if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress()) {
       console.log('✅ Usuario autenticado, redirigiendo inmediatamente...')
+      redirectAttemptsRef.current++
       setIsRedirecting(true)
       
       if (startRedirect(5000)) {
-        // Use setTimeout to ensure state updates are processed
-        setTimeout(() => {
-          navigate({ to: '/dashboard', replace: true })
-          completeRedirect()
-        }, 100)
+        // Increased timeout for better stability
+        const redirectTimer = setTimeout(() => {
+          try {
+            navigate({ to: '/dashboard', replace: true })
+            completeRedirect()
+            console.log('✅ Redirect completed successfully')
+          } catch (error) {
+            console.error('❌ Redirect failed:', error)
+            setIsRedirecting(false)
+            redirectAttemptsRef.current--
+          }
+        }, 500) // Increased from 100ms to 500ms
+        
+        // Cleanup timer on unmount
+        return () => clearTimeout(redirectTimer)
+      } else {
+        setIsRedirecting(false)
+        redirectAttemptsRef.current--
       }
     }
+    
+    // Return undefined to fix TypeScript error
+    return undefined
   }, [isAuthenticated, isRedirecting, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
   // 🎯 OPTIMIZACIÓN: Mostrar loading state consistente
@@ -101,8 +126,10 @@ function RouteComponent() {
       
       showSuccess('¡Éxito!', '¡Inicio de sesión exitoso!')
       
-      // 🎯 OPTIMIZACIÓN: Redirección más suave sin setTimeout
+      // 🎯 OPTIMIZACIÓN: Redirección más suave con manejo de estado
       console.log('✅ Login exitoso, redirigiendo a dashboard...')
+      // Reset redirect attempts on successful login
+      redirectAttemptsRef.current = 0
       setIsRedirecting(true)
       
       // The redirect will be handled by the useEffect above
@@ -276,8 +303,10 @@ function RouteComponent() {
         setShowResendEmail(true)
         setFormData({ email: '', password: '', confirmPassword: '', name: '' })
       } else {
-        // 🎯 OPTIMIZACIÓN: Redirección más suave sin setTimeout
+        // 🎯 OPTIMIZACIÓN: Redirección más suave con manejo de estado
         showSuccess('¡Éxito!', '¡Cuenta creada exitosamente!')
+        // Reset redirect attempts on successful registration
+        redirectAttemptsRef.current = 0
         setIsRedirecting(true)
       }
     } catch (error) {
