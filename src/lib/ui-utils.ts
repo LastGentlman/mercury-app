@@ -1,13 +1,11 @@
-import { designSystem } from './design-system'
-
-// Common UI utility functions using the design system
+// Common UI utility functions using Tailwind CSS classes
 
 export const uiUtils = {
   // Button variants
   button: {
     primary: `
-      bg-[${designSystem.colors.primary[500]}]
-      hover:bg-[${designSystem.colors.primary[600]}]
+      bg-blue-500
+      hover:bg-blue-600
       text-white
       font-medium
       px-4 py-2
@@ -16,17 +14,17 @@ export const uiUtils = {
       duration-200
       focus:outline-none
       focus:ring-2
-      focus:ring-[${designSystem.colors.primary[500]}]
+      focus:ring-blue-500
       focus:ring-opacity-50
       disabled:opacity-50
       disabled:cursor-not-allowed
     `,
     secondary: `
       bg-white
-      hover:bg-[${designSystem.colors.neutral[50]}]
-      text-[${designSystem.colors.neutral[700]}]
+      hover:bg-gray-50
+      text-gray-700
       border
-      border-[${designSystem.colors.neutral[300]}]
+      border-gray-300
       font-medium
       px-4 py-2
       rounded-lg
@@ -34,14 +32,14 @@ export const uiUtils = {
       duration-200
       focus:outline-none
       focus:ring-2
-      focus:ring-[${designSystem.colors.primary[500]}]
+      focus:ring-blue-500
       focus:ring-opacity-50
       disabled:opacity-50
       disabled:cursor-not-allowed
     `,
     danger: `
-      bg-[${designSystem.colors.error[500]}]
-      hover:bg-[${designSystem.colors.error[600]}]
+      bg-red-500
+      hover:bg-red-600
       text-white
       font-medium
       px-4 py-2
@@ -50,14 +48,14 @@ export const uiUtils = {
       duration-200
       focus:outline-none
       focus:ring-2
-      focus:ring-[${designSystem.colors.error[500]}]
+      focus:ring-red-500
       focus:ring-opacity-50
       disabled:opacity-50
       disabled:cursor-not-allowed
     `,
     success: `
-      bg-[${designSystem.colors.success[500]}]
-      hover:bg-[${designSystem.colors.success[600]}]
+      bg-green-500
+      hover:bg-green-600
       text-white
       font-medium
       px-4 py-2
@@ -66,7 +64,7 @@ export const uiUtils = {
       duration-200
       focus:outline-none
       focus:ring-2
-      focus:ring-[${designSystem.colors.success[500]}]
+      focus:ring-green-500
       focus:ring-opacity-50
       disabled:opacity-50
       disabled:cursor-not-allowed
@@ -79,29 +77,29 @@ export const uiUtils = {
       w-full
       px-3 py-2
       border
-      border-[${designSystem.colors.neutral[300]}]
+      border-gray-300
       rounded-lg
-      text-[${designSystem.colors.text.primary}]
-      placeholder-[${designSystem.colors.text.tertiary}]
+      text-gray-900
+      placeholder-gray-500
       transition-colors
       duration-200
       focus:outline-none
-      focus:border-[${designSystem.colors.primary[500]}]
+      focus:border-blue-500
       focus:ring-2
-      focus:ring-[${designSystem.colors.primary[500]}]
+      focus:ring-blue-500
       focus:ring-opacity-20
-      disabled:bg-[${designSystem.colors.neutral[100]}]
+      disabled:bg-gray-100
       disabled:cursor-not-allowed
     `,
     error: `
-      border-[${designSystem.colors.error[500]}]
-      focus:border-[${designSystem.colors.error[500]}]
-      focus:ring-[${designSystem.colors.error[500]}]
+      border-red-500
+      focus:border-red-500
+      focus:ring-red-500
     `,
     success: `
-      border-[${designSystem.colors.success[500]}]
-      focus:border-[${designSystem.colors.success[500]}]
-      focus:ring-[${designSystem.colors.success[500]}]
+      border-green-500
+      focus:border-green-500
+      focus:ring-green-500
     `,
   },
 
@@ -112,7 +110,7 @@ export const uiUtils = {
       rounded-xl
       shadow-md
       border
-      border-[${designSystem.colors.neutral[200]}]
+      border-gray-200
       overflow-hidden
     `,
     elevated: `
@@ -120,14 +118,14 @@ export const uiUtils = {
       rounded-xl
       shadow-lg
       border
-      border-[${designSystem.colors.neutral[200]}]
+      border-gray-200
       overflow-hidden
     `,
     flat: `
       bg-white
       rounded-xl
       border
-      border-[${designSystem.colors.neutral[200]}]
+      border-gray-200
       overflow-hidden
     `,
   },
@@ -135,40 +133,40 @@ export const uiUtils = {
   // Badge styles
   badge: {
     primary: `
-      bg-[${designSystem.colors.primary[100]}]
-      text-[${designSystem.colors.primary[700]}]
+      bg-blue-100
+      text-blue-700
       px-2 py-1
       rounded-md
       text-xs
       font-medium
     `,
     success: `
-      bg-[${designSystem.colors.success[100]}]
-      text-[${designSystem.colors.success[700]}]
+      bg-green-100
+      text-green-700
       px-2 py-1
       rounded-md
       text-xs
       font-medium
     `,
     warning: `
-      bg-[${designSystem.colors.warning[100]}]
-      text-[${designSystem.colors.warning[700]}]
+      bg-yellow-100
+      text-yellow-700
       px-2 py-1
       rounded-md
       text-xs
       font-medium
     `,
     error: `
-      bg-[${designSystem.colors.error[100]}]
-      text-[${designSystem.colors.error[700]}]
+      bg-red-100
+      text-red-700
       px-2 py-1
       rounded-md
       text-xs
       font-medium
     `,
     neutral: `
-      bg-[${designSystem.colors.neutral[100]}]
-      text-[${designSystem.colors.neutral[700]}]
+      bg-gray-100
+      text-gray-700
       px-2 py-1
       rounded-md
       text-xs
@@ -179,34 +177,34 @@ export const uiUtils = {
   // Alert styles
   alert: {
     success: `
-      bg-[${designSystem.colors.success[50]}]
+      bg-green-50
       border
-      border-[${designSystem.colors.success[200]}]
-      text-[${designSystem.colors.success[800]}]
+      border-green-200
+      text-green-800
       p-4
       rounded-lg
     `,
     warning: `
-      bg-[${designSystem.colors.warning[50]}]
+      bg-yellow-50
       border
-      border-[${designSystem.colors.warning[200]}]
-      text-[${designSystem.colors.warning[800]}]
+      border-yellow-200
+      text-yellow-800
       p-4
       rounded-lg
     `,
     error: `
-      bg-[${designSystem.colors.error[50]}]
+      bg-red-50
       border
-      border-[${designSystem.colors.error[200]}]
-      text-[${designSystem.colors.error[800]}]
+      border-red-200
+      text-red-800
       p-4
       rounded-lg
     `,
     info: `
-      bg-[${designSystem.colors.primary[50]}]
+      bg-blue-50
       border
-      border-[${designSystem.colors.primary[200]}]
-      text-[${designSystem.colors.primary[800]}]
+      border-blue-200
+      text-blue-800
       p-4
       rounded-lg
     `,
@@ -239,35 +237,35 @@ export const uiUtils = {
     h1: `
       text-4xl
       font-bold
-      text-[${designSystem.colors.text.primary}]
+      text-gray-900
       leading-tight
     `,
     h2: `
       text-3xl
       font-semibold
-      text-[${designSystem.colors.text.primary}]
+      text-gray-900
       leading-tight
     `,
     h3: `
       text-2xl
       font-semibold
-      text-[${designSystem.colors.text.primary}]
+      text-gray-900
       leading-tight
     `,
     h4: `
       text-xl
       font-medium
-      text-[${designSystem.colors.text.primary}]
+      text-gray-900
       leading-tight
     `,
     body: `
       text-base
-      text-[${designSystem.colors.text.secondary}]
+      text-gray-700
       leading-relaxed
     `,
     small: `
       text-sm
-      text-[${designSystem.colors.text.tertiary}]
+      text-gray-500
       leading-normal
     `,
   },
@@ -275,18 +273,18 @@ export const uiUtils = {
   // Spacing utilities
   spacing: {
     p: {
-      xs: `p-${designSystem.spacing.xs}`,
-      sm: `p-${designSystem.spacing.sm}`,
-      md: `p-${designSystem.spacing.md}`,
-      lg: `p-${designSystem.spacing.lg}`,
-      xl: `p-${designSystem.spacing.xl}`,
+      xs: 'p-1',
+      sm: 'p-2',
+      md: 'p-4',
+      lg: 'p-6',
+      xl: 'p-8',
     },
     m: {
-      xs: `m-${designSystem.spacing.xs}`,
-      sm: `m-${designSystem.spacing.sm}`,
-      md: `m-${designSystem.spacing.md}`,
-      lg: `m-${designSystem.spacing.lg}`,
-      xl: `m-${designSystem.spacing.xl}`,
+      xs: 'm-1',
+      sm: 'm-2',
+      md: 'm-4',
+      lg: 'm-6',
+      xl: 'm-8',
     },
   },
 }

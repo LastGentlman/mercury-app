@@ -24,30 +24,30 @@ export const StatsCard: React.FC<StatsCardProps> = ({
 }) => {
   const variantClasses = {
     default: {
-      bg: `bg-[${designSystem.colors.neutral[50]}]`,
-      border: `border-[${designSystem.colors.neutral[200]}]`,
-      icon: `text-[${designSystem.colors.neutral[400]}]`,
+      bg: 'bg-gray-50',
+      border: 'border-gray-200',
+      icon: 'text-gray-400',
     },
     success: {
-      bg: `bg-[${designSystem.colors.success[50]}]`,
-      border: `border-[${designSystem.colors.success[200]}]`,
-      icon: `text-[${designSystem.colors.success[500]}]`,
+      bg: 'bg-green-50',
+      border: 'border-green-200',
+      icon: 'text-green-500',
     },
     warning: {
-      bg: `bg-[${designSystem.colors.warning[50]}]`,
-      border: `border-[${designSystem.colors.warning[200]}]`,
-      icon: `text-[${designSystem.colors.warning[500]}]`,
+      bg: 'bg-yellow-50',
+      border: 'border-yellow-200',
+      icon: 'text-yellow-500',
     },
     error: {
-      bg: `bg-[${designSystem.colors.error[50]}]`,
-      border: `border-[${designSystem.colors.error[200]}]`,
-      icon: `text-[${designSystem.colors.error[500]}]`,
+      bg: 'bg-red-50',
+      border: 'border-red-200',
+      icon: 'text-red-500',
     },
   }
 
   const changeColors = {
-    increase: `text-[${designSystem.colors.success[600]}]`,
-    decrease: `text-[${designSystem.colors.error[600]}]`,
+    increase: 'text-green-600',
+    decrease: 'text-red-600',
   }
 
   const config = variantClasses[variant]

@@ -1,6 +1,5 @@
 import React from 'react'
 import { cn } from '../../lib/ui-utils.ts'
-import { designSystem } from '../../lib/design-system.ts'
 
 interface EnhancedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'success' | 'danger' | 'ghost' | 'outline'
@@ -42,56 +41,56 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
 
   const variantClasses = {
     primary: `
-      bg-[${designSystem.colors.primary[500]}]
-      hover:bg-[${designSystem.colors.primary[600]}]
-      active:bg-[${designSystem.colors.primary[700]}]
+      bg-blue-500
+      hover:bg-blue-600
+      active:bg-blue-700
       text-white
-      focus:ring-[${designSystem.colors.primary[500]}]
+      focus:ring-blue-500
       shadow-sm
       hover:shadow-md
     `,
     secondary: `
-      bg-[${designSystem.colors.neutral[100]}]
-      hover:bg-[${designSystem.colors.neutral[200]}]
-      active:bg-[${designSystem.colors.neutral[300]}]
-      text-[${designSystem.colors.neutral[700]}]
-      focus:ring-[${designSystem.colors.neutral[500]}]
+      bg-gray-100
+      hover:bg-gray-200
+      active:bg-gray-300
+      text-gray-700
+      focus:ring-gray-500
       border
-      border-[${designSystem.colors.neutral[300]}]
+      border-gray-300
     `,
     success: `
-      bg-[${designSystem.colors.success[500]}]
-      hover:bg-[${designSystem.colors.success[600]}]
-      active:bg-[${designSystem.colors.success[700]}]
+      bg-green-500
+      hover:bg-green-600
+      active:bg-green-700
       text-white
-      focus:ring-[${designSystem.colors.success[500]}]
+      focus:ring-green-500
       shadow-sm
       hover:shadow-md
     `,
     danger: `
-      bg-[${designSystem.colors.error[500]}]
-      hover:bg-[${designSystem.colors.error[600]}]
-      active:bg-[${designSystem.colors.error[700]}]
+      bg-red-500
+      hover:bg-red-600
+      active:bg-red-700
       text-white
-      focus:ring-[${designSystem.colors.error[500]}]
+      focus:ring-red-500
       shadow-sm
       hover:shadow-md
     `,
     ghost: `
       bg-transparent
-      hover:bg-[${designSystem.colors.neutral[100]}]
-      active:bg-[${designSystem.colors.neutral[200]}]
-      text-[${designSystem.colors.neutral[700]}]
-      focus:ring-[${designSystem.colors.neutral[500]}]
+      hover:bg-gray-100
+      active:bg-gray-200
+      text-gray-700
+      focus:ring-gray-500
     `,
     outline: `
       bg-transparent
       border-2
-      border-[${designSystem.colors.primary[500]}]
-      hover:bg-[${designSystem.colors.primary[50]}]
-      active:bg-[${designSystem.colors.primary[100]}]
-      text-[${designSystem.colors.primary[700]}]
-      focus:ring-[${designSystem.colors.primary[500]}]
+      border-blue-500
+      hover:bg-blue-50
+      active:bg-blue-100
+      text-blue-700
+      focus:ring-blue-500
     `,
   }
 

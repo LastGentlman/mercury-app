@@ -219,77 +219,7 @@ export const getShadow = (size: keyof typeof designSystem.shadows) => {
   return designSystem.shadows[size]
 }
 
-// CSS Custom Properties for use in CSS
-export const cssCustomProperties = `
-  :root {
-    /* Primary Colors */
-    --color-primary-50: ${designSystem.colors.primary[50]};
-    --color-primary-500: ${designSystem.colors.primary[500]};
-    --color-primary-600: ${designSystem.colors.primary[600]};
-    --color-primary-700: ${designSystem.colors.primary[700]};
-    
-    /* Success Colors */
-    --color-success-50: ${designSystem.colors.success[50]};
-    --color-success-500: ${designSystem.colors.success[500]};
-    --color-success-600: ${designSystem.colors.success[600]};
-    
-    /* Warning Colors */
-    --color-warning-50: ${designSystem.colors.warning[50]};
-    --color-warning-500: ${designSystem.colors.warning[500]};
-    --color-warning-600: ${designSystem.colors.warning[600]};
-    
-    /* Error Colors */
-    --color-error-50: ${designSystem.colors.error[50]};
-    --color-error-500: ${designSystem.colors.error[500]};
-    --color-error-600: ${designSystem.colors.error[600]};
-    
-    /* Neutral Colors */
-    --color-neutral-50: ${designSystem.colors.neutral[50]};
-    --color-neutral-100: ${designSystem.colors.neutral[100]};
-    --color-neutral-200: ${designSystem.colors.neutral[200]};
-    --color-neutral-300: ${designSystem.colors.neutral[300]};
-    --color-neutral-400: ${designSystem.colors.neutral[400]};
-    --color-neutral-500: ${designSystem.colors.neutral[500]};
-    --color-neutral-600: ${designSystem.colors.neutral[600]};
-    --color-neutral-700: ${designSystem.colors.neutral[700]};
-    --color-neutral-800: ${designSystem.colors.neutral[800]};
-    --color-neutral-900: ${designSystem.colors.neutral[900]};
-    
-    /* Semantic Colors */
-    --color-background-primary: ${designSystem.colors.background.primary};
-    --color-background-secondary: ${designSystem.colors.background.secondary};
-    --color-text-primary: ${designSystem.colors.text.primary};
-    --color-text-secondary: ${designSystem.colors.text.secondary};
-    --color-text-tertiary: ${designSystem.colors.text.tertiary};
-    --color-border-light: ${designSystem.colors.border.light};
-    --color-border-medium: ${designSystem.colors.border.medium};
-    
-    /* Spacing */
-    --spacing-xs: ${designSystem.spacing.xs};
-    --spacing-sm: ${designSystem.spacing.sm};
-    --spacing-md: ${designSystem.spacing.md};
-    --spacing-lg: ${designSystem.spacing.lg};
-    --spacing-xl: ${designSystem.spacing.xl};
-    --spacing-xxl: ${designSystem.spacing.xxl};
-    
-    /* Border Radius */
-    --radius-sm: ${designSystem.borderRadius.sm};
-    --radius-md: ${designSystem.borderRadius.md};
-    --radius-lg: ${designSystem.borderRadius.lg};
-    --radius-xl: ${designSystem.borderRadius.xl};
-    --radius-2xl: ${designSystem.borderRadius['2xl']};
-    
-    /* Shadows */
-    --shadow-sm: ${designSystem.shadows.sm};
-    --shadow-md: ${designSystem.shadows.md};
-    --shadow-lg: ${designSystem.shadows.lg};
-    --shadow-xl: ${designSystem.shadows.xl};
-    
-    /* Transitions */
-    --transition-fast: ${designSystem.transitions.duration.fast};
-    --transition-normal: ${designSystem.transitions.duration.normal};
-    --transition-slow: ${designSystem.transitions.duration.slow};
-  }
-`
+// CSS Custom Properties removed to avoid build warnings
+// Use Tailwind CSS classes instead for better performance
 
 export default designSystem 
