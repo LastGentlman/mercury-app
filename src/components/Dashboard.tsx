@@ -1,15 +1,13 @@
 import React from 'react';
-import { AlertCircle, CheckCircle, Clock, Package, Plus, TrendingUp, Users } from 'lucide-react';
+import { AlertCircle, CheckCircle, Clock, Package, Plus } from 'lucide-react';
 import type { Order } from '../types/index.ts';
 import { useOrders } from '../hooks/useOrders.ts';
-import { useDashboardStats } from '../hooks/useDashboardStats.ts';
 import { Button } from './ui/index.ts';
 import { Card, CardContent } from './ui/index.ts';
 import { CreateOrderDialog } from './CreateOrderDialog.tsx';
 import { OrderCard } from './orders/OrderCard.tsx';
 import { OrderDetails } from './orders/OrderDetails.tsx';
 import { TrialExtensionBanner } from './TrialExtensionBanner.tsx';
-import SaaSDashboard from './SaaSDashboard.tsx';
 
 interface DashboardProps {
   businessId: string;
@@ -17,27 +15,12 @@ interface DashboardProps {
 
 export function Dashboard({ businessId }: DashboardProps) {
   const { orders, isLoading, updateOrderStatus } = useOrders(businessId);
-  const { stats: dashboardStats, isLoading: _statsLoading } = useDashboardStats();
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = React.useState(false);
-  const [showSaaSDashboard, setShowSaaSDashboard] = React.useState(false);
 
-  // Use dashboard stats if available, otherwise fall back to local calculation
+  // Calculate stats from orders
   const stats = React.useMemo(() => {
-    if (dashboardStats) {
-      return {
-        total: dashboardStats.today.total,
-        pending: dashboardStats.today.pending,
-        preparing: dashboardStats.today.preparing,
-        ready: dashboardStats.today.ready,
-        delivered: dashboardStats.today.delivered,
-        cancelled: dashboardStats.today.cancelled,
-        totalAmount: dashboardStats.today.totalAmount,
-      };
-    }
-
-    // Fallback to local calculation
     const today = orders.filter((order: Order) => 
       order.delivery_date === new Date().toISOString().split('T')[0]
     );
@@ -51,7 +34,7 @@ export function Dashboard({ businessId }: DashboardProps) {
       cancelled: today.filter((o: Order) => o.status === 'cancelled').length,
       totalAmount: today.reduce((sum: number, order: Order) => sum + order.total, 0),
     };
-  }, [orders, dashboardStats]);
+  }, [orders]);
 
   const sortedOrders = React.useMemo(() => {
     return [...orders].sort((a: Order, b: Order) => {
@@ -73,26 +56,6 @@ export function Dashboard({ businessId }: DashboardProps) {
     );
   }
 
-  // Mostrar el dashboard SaaS si está activado
-  if (showSaaSDashboard) {
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold">Dashboard SaaS</h1>
-            <p className="text-gray-600">Métricas y análisis de negocio</p>
-          </div>
-          <Button 
-            onClick={() => setShowSaaSDashboard(false)}
-            variant="outline"
-          >
-            Volver al Dashboard de Pedidos
-          </Button>
-        </div>
-        <SaaSDashboard />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -113,14 +76,6 @@ export function Dashboard({ businessId }: DashboardProps) {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button 
-            onClick={() => setShowSaaSDashboard(true)}
-            variant="outline"
-            className="border-purple-200 text-purple-700 hover:bg-purple-50"
-          >
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Dashboard SaaS
-          </Button>
           <Button 
             onClick={() => setShowCreateDialog(true)}
             className="bg-blue-600 hover:bg-blue-700"
@@ -205,62 +160,6 @@ export function Dashboard({ businessId }: DashboardProps) {
         </Card>
       </div>
 
-      {/* Additional Stats from Dashboard API */}
-      {dashboardStats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Crecimiento Pedidos</p>
-                  <p className={`text-lg font-bold ${dashboardStats.growth.orders >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {dashboardStats.growth.orders >= 0 ? '+' : ''}{dashboardStats.growth.orders}%
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-5 h-5 text-green-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Crecimiento Ingresos</p>
-                  <p className={`text-lg font-bold ${dashboardStats.growth.revenue >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {dashboardStats.growth.revenue >= 0 ? '+' : ''}{dashboardStats.growth.revenue}%
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Package className="w-5 h-5 text-purple-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Productos Activos</p>
-                  <p className="text-lg font-bold text-purple-600">{dashboardStats.totals.products}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Users className="w-5 h-5 text-indigo-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Clientes Registrados</p>
-                  <p className="text-lg font-bold text-indigo-600">{dashboardStats.totals.clients}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Orders List */}
       <div className="space-y-4">
