@@ -1,7 +1,8 @@
 {
   "buildCommand": "npm run build:no-pwa",
   "env": {
-    "VITE_PWA_DISABLED": "true"
+    "VITE_PWA_DISABLED": "true",
+    "VITE_BACKEND_URL": "https://api.pedidolist.com"
   },
   "redirects": [
     {

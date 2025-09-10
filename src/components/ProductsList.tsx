@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Edit, Package, Plus, Search, Trash2 } from 'lucide-react';
-import { useAuth } from '../hooks/useAuth.ts';
-import { useProducts } from '../hooks/useProducts.ts';
+import { useProductsAPI } from '../hooks/useProductsAPI.ts';
 import { Button } from './ui/index.ts';
 import { Input } from './ui/index.ts';
 import { Card } from './ui/index.ts';
@@ -63,20 +62,11 @@ function ProductCard({ product, onEdit, onDelete }: ProductCardProps) {
         </div>
         
         <div className="flex justify-between items-center">
-          <span className="text-sm text-gray-500">Stock:</span>
-          <span className={`font-medium ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-            {product.stock} unidades
+          <span className="text-sm text-gray-500">Estado:</span>
+          <span className={`font-medium ${product.isActive ? 'text-green-600' : 'text-red-600'}`}>
+            {product.isActive ? 'Activo' : 'Inactivo'}
           </span>
         </div>
-        
-        {product.cost && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500">Costo:</span>
-            <span className="text-sm text-gray-600">
-              ${product.cost.toFixed(2)}
-            </span>
-          </div>
-        )}
       </div>
       
       <div className="mt-3 pt-3 border-t">
@@ -97,18 +87,15 @@ export function ProductsList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   
-  const { user } = useAuth();
   const {
     products,
     isLoading,
-    createProductWithCategory: _createProductWithCategory,
+    createProduct,
     updateProduct,
     deleteProduct,
     isCreating,
-    isDeleting: _isDeleting,
-    error: _error,
-    isLoading: _isLoadingProducts
-  } = useProducts({ businessId: user?.businessId || '' });
+    isDeleting
+  } = useProductsAPI();
 
   const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -165,7 +152,7 @@ export function ProductsList() {
               key={product.id}
               product={product}
               onEdit={() => setSelectedProduct(product)}
-              onDelete={() => product.id && deleteProduct(product.id)}
+              onDelete={() => product.id !== undefined && deleteProduct(product.id.toString())}
             />
           ))}
         </div>
@@ -194,15 +181,13 @@ export function ProductsList() {
       {showCreateModal && (
         <CreateProductModal
           onClose={() => setShowCreateModal(false)}
-          onSave={async (productData) => {
-            const fullProductData = {
-              ...(productData as Product),
-              businessId: user?.businessId || '',
-              syncStatus: 'pending' as const,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            await _createProductWithCategory(fullProductData as Product & { categoryId: string } & { businessId: string });
+          onSave={async (productData: any) => {
+            await createProduct({
+              name: productData.name,
+              price: productData.price,
+              category: productData.category,
+              description: productData.description
+            });
           }}
           isLoading={isCreating}
         />
@@ -212,17 +197,18 @@ export function ProductsList() {
         <EditProductModal
           product={selectedProduct}
           onClose={() => setSelectedProduct(null)}
-          onSave={async (productData) => {
-            const fullProductData = {
-              ...(productData as Product),
-              businessId: user?.businessId || '',
-              syncStatus: 'pending' as const,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            };
-            await updateProduct(fullProductData as Partial<Product> & { id: number });
+          onSave={async (productData: any) => {
+            if (selectedProduct.id !== undefined) {
+              await updateProduct({
+                id: selectedProduct.id.toString(),
+                name: productData.name,
+                price: productData.price,
+                category: productData.category,
+                description: productData.description
+              });
+            }
           }}
-          isLoading={false}
+          isLoading={isDeleting}
         />
       )}
     </div>
