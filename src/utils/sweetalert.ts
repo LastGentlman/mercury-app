@@ -1,4 +1,6 @@
-import Swal from 'sweetalert2'
+// Dynamic import for SweetAlert2 to reduce initial bundle size
+let Swal: any = null
+let isInitialized = false
 
 // Configuración global de SweetAlert2
 const defaultConfig = {
@@ -15,18 +17,32 @@ const defaultConfig = {
   }
 }
 
-// Configurar SweetAlert2 globalmente
-Swal.mixin(defaultConfig)
+// Initialize SweetAlert2 dynamically
+async function initializeSwal() {
+  if (isInitialized) return Swal
+  
+  try {
+    const { default: SwalModule } = await import('sweetalert2')
+    Swal = SwalModule
+    Swal.mixin(defaultConfig)
+    isInitialized = true
+    return Swal
+  } catch (error) {
+    console.error('Failed to load SweetAlert2:', error)
+    throw error
+  }
+}
 
 /**
  * Muestra una alerta de éxito
  */
-export const showSuccess = (
+export const showSuccess = async (
   title: string, 
   message?: string, 
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'success',
     title,
     text: message,
@@ -40,12 +56,13 @@ export const showSuccess = (
 /**
  * Muestra una alerta de error
  */
-export const showError = (
+export const showError = async (
   title: string, 
   message?: string, 
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'error',
     title,
     text: message,
@@ -57,12 +74,13 @@ export const showError = (
 /**
  * Muestra una alerta de advertencia
  */
-export const showWarning = (
+export const showWarning = async (
   title: string, 
   message?: string, 
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'warning',
     title,
     text: message,
@@ -74,12 +92,13 @@ export const showWarning = (
 /**
  * Muestra una alerta de información
  */
-export const showInfo = (
+export const showInfo = async (
   title: string, 
   message?: string, 
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'info',
     title,
     text: message,
@@ -91,12 +110,13 @@ export const showInfo = (
 /**
  * Muestra una alerta de confirmación
  */
-export const showConfirm = (
+export const showConfirm = async (
   title: string, 
   message?: string, 
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'question',
     title,
     text: message,
@@ -111,12 +131,13 @@ export const showConfirm = (
 /**
  * Muestra una alerta de confirmación para acciones destructivas
  */
-export const showDeleteConfirm = (
+export const showDeleteConfirm = async (
   title: string, 
   message?: string, 
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'warning',
     title,
     text: message || 'Esta acción no se puede deshacer.',
@@ -132,12 +153,13 @@ export const showDeleteConfirm = (
 /**
  * Muestra una alerta de email no confirmado con opciones de reenvío y cambio
  */
-export const showEmailNotConfirmed = (
+export const showEmailNotConfirmed = async (
   email: string,
   onResendEmail: () => Promise<void>,
   onChangeEmail: () => void
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'warning',
     title: 'Email no verificado',
     html: `
@@ -163,7 +185,7 @@ export const showEmailNotConfirmed = (
         await onResendEmail()
         return true
       } catch (error) {
-        Swal.showValidationMessage(`Error al reenviar: ${error}`)
+        swal.showValidationMessage(`Error al reenviar: ${error}`)
         return false
       }
     },
@@ -177,8 +199,9 @@ export const showEmailNotConfirmed = (
 /**
  * Muestra una alerta de email reenviado exitosamente
  */
-export const showEmailResent = (email: string) => {
-  return Swal.fire({
+export const showEmailResent = async (email: string) => {
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'success',
     title: 'Email reenviado',
     html: `
@@ -199,11 +222,12 @@ export const showEmailResent = (email: string) => {
 /**
  * Muestra una alerta de cambio de email
  */
-export const showChangeEmail = (
+export const showChangeEmail = async (
   currentEmail: string,
   onEmailChange: (newEmail: string) => Promise<void>
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     icon: 'question',
     title: 'Cambiar email',
     html: `
@@ -238,7 +262,7 @@ export const showChangeEmail = (
         await onEmailChange(newEmail)
         return newEmail
       } catch (error) {
-        Swal.showValidationMessage(`Error al cambiar email: ${error}`)
+        swal.showValidationMessage(`Error al cambiar email: ${error}`)
         return false
       }
     }
@@ -248,18 +272,19 @@ export const showChangeEmail = (
 /**
  * Muestra una alerta de carga
  */
-export const showLoading = (
+export const showLoading = async (
   title: string = 'Cargando...',
   message?: string
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     title,
     text: message,
     allowOutsideClick: false,
     allowEscapeKey: false,
     showConfirmButton: false,
     didOpen: () => {
-      Swal.showLoading()
+      swal.showLoading()
     }
   })
 }
@@ -267,19 +292,21 @@ export const showLoading = (
 /**
  * Cierra la alerta actual
  */
-export const closeAlert = () => {
-  Swal.close()
+export const closeAlert = async () => {
+  const swal = await initializeSwal()
+  swal.close()
 }
 
 /**
  * Muestra una alerta de input
  */
-export const showInput = (
+export const showInput = async (
   title: string,
   inputPlaceholder?: string,
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     title,
     input: 'text',
     inputPlaceholder,
@@ -299,12 +326,13 @@ export const showInput = (
 /**
  * Muestra una alerta de email
  */
-export const showEmailInput = (
+export const showEmailInput = async (
   title: string,
   inputPlaceholder?: string,
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     title,
     input: 'email',
     inputPlaceholder: inputPlaceholder || 'tu@email.com',
@@ -327,12 +355,13 @@ export const showEmailInput = (
 /**
  * Muestra una alerta de contraseña
  */
-export const showPasswordInput = (
+export const showPasswordInput = async (
   title: string,
   inputPlaceholder?: string,
-  options?: Partial<typeof Swal.fire>
+  options?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     title,
     input: 'password',
     inputPlaceholder: inputPlaceholder || 'Ingresa tu contraseña',
@@ -352,13 +381,14 @@ export const showPasswordInput = (
 /**
  * Muestra una alerta de selección
  */
-export const showSelect = (
+export const showSelect = async (
   title: string,
   options: string[],
   placeholder?: string,
-  optionsConfig?: Partial<typeof Swal.fire>
+  optionsConfig?: any
 ) => {
-  return Swal.fire({
+  const swal = await initializeSwal()
+  return swal.fire({
     title,
     input: 'select',
     inputOptions: options.reduce((acc, option) => {
@@ -379,5 +409,5 @@ export const showSelect = (
   })
 }
 
-// Exportar Swal para uso directo si es necesario
-export { Swal } 
+// Exportar función para obtener Swal si es necesario
+export const getSwal = () => initializeSwal() 

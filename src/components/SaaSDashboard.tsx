@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
+import React, { useState, lazy, Suspense } from 'react';
 import { TrendingUp, Users, DollarSign, Target, Settings, EyeOff, Smartphone, Monitor, Tablet, Percent, Clock } from 'lucide-react';
+
+// Dynamic import for Recharts to reduce initial bundle size
+const RechartsComponents = lazy(() => import('./RechartsComponents.tsx'));
 
 const SaaSDashboard = () => {
   const [isCustomizing, setIsCustomizing] = useState(false);
@@ -266,59 +268,33 @@ const SaaSDashboard = () => {
 
         {/* Gráficos - Layout optimizado para Desktop */}
         <div className={`grid ${deviceView === 'mobile' ? 'grid-cols-1' : deviceView === 'desktop' ? 'grid-cols-3' : 'grid-cols-2'} gap-6 mb-6`}>
-          {!hiddenCards.has('tendencia') && (
+          {(!hiddenCards.has('tendencia') || !hiddenCards.has('costos')) && (
             <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-6 ${deviceView === 'desktop' ? 'col-span-2' : ''}`}>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Tendencia de Crecimiento</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Análisis de Datos</h3>
                 {isCustomizing && (
-                  <button onClick={() => toggleCard('tendencia')} className="p-1 hover:bg-gray-100 rounded">
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  </button>
+                  <div className="flex gap-2">
+                    {!hiddenCards.has('tendencia') && (
+                      <button onClick={() => toggleCard('tendencia')} className="p-1 hover:bg-gray-100 rounded">
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      </button>
+                    )}
+                    {!hiddenCards.has('costos') && (
+                      <button onClick={() => toggleCard('costos')} className="p-1 hover:bg-gray-100 rounded">
+                        <EyeOff className="h-4 w-4 text-gray-400" />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
-              <ResponsiveContainer width="100%" height={deviceView === 'desktop' ? 320 : 250}>
-                <LineChart data={tendenciaData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="mes" />
-                  <YAxis />
-                  <Tooltip formatter={(value, name) => [
-                    name === 'usuarios' ? value : formatCurrency(Number(value)), 
-                    name === 'usuarios' ? 'Usuarios' : name === 'ingresos' ? 'Ingresos' : 'Ganancia'
-                  ]} />
-                  <Line type="monotone" dataKey="usuarios" stroke="#3b82f6" strokeWidth={3} />
-                  <Line type="monotone" dataKey="ganancia" stroke="#10b981" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-
-          {!hiddenCards.has('costos') && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Distribución de Costos</h3>
-                {isCustomizing && (
-                  <button onClick={() => toggleCard('costos')} className="p-1 hover:bg-gray-100 rounded">
-                    <EyeOff className="h-4 w-4 text-gray-400" />
-                  </button>
-                )}
-              </div>
-              <ResponsiveContainer width="100%" height={deviceView === 'desktop' ? 320 : 250}>
-                <PieChart>
-                  <Pie
-                    data={costosData}
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={deviceView === 'desktop' ? 100 : 80}
-                    dataKey="valor"
-                    label={({nombre, porcentaje}) => `${nombre} ${porcentaje}%`}
-                  >
-                    {costosData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                </PieChart>
-              </ResponsiveContainer>
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <span className="ml-2 text-gray-600">Cargando gráficos...</span>
+                </div>
+              }>
+                <RechartsComponents costosData={costosData} tendenciaData={tendenciaData} />
+              </Suspense>
             </div>
           )}
         </div>

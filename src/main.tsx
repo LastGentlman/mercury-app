@@ -2,7 +2,7 @@ import React, { StrictMode } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import * as Sentry from "@sentry/react"
+// Dynamic import for Sentry to reduce initial bundle size
 import { Toaster } from 'sonner'
 
 import { routeTree } from './routeTree.gen.ts'
@@ -49,43 +49,52 @@ declare module '@tanstack/react-router' {
   }
 }
 
-// ✅ Sentry initialization con control de errores
+// ✅ Sentry initialization con control de errores y dynamic import
 const shouldInitSentry = import.meta.env.VITE_SENTRY_DSN && 
   (import.meta.env.PROD || import.meta.env.VITE_ENABLE_SENTRY_DEV === 'true')
 
-if (shouldInitSentry) {
-  Sentry.init({
-    dsn: import.meta.env.VITE_SENTRY_DSN,
-    environment: import.meta.env.VITE_ENVIRONMENT || "development",
-    enabled: import.meta.env.VITE_ENVIROMENT === 'production',
-    tracesSampleRate: import.meta.env.VITE_ENVIROMENT === 'production' ? 0.1 : 0.01,
-    debug: import.meta.env.VITE_ENVIROMENT !== 'production',
-    beforeSend(event) {
-      if (!import.meta.env.PROD) {
-        console.group('🐛 Sentry Error Captured')
-        console.error('Error:', event.exception?.values?.[0]?.value)
-        console.error('Stack:', event.exception?.values?.[0]?.stacktrace)
-        console.groupEnd()
-      }
-      
-      if (event.exception?.values?.[0]?.value?.includes('Non-Error promise rejection')) {
-        return null
-      }
-      
-      return event
-    },
-    initialScope: {
-      tags: {
-        component: "frontend",
-        version: "1.0.0",
-        buildMode: import.meta.env.MODE
-      }
-    },
-  })
-  
-  console.log(`✅ Sentry initialized for ${import.meta.env.VITE_ENVIRONMENT}`)
-} else {
-  console.log("🚫 Sentry disabled")
+async function initializeSentry() {
+  if (!shouldInitSentry) {
+    console.log("🚫 Sentry disabled")
+    return
+  }
+
+  try {
+    const Sentry = await import("@sentry/react")
+    
+    Sentry.init({
+      dsn: import.meta.env.VITE_SENTRY_DSN,
+      environment: import.meta.env.VITE_ENVIRONMENT || "development",
+      enabled: import.meta.env.VITE_ENVIROMENT === 'production',
+      tracesSampleRate: import.meta.env.VITE_ENVIROMENT === 'production' ? 0.1 : 0.01,
+      debug: import.meta.env.VITE_ENVIROMENT !== 'production',
+      beforeSend(event) {
+        if (!import.meta.env.PROD) {
+          console.group('🐛 Sentry Error Captured')
+          console.error('Error:', event.exception?.values?.[0]?.value)
+          console.error('Stack:', event.exception?.values?.[0]?.stacktrace)
+          console.groupEnd()
+        }
+        
+        if (event.exception?.values?.[0]?.value?.includes('Non-Error promise rejection')) {
+          return null
+        }
+        
+        return event
+      },
+      initialScope: {
+        tags: {
+          component: "frontend",
+          version: "1.0.0",
+          buildMode: import.meta.env.MODE
+        }
+      },
+    })
+    
+    console.log(`✅ Sentry initialized for ${import.meta.env.VITE_ENVIRONMENT}`)
+  } catch (error) {
+    console.warn('⚠️ Sentry initialization failed:', error)
+  }
 }
 
 // ✅ PWA Registration con control de errores
@@ -157,8 +166,11 @@ function initializeApp() {
     </StrictMode>
   )
 
-  // Inicializar PWA después de que React esté montado
-  setTimeout(initializePWA, 1000)
+  // Inicializar servicios después de que React esté montado
+  setTimeout(() => {
+    initializeSentry()
+    initializePWA()
+  }, 1000)
 }
 
 // ✅ Inicialización segura

@@ -214,7 +214,17 @@ export default defineConfig({
         manualChunks: {
           'react': ['react', 'react-dom'],
           'router': ['@tanstack/react-router'],
-          'query': ['@tanstack/react-query']
+          'query': ['@tanstack/react-query'],
+          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-label', '@radix-ui/react-select', '@radix-ui/react-slider', '@radix-ui/react-slot', '@radix-ui/react-switch'],
+          'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
+          'charts': ['recharts'],
+          'alerts': ['sweetalert2'],
+          'monitoring': ['@sentry/react'],
+          'icons': ['lucide-react'],
+          'stripe': ['@stripe/react-stripe-js', '@stripe/stripe-js'],
+          'supabase': ['@supabase/supabase-js'],
+          'utils': ['clsx', 'tailwind-merge', 'class-variance-authority', 'sonner', 'dompurify'],
+          'storage': ['dexie']
         }
       }
     }
