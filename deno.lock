@@ -1578,7 +1578,7 @@
         "npm:vite@^6.1.0",
         "npm:vitest@^3.0.5",
         "npm:web-vitals@^4.2.4",
-        "npm:zod@^3.24.2"
+        "npm:zod@^3.25.76"
       ]
     }
   }
