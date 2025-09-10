@@ -196,6 +196,9 @@ export default defineConfig({
           if (name.includes('extend-trial')) {
             return 'assets/extend-trial.js'
           }
+          if (name.includes('protected-route')) {
+            return 'assets/ProtectedRoute.js'
+          }
           
           // For other chunks, use descriptive name without hash
           const cleanName = name.replace(/index/g, 'app').replace(/[^a-zA-Z0-9-]/g, '-')
@@ -210,21 +213,35 @@ export default defineConfig({
           return 'assets/[name].[ext]'
         },
         
+        // ✅ Preserve named exports to prevent minification issues
+        preserveModules: false,
+        exports: 'named',
+        
         // ✅ Separación de vendors para mejor caching
-        manualChunks: {
-          'react': ['react', 'react-dom'],
-          'router': ['@tanstack/react-router'],
-          'query': ['@tanstack/react-query'],
-          'ui': ['@radix-ui/react-dialog', '@radix-ui/react-label', '@radix-ui/react-select', '@radix-ui/react-slider', '@radix-ui/react-slot', '@radix-ui/react-switch'],
-          'forms': ['react-hook-form', '@hookform/resolvers', 'zod'],
-          'charts': ['recharts'],
-          'alerts': ['sweetalert2'],
-          'monitoring': ['@sentry/react'],
-          'icons': ['lucide-react'],
-          'stripe': ['@stripe/react-stripe-js', '@stripe/stripe-js'],
-          'supabase': ['@supabase/supabase-js'],
-          'utils': ['clsx', 'tailwind-merge', 'class-variance-authority', 'sonner', 'dompurify'],
-          'storage': ['dexie']
+        manualChunks: (id) => {
+          // Keep ProtectedRoute in its own chunk to avoid export conflicts
+          if (id.includes('ProtectedRoute')) {
+            return 'protected-route'
+          }
+          
+          // Vendor chunks
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom')) return 'react'
+            if (id.includes('@tanstack/react-router')) return 'router'
+            if (id.includes('@tanstack/react-query')) return 'query'
+            if (id.includes('@radix-ui')) return 'ui'
+            if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) return 'forms'
+            if (id.includes('recharts')) return 'charts'
+            if (id.includes('sweetalert2')) return 'alerts'
+            if (id.includes('@sentry')) return 'monitoring'
+            if (id.includes('lucide-react')) return 'icons'
+            if (id.includes('@stripe')) return 'stripe'
+            if (id.includes('@supabase')) return 'supabase'
+            if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority') || id.includes('sonner') || id.includes('dompurify')) return 'utils'
+            if (id.includes('dexie')) return 'storage'
+          }
+          
+          return undefined
         }
       }
     }
