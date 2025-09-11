@@ -83,7 +83,7 @@ export default function Header() {
             )}
 
             {/* Authentication Section - Hidden on mobile when authenticated */}
-            <div className={`items-center space-x-4 ${isAuthenticated ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`items-center space-x-4 ml-auto justify-end ${isAuthenticated ? 'hidden md:flex' : 'flex'}`}>
               {isLoading ? (
                 <div className="flex items-center space-x-2 text-gray-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
