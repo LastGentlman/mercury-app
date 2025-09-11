@@ -9,78 +9,75 @@ interface CSRFConfig {
   refreshToken: () => Promise<string | null>;
 }
 
-/**
- * Hook para manejar tokens CSRF
- */
-export function useCSRF(): CSRFConfig {
-  const [sessionId] = useState(() => {
-    // Generar ID de sesión único
-    return localStorage.getItem('sessionId') || 
-           generateUUID();
-  });
-  
-  const [token, setToken] = useState<string | null>(null);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefreshTime, setLastRefreshTime] = useState(0);
+// =========================
+// Shared CSRF Manager (Singleton)
+// =========================
+let sharedSessionId: string | null = null;
+let sharedToken: string | null = null;
+let sharedIsRefreshing = false;
+let sharedLastRefreshTime = 0;
+let sharedPendingPromise: Promise<string | null> | null = null;
+const CSRF_REFRESH_THROTTLE_MS = 5000;
 
-  // Guardar sessionId en localStorage
-  useEffect(() => {
-    localStorage.setItem('sessionId', sessionId);
-  }, [sessionId]);
+function getSharedSessionId(): string {
+  if (sharedSessionId) return sharedSessionId;
+  const existing = (typeof window !== 'undefined') ? localStorage.getItem('sessionId') : null;
+  sharedSessionId = existing || generateUUID();
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('sessionId', sharedSessionId);
+  }
+  return sharedSessionId;
+}
 
-  // Obtener token CSRF del servidor con throttling
-  const refreshToken = async (): Promise<string | null> => {
-    const now = Date.now();
-    const refreshThrottle = 5000; // 5 seconds throttle
-    
-    // Prevent rapid successive calls
-    if (isRefreshing || (now - lastRefreshTime < refreshThrottle)) {
-      console.log('⏳ CSRF token refresh throttled');
-      return token; // Return existing token if available
+async function refreshCSRFTokenSingleton(): Promise<string | null> {
+  const now = Date.now();
+
+  // Global throttle and concurrent call coalescing
+  if (sharedIsRefreshing || (now - sharedLastRefreshTime < CSRF_REFRESH_THROTTLE_MS)) {
+    if (sharedPendingPromise) {
+      console.log('⏳ CSRF token refresh coalesced to pending promise');
+      return sharedPendingPromise;
     }
-    
-    setIsRefreshing(true);
-    setLastRefreshTime(now);
+    console.log('⏳ CSRF token refresh throttled (singleton)');
+    return sharedToken;
+  }
+
+  sharedIsRefreshing = true;
+  sharedLastRefreshTime = now;
+
+  sharedPendingPromise = (async () => {
     try {
-      let authToken = localStorage.getItem('authToken');
-      
-      // Si no hay token en localStorage, intentar obtener de Supabase (OAuth users)
+      let authToken = (typeof window !== 'undefined') ? localStorage.getItem('authToken') : null;
+
       if (!authToken && supabase) {
         try {
           const { data: { session }, error } = await supabase.auth.getSession();
           if (error) {
-            console.error('Error getting Supabase session for CSRF:', error);
-            return null; // ✅ FIX: Return null if no valid session
+            console.error('Error getting Supabase session for CSRF (singleton):', error);
+            return sharedToken; // keep previous if any
           } else if (session?.access_token) {
             authToken = session.access_token;
             console.log('✅ Using Supabase session token for CSRF request');
           } else {
             console.log('⚠️ No valid Supabase session found for CSRF request');
-            return null; // ✅ FIX: Return null if no access token
+            return sharedToken; // no change
           }
         } catch (error) {
-          console.error('Error accessing Supabase session for CSRF:', error);
-          return null; // ✅ FIX: Return null on error
+          console.error('Error accessing Supabase session for CSRF (singleton):', error);
+          return sharedToken;
         }
       }
-      
-      // ✅ FIX: If still no auth token, don't make the request
+
       if (!authToken) {
-        console.log('⚠️ No auth token available for CSRF request');
-        return null;
-      }
-      
-      const headers: Record<string, string> = {
-        'X-Session-ID': sessionId,
-      };
-      
-      // Solo incluir Authorization si hay un token de autenticación
-      if (authToken) {
-        headers['Authorization'] = `Bearer ${authToken}`;
+        console.log('⚠️ No auth token available for CSRF request (singleton)');
+        return sharedToken;
       }
 
-      console.log('🔄 Fetching CSRF token from:', `${BACKEND_URL}/api/auth/csrf/token`)
-      console.log('📋 CSRF request headers:', headers)
+      const headers: Record<string, string> = { 'X-Session-ID': getSharedSessionId() };
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+      console.log('🔄 Fetching CSRF token from:', `${BACKEND_URL}/api/auth/csrf/token`);
+      console.log('📋 CSRF request headers:', headers);
 
       const response = await fetch(`${BACKEND_URL}/api/auth/csrf/token`, {
         method: 'GET',
@@ -92,37 +89,61 @@ export function useCSRF(): CSRFConfig {
         statusText: response.statusText,
         ok: response.ok,
         headers: Object.fromEntries(response.headers.entries())
-      })
+      });
 
-      if (response.ok) {
-        const newToken = response.headers.get('X-CSRF-Token');
-        if (newToken) {
-          console.log('✅ CSRF token received:', newToken.substring(0, 8) + '...')
-          setToken(newToken);
-          return newToken;
-        } else {
-          console.warn('⚠️ No CSRF token in response headers')
-          return null;
-        }
-      } else {
-        console.error('❌ CSRF token request failed:', response.status, response.statusText)
-        return null;
+      if (!response.ok) {
+        console.error('❌ CSRF token request failed:', response.status, response.statusText);
+        return sharedToken;
       }
+
+      const newToken = response.headers.get('X-CSRF-Token');
+      if (newToken) {
+        console.log('✅ CSRF token received:', newToken.substring(0, 8) + '...');
+        sharedToken = newToken;
+      } else {
+        console.warn('⚠️ No CSRF token in response headers');
+      }
+
+      return sharedToken;
     } catch (error) {
-      console.error('❌ Error obteniendo token CSRF:', error);
-      return null;
+      console.error('❌ Error obteniendo token CSRF (singleton):', error);
+      return sharedToken;
     } finally {
-      setIsRefreshing(false);
+      sharedIsRefreshing = false;
+      sharedPendingPromise = null;
     }
+  })();
+
+  return sharedPendingPromise;
+}
+
+/**
+ * Hook para manejar tokens CSRF
+ */
+export function useCSRF(): CSRFConfig {
+  const [sessionId] = useState(() => getSharedSessionId());
+  
+  const [token, setToken] = useState<string | null>(sharedToken);
+
+  // Guardar sessionId en localStorage
+  useEffect(() => {
+    localStorage.setItem('sessionId', sessionId);
+  }, [sessionId]);
+
+  // Obtener token CSRF del servidor con throttling
+  const refreshToken = async (): Promise<string | null> => {
+    const newToken = await refreshCSRFTokenSingleton();
+    if (newToken && newToken !== token) setToken(newToken);
+    return newToken || null;
   };
 
-  // Obtener token inicial solo una vez
+  // ✅ Lazy strategy: Do NOT prefetch CSRF on mount; only fetch on demand for mutating requests
   useEffect(() => {
-    // Only fetch initial token if we don't have one and we're not already refreshing
-    if (!token && !isRefreshing) {
-      refreshToken();
+    // Keep local state in sync if another instance refreshed the token
+    if (sharedToken && sharedToken !== token) {
+      setToken(sharedToken);
     }
-  }, []); // ✅ FIX: Empty dependency array to run only once on mount
+  }, [token]);
 
   return {
     sessionId,
@@ -175,7 +196,7 @@ export function useCSRFRequest() {
       });
     }
 
-    // Agregar token CSRF para métodos que modifican datos
+    // Agregar token CSRF SOLO para métodos que modifican datos
     if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(options.method || 'GET')) {
       if (token) {
         headers['X-CSRF-Token'] = token;
