@@ -34,8 +34,8 @@ export default function Header() {
     <>
       <header className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 z-50 transition-all duration-300">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-center md:justify-between items-center">
-            {/* Logo - Centered on mobile, left on desktop */}
+          <div className="flex justify-between items-center">
+            {/* Logo - Left aligned */}
             <div className="text-2xl font-bold tracking-tight">
               <Link 
                 to="/" 
