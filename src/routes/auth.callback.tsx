@@ -88,15 +88,22 @@ async function directAuthCheck(): Promise<AuthUser | null> {
   
   // Try to get user from OAuth session only (avoid extra profile fetch here)
   try {
-    const user = await perf.timeAsync('oauth_cb:get_oauth_session', () => AuthService.getOAuthSession())
+    console.log('🔍 Attempting to get OAuth session...')
+    const user = await perf.timeAsync('oauth_cb:get_oauth_session', () => AuthService.getOAuthSession(true))
+    console.log('🔍 OAuth session result:', { user: user ? { id: user.id, email: user.email } : null })
+    
     if (user) {
       perf.mark('oauth_cb:user_ready')
       perf.measure('oauth_cb:total_to_user', 'oauth_cb:start', 'oauth_cb:user_ready')
       logger.info('✅ User authenticated (OAuth session):', { email: user.email, component: 'AuthCallback' })
+      console.log('✅ OAuth session successful, returning user')
       return user
+    } else {
+      console.log('⚠️ OAuth session returned null user')
     }
-  } catch (_error) {
+  } catch (error) {
     logger.warn('⚠️ First attempt failed, trying fallback...', { component: 'AuthCallback' })
+    console.error('❌ First OAuth session attempt failed:', error)
   }
   
   // Short fallback with minimal delay for fragment-based auth
@@ -108,15 +115,22 @@ async function directAuthCheck(): Promise<AuthUser | null> {
   }
   
   try {
-    const user = await perf.timeAsync('oauth_cb:get_oauth_session_retry', () => AuthService.getOAuthSession())
+    console.log('🔍 Attempting OAuth session retry...')
+    const user = await perf.timeAsync('oauth_cb:get_oauth_session_retry', () => AuthService.getOAuthSession(true))
+    console.log('🔍 OAuth session retry result:', { user: user ? { id: user.id, email: user.email } : null })
+    
     if (user) {
       perf.mark('oauth_cb:user_ready')
       perf.measure('oauth_cb:total_to_user', 'oauth_cb:start', 'oauth_cb:user_ready')
       logger.info('✅ User authenticated on retry (OAuth session):', { email: user.email, component: 'AuthCallback' })
+      console.log('✅ OAuth session retry successful, returning user')
       return user
+    } else {
+      console.log('⚠️ OAuth session retry returned null user')
     }
   } catch (error) {
     logger.error('❌ Auth check failed:', error as Error)
+    console.error('❌ OAuth session retry failed:', error)
     throw new Error('Authentication failed after retry')
   }
   
@@ -144,7 +158,8 @@ export const OptimizedAuthCallback = () => {
     url: globalThis.location.href,
     pathname: globalThis.location.pathname,
     search: globalThis.location.search,
-    hash: globalThis.location.hash
+    hash: globalThis.location.hash,
+    timestamp: new Date().toISOString()
   })
   
   useEffect(() => {
@@ -183,14 +198,20 @@ export const OptimizedAuthCallback = () => {
         }))
         
         // ✅ DIRECT AUTH CHECK - No polling, no useQuery loop
+        console.log('🔍 Starting direct auth check...')
         const user = await directAuthCheck()
         
         if (!user) {
+          console.error('❌ Direct auth check failed - no user returned')
           throw new Error('Authentication failed')
         }
         
         logger.info('✅ Authentication successful:', { email: user.email, component: 'AuthCallback' })
-        console.log('🎯 OAuth callback: User authenticated successfully, proceeding with redirect...')
+        console.log('🎯 OAuth callback: User authenticated successfully, proceeding with redirect...', {
+          userId: user.id,
+          email: user.email,
+          provider: user.provider
+        })
         
         // ✅ BATCH UPDATE #3: Success
         setState(prev => ({
@@ -201,21 +222,51 @@ export const OptimizedAuthCallback = () => {
         }))
         
         // ✅ NAVIGATE ONCE - Prevent multiple navigation with multiple fallbacks
+        console.log('🔍 Checking if navigation is already in progress...', { isNavigating: isNavigating.current })
+        
         if (!isNavigating.current) {
+          console.log('✅ Starting navigation process...')
           isNavigating.current = true
           perf.mark('oauth_cb:navigate_start')
           
           // Force redirect to bypass any throttling or restrictions
+          console.log('🚀 Calling forceRedirect()...')
           forceRedirect()
           
           // Use window.location.href for immediate and reliable redirect
-          logger.info('🎯 Redirecting to dashboard using window.location.href', { component: 'AuthCallback' })
-          console.log('🚀 OAuth callback: Redirecting to dashboard...')
+          logger.info('🎯 Redirecting to root route using window.location.href', { component: 'AuthCallback' })
+          console.log('🚀 OAuth callback: Redirecting to root route...', {
+            currentUrl: globalThis.window.location.href,
+            targetUrl: '/',
+            timestamp: new Date().toISOString()
+          })
           
           // Small delay to ensure auth state is fully processed, then redirect
           setTimeout(() => {
-            globalThis.window.location.href = '/dashboard'
+            console.log('⏰ Timeout reached, executing redirect...')
+            console.log('🔄 Using window.location.replace() to /')
+            
+            try {
+              // Redirect to root first to avoid ProtectedRoute interference
+              console.log('🔄 Redirecting to root route first...')
+              globalThis.window.location.replace('/')
+            } catch (replaceError) {
+              console.warn('⚠️ window.location.replace() failed, trying href:', replaceError)
+              try {
+                globalThis.window.location.href = '/'
+              } catch (hrefError) {
+                console.error('❌ Both redirect methods failed:', hrefError)
+                // Last resort: try to navigate using TanStack Router
+                try {
+                  navigate({ to: '/', replace: true })
+                } catch (navError) {
+                  console.error('❌ All redirect methods failed:', navError)
+                }
+              }
+            }
           }, 100)
+        } else {
+          console.log('⚠️ Navigation already in progress, skipping...')
         }
         
       } catch (error: unknown) {

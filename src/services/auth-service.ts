@@ -40,16 +40,21 @@ export class AuthService {
   /**
    * Gets current user session from Supabase OAuth - Versión mejorada
    */
-  static async getOAuthSession(): Promise<AuthUser | null> {
+  static async getOAuthSession(bypassThrottle: boolean = false): Promise<AuthUser | null> {
     if (!supabase) {
       console.log('⚠️ Supabase no configurado, saltando OAuth session check')
       return null
     }
 
-    // ✅ FIX: Throttle OAuth session checks to prevent infinite loops
+    // ✅ FIX: Throttle OAuth session checks to prevent infinite loops (unless bypassed)
     const now = Date.now()
-    if (now - this.lastOAuthCheck < this.oAuthCheckThrottle) {
-      console.log('⏳ OAuth session check throttled')
+    if (!bypassThrottle && now - this.lastOAuthCheck < this.oAuthCheckThrottle) {
+      console.log('⏳ OAuth session check throttled', {
+        timeSinceLastCheck: now - this.lastOAuthCheck,
+        throttleTime: this.oAuthCheckThrottle,
+        remainingTime: this.oAuthCheckThrottle - (now - this.lastOAuthCheck),
+        bypassThrottle
+      })
       return null
     }
     this.lastOAuthCheck = now
@@ -58,6 +63,15 @@ export class AuthService {
       console.log('🔍 Verificando sesión OAuth...')
       
       const { data: { session }, error } = await supabase.auth.getSession()
+      
+      console.log('🔍 Supabase session result:', {
+        hasSession: !!session,
+        hasUser: !!session?.user,
+        hasError: !!error,
+        error: error?.message,
+        sessionExpiresAt: session?.expires_at,
+        userEmail: session?.user?.email
+      })
       
       if (error) {
         console.error('❌ Error obteniendo sesión OAuth:', error)

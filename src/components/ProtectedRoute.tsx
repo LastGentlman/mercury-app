@@ -18,19 +18,30 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     console.log('🔍 ProtectedRoute useEffect triggered:', {
       isLoading,
       isAuthenticated,
-      isRedirectInProgress: isRedirectInProgress()
+      isRedirectInProgress: isRedirectInProgress(),
+      currentPath: globalThis.location?.pathname
     })
 
+    // Check if we're coming from OAuth callback (give more time for auth to establish)
+    const isFromOAuthCallback = globalThis.location?.search?.includes('source=') || 
+                               globalThis.location?.hash?.includes('access_token') ||
+                               globalThis.location?.search?.includes('access_token')
+
     // Only redirect if we're sure the user is not authenticated and not loading
+    // Add extra delay if coming from OAuth callback
     if (!isLoading && !isAuthenticated && !isRedirectInProgress()) {
-      console.log('🔒 ProtectedRoute: User not authenticated, redirecting to auth...')
+      console.log('🔒 ProtectedRoute: User not authenticated, redirecting to auth...', {
+        isFromOAuthCallback,
+        willDelay: isFromOAuthCallback
+      })
       
       if (startRedirect(3000)) {
-        // Use setTimeout to prevent race conditions
+        // Use longer delay if coming from OAuth callback to allow auth to establish
+        const delay = isFromOAuthCallback ? 2000 : 50
         setTimeout(() => {
           navigate({ to: '/auth', replace: true })
           completeRedirect()
-        }, 50)
+        }, delay)
       }
     } else {
       console.log('⏳ ProtectedRoute: Skipping redirect - loading, authenticated, or redirect in progress')
