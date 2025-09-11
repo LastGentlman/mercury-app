@@ -34,7 +34,7 @@ export default function Header() {
     <>
       <header className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 z-50 transition-all duration-300">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
+          <div className="grid grid-cols-3 items-center">
             {/* Logo - Left aligned */}
             <div className="text-2xl font-bold tracking-tight">
               <Link 
@@ -47,7 +47,7 @@ export default function Header() {
 
             {/* Desktop Navigation - Hidden on mobile */}
             {isAuthenticated && (
-              <nav className="hidden md:flex items-center space-x-8">
+              <nav className="hidden md:flex items-center space-x-8 justify-center">
                 <Link 
                   to="/dashboard" 
                   className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
@@ -83,7 +83,7 @@ export default function Header() {
             )}
 
             {/* Authentication Section - Hidden on mobile when authenticated */}
-            <div className={`items-center space-x-4 ml-auto justify-end ${isAuthenticated ? 'hidden md:flex' : 'flex'}`}>
+            <div className={`items-center space-x-4 justify-self-end ${isAuthenticated ? 'hidden md:flex' : 'flex'}`}>
               {isLoading ? (
                 <div className="flex items-center space-x-2 text-gray-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
