@@ -126,7 +126,7 @@ async function directAuthCheck(): Promise<AuthUser | null> {
 // ✅ OPTIMIZACIÓN 4: Zero Re-render Callback Component  
 export const OptimizedAuthCallback = () => {
   const navigate = useNavigate()
-  const { resetRedirectCount } = useRedirectManager()
+  const { forceRedirect } = useRedirectManager()
   
   // ✅ SINGLE STATE = SINGLE RE-RENDER SOURCE
   const [state, setState] = useState<AuthCallbackState>({
@@ -205,38 +205,17 @@ export const OptimizedAuthCallback = () => {
           isNavigating.current = true
           perf.mark('oauth_cb:navigate_start')
           
-          // Reset redirect count on successful authentication
-          resetRedirectCount()
+          // Force redirect to bypass any throttling or restrictions
+          forceRedirect()
           
-          // Primary navigation attempt (no artificial delay)
-          setTimeout(() => {
-            logger.info('🎯 Attempting TanStack Router navigation to: /dashboard', { component: 'AuthCallback' })
-            console.log('🚀 OAuth callback: Starting navigation to dashboard...')
-            try {
-              navigate({ to: '/dashboard' })
-              console.log('✅ OAuth callback: TanStack Router navigation successful')
-            } catch (navError) {
-              logger.error('❌ TanStack Router navigation failed, trying window.location:', navError as Error)
-              console.log('⚠️ OAuth callback: TanStack Router failed, using window.location fallback')
-              globalThis.window.location.href = '/dashboard'
-            }
-          }, 0)
+          // Use window.location.href for immediate and reliable redirect
+          logger.info('🎯 Redirecting to dashboard using window.location.href', { component: 'AuthCallback' })
+          console.log('🚀 OAuth callback: Redirecting to dashboard...')
           
-          // Secondary fallback after 2 seconds
+          // Small delay to ensure auth state is fully processed, then redirect
           setTimeout(() => {
-            if (globalThis.window.location.pathname.includes('/auth/callback')) {
-              logger.warn('⚠️ Still on callback page after 2s, trying window.location...')
-              globalThis.window.location.href = '/dashboard'
-            }
-          }, 2000)
-          
-          // Final fallback after 5 seconds
-          setTimeout(() => {
-            if (globalThis.window.location.pathname.includes('/auth/callback')) {
-              logger.error('❌ Still on callback page after 5s, forcing page reload...')
-              globalThis.window.location.reload()
-            }
-          }, 5000)
+            globalThis.window.location.href = '/dashboard'
+          }, 100)
         }
         
       } catch (error: unknown) {

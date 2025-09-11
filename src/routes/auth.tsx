@@ -60,7 +60,14 @@ function RouteComponent() {
       currentPath: globalThis.location?.pathname,
       shouldRedirect: isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress() && !isOAuthCallback
     })
-    if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress() && !isOAuthCallback) {
+    
+    // ✅ FIX: Completely skip redirect logic if we're on OAuth callback route
+    if (isOAuthCallback) {
+      console.log('🚫 Skipping auth route redirect - on OAuth callback route')
+      return undefined
+    }
+    
+    if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress()) {
       console.log('✅ Usuario autenticado, redirigiendo inmediatamente...', {
         isAuthenticated,
         isRedirecting,

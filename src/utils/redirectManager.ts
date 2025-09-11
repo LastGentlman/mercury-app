@@ -64,6 +64,22 @@ class RedirectManager {
   }
 
   /**
+   * Force redirect (bypasses throttling and redirect count for OAuth callback)
+   * Used specifically for OAuth callback redirects
+   */
+  forceRedirect(): void {
+    console.log('🚀 Force redirect - bypassing all restrictions')
+    this.isRedirecting = true
+    this.redirectCount = 0 // Reset count for OAuth callback
+    this.lastRedirectTime = Date.now()
+    
+    // Clear any existing timeout
+    if (this.redirectTimeout) {
+      clearTimeout(this.redirectTimeout)
+    }
+  }
+
+  /**
    * Complete a redirect operation
    */
   completeRedirect(): void {
@@ -117,6 +133,7 @@ export function useRedirectManager() {
     completeRedirect: () => redirectManager.completeRedirect(),
     reset: () => redirectManager.reset(),
     resetRedirectCount: () => redirectManager.resetRedirectCount(),
-    getRedirectCount: () => redirectManager.getRedirectCount()
+    getRedirectCount: () => redirectManager.getRedirectCount(),
+    forceRedirect: () => redirectManager.forceRedirect()
   }
 }
