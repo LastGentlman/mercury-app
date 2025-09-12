@@ -101,7 +101,14 @@ export function useAuth(): AuthHookReturn {
       return await AuthService.login(credentials)
     },
     onSuccess: (response) => {
-      // Store auth token
+      // Store auth token synchronously to avoid race with refetch
+      try {
+        localStorage.setItem('authToken', response.session.access_token)
+        console.log('🔐 Auth token persisted to localStorage before refetch')
+      } catch (e) {
+        console.warn('⚠️ Failed to persist auth token synchronously:', e)
+      }
+      // Also update via hook for state consistency
       setAuthToken(response.session.access_token)
       
       // CRITICAL: Set user data immediately and then invalidate
