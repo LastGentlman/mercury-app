@@ -204,7 +204,7 @@ export default defineConfig({
           const cleanName = name.replace(/index/g, 'app').replace(/[^a-zA-Z0-9-]/g, '-')
           return `assets/${cleanName}.js`
         },
-        entryFileNames: 'assets/app.js',
+        entryFileNames: 'assets/[name]-[hash].js',
         assetFileNames: (assetInfo) => {
           // Only add hash for assets that might change frequently
           if (assetInfo.name?.endsWith('.css')) {
@@ -215,7 +215,6 @@ export default defineConfig({
         
         // ✅ Preserve named exports to prevent minification issues
         preserveModules: false,
-        exports: 'named',
         
         // ✅ Separación de vendors para mejor caching
         manualChunks: (id) => {
