@@ -9,7 +9,7 @@
  */
 
 import { Link, useLocation } from '@tanstack/react-router'
-import { Loader2, LogOut, User } from 'lucide-react'
+import { Loader2, LogOut, User, KeyRound, House } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useMobileAuth } from '../hooks/useMobileAuth.ts'
 import { Button } from './ui/index.ts'
@@ -22,7 +22,7 @@ export default function Header() {
   
   // Determine button text and route based on current location
   const isOnAuthPage = location.pathname === '/auth'
-  const buttonText = isOnAuthPage ? 'Home' : 'Acceso'
+  const buttonText = isOnAuthPage ? 'Inicio' : 'Acceso'
   const buttonRoute = isOnAuthPage ? '/' : '/auth'
 
   // Early return if header should be hidden
@@ -34,7 +34,8 @@ export default function Header() {
     <>
       <header className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 z-50 transition-all duration-300">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="grid grid-cols-3 items-center">
+          {/* Mobile Layout: Flex with space-between */}
+          <div className="flex items-center justify-between md:hidden">
             {/* Logo - Left aligned */}
             <div className="text-2xl font-bold tracking-tight">
               <Link 
@@ -45,9 +46,44 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Desktop Navigation - Hidden on mobile */}
+            {/* Mobile Authentication Section */}
+            {!isAuthenticated && (
+              <div className="flex items-center">
+                {isLoading ? (
+                  <div className="flex items-center space-x-2 text-gray-500">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">Cargando...</span>
+                  </div>
+                ) : (
+                  <Link to={buttonRoute}>
+                    <Button className="bg-gray-900 text-white p-3 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105">
+                      {isOnAuthPage ? (
+                        <House className="h-5 w-5" />
+                      ) : (
+                        <KeyRound className="h-5 w-5" />
+                      )}
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Desktop Layout: Grid */}
+          <div className="hidden md:grid grid-cols-3 items-center">
+            {/* Logo - Left aligned */}
+            <div className="text-2xl font-bold tracking-tight">
+              <Link 
+                to="/" 
+                className="text-gray-900 hover:text-gray-700 transition-colors duration-300"
+              >
+                PedidoList
+              </Link>
+            </div>
+
+            {/* Desktop Navigation */}
             {isAuthenticated && (
-              <nav className="hidden md:flex items-center space-x-8 justify-center">
+              <nav className="flex items-center space-x-8 justify-center">
                 <Link 
                   to="/dashboard" 
                   className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
@@ -82,8 +118,8 @@ export default function Header() {
               </nav>
             )}
 
-            {/* Authentication Section - Hidden on mobile when authenticated */}
-            <div className={`items-center space-x-4 justify-self-end ${isAuthenticated ? 'hidden md:flex' : 'flex'}`}>
+            {/* Desktop Authentication Section */}
+            <div className="flex items-center space-x-4 justify-self-end">
               {isLoading ? (
                 <div className="flex items-center space-x-2 text-gray-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -113,8 +149,13 @@ export default function Header() {
               ) : (
                 <div className="flex items-center space-x-3">
                   <Link to={buttonRoute}>
-                    <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm">
-                      {buttonText}
+                    <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2">
+                      {isOnAuthPage ? (
+                        <House className="h-4 w-4" />
+                      ) : (
+                        <KeyRound className="h-4 w-4" />
+                      )}
+                      <span>{buttonText}</span>
                     </Button>
                   </Link>
                 </div>
