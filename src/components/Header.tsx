@@ -9,7 +9,7 @@
  */
 
 import { Link, useLocation } from '@tanstack/react-router'
-import { Loader2, LogOut, User, KeyRound, House } from 'lucide-react'
+import { Loader2, LogOut, User, Key, Home } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useMobileAuth } from '../hooks/useMobileAuth.ts'
 import { Button } from './ui/index.ts'
@@ -58,9 +58,9 @@ export default function Header() {
                   <Link to={buttonRoute}>
                     <Button className="bg-gray-900 text-white p-3 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105">
                       {isOnAuthPage ? (
-                        <House className="h-5 w-5" />
+                        <Home className="h-5 w-5" />
                       ) : (
-                        <KeyRound className="h-5 w-5" />
+                        <Key className="h-5 w-5" />
                       )}
                     </Button>
                   </Link>
@@ -151,9 +151,9 @@ export default function Header() {
                   <Link to={buttonRoute}>
                     <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2">
                       {isOnAuthPage ? (
-                        <House className="h-4 w-4" />
+                        <Home className="h-4 w-4" />
                       ) : (
-                        <KeyRound className="h-4 w-4" />
+                        <Key className="h-4 w-4" />
                       )}
                       <span>{buttonText}</span>
                     </Button>
