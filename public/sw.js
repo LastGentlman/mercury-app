@@ -1,6 +1,6 @@
 // public/sw.js - OPTIMIZED VERSION WITH AUTH PERFORMANCE IMPROVEMENTS
-const CACHE_NAME = 'pedidolist-app-v1';
-const OFFLINE_CACHE = 'pedidolist-offline-v1';
+const CACHE_NAME = 'pedidolist-app-v2';
+const OFFLINE_CACHE = 'pedidolist-offline-v2';
 
 // ✅ Assets estáticos a cachear
 const STATIC_ASSETS = [

@@ -156,92 +156,11 @@ export default defineConfig({
     
     rollupOptions: {
       output: {
-        // ✅ Descriptive naming without unnecessary hashes
-        chunkFileNames: (chunkInfo) => {
-          const name = chunkInfo.name || 'chunk'
-          
-          // Skip test and demo files
-          if (name.includes('test') || name.includes('demo') || name.includes('api-test')) {
-            return `assets/${name}.js`
-          }
-          
-          // Map chunk names to descriptive names
-          if (name.includes('index') || name.includes('root')) {
-            return 'assets/root.js'
-          }
-          if (name.includes('dashboard')) {
-            return 'assets/dashboard.js'
-          }
-          if (name.includes('auth')) {
-            return 'assets/auth.js'
-          }
-          if (name.includes('clients')) {
-            return 'assets/clients.js'
-          }
-          if (name.includes('products')) {
-            return 'assets/products.js'
-          }
-          if (name.includes('profile')) {
-            return 'assets/profile.js'
-          }
-          if (name.includes('setup')) {
-            return 'assets/setup.js'
-          }
-          if (name.includes('paywall')) {
-            return 'assets/paywall.js'
-          }
-          if (name.includes('design-system')) {
-            return 'assets/design-system.js'
-          }
-          if (name.includes('extend-trial')) {
-            return 'assets/extend-trial.js'
-          }
-          if (name.includes('protected-route')) {
-            return 'assets/ProtectedRoute.js'
-          }
-          
-          // For other chunks, use descriptive name without hash
-          const cleanName = name.replace(/index/g, 'app').replace(/[^a-zA-Z0-9-]/g, '-')
-          return `assets/${cleanName}.js`
-        },
+        // ✅ Use content hashes for reliable cache-busting
+        chunkFileNames: 'assets/[name]-[hash].js',
         entryFileNames: 'assets/[name]-[hash].js',
-        assetFileNames: (assetInfo) => {
-          // Only add hash for assets that might change frequently
-          if (assetInfo.name?.endsWith('.css')) {
-            return 'assets/[name]-[hash].[ext]'
-          }
-          return 'assets/[name].[ext]'
-        },
-        
-        // ✅ Preserve named exports to prevent minification issues
-        preserveModules: false,
-        
-        // ✅ Separación de vendors para mejor caching
-        manualChunks: (id) => {
-          // Keep ProtectedRoute in its own chunk to avoid export conflicts
-          if (id.includes('ProtectedRoute')) {
-            return 'protected-route'
-          }
-          
-          // Vendor chunks
-          if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom')) return 'react'
-            if (id.includes('@tanstack/react-router')) return 'router'
-            if (id.includes('@tanstack/react-query')) return 'query'
-            if (id.includes('@radix-ui')) return 'ui'
-            if (id.includes('react-hook-form') || id.includes('@hookform') || id.includes('zod')) return 'forms'
-            if (id.includes('recharts')) return 'charts'
-            if (id.includes('sweetalert2')) return 'alerts'
-            if (id.includes('@sentry')) return 'monitoring'
-            if (id.includes('lucide-react')) return 'icons'
-            if (id.includes('@stripe')) return 'stripe'
-            if (id.includes('@supabase')) return 'supabase'
-            if (id.includes('clsx') || id.includes('tailwind-merge') || id.includes('class-variance-authority') || id.includes('sonner') || id.includes('dompurify')) return 'utils'
-            if (id.includes('dexie')) return 'storage'
-          }
-          
-          return undefined
-        }
+        assetFileNames: 'assets/[name]-[hash][extname]',
+        preserveModules: false
       }
     }
   },

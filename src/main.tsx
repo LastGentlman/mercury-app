@@ -130,6 +130,25 @@ async function initializePWA() {
     }
   } else {
     console.log('🚫 PWA disabled or not supported')
+    // ✅ Auto-unregister any previously installed Service Workers when PWA is disabled
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        if (registrations.length > 0) {
+          for (const registration of registrations) {
+            await registration.unregister()
+          }
+          // Also clear caches to prevent stale assets when SW is removed
+          if ('caches' in window) {
+            const cacheNames = await caches.keys()
+            await Promise.all(cacheNames.map((name) => caches.delete(name)))
+          }
+          console.log('🧹 Unregistered existing Service Workers and cleared caches')
+        }
+      }
+    } catch (cleanupError) {
+      console.warn('⚠️ Failed to cleanup Service Workers/caches:', cleanupError)
+    }
   }
 }
 
