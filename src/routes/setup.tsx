@@ -51,11 +51,11 @@ function SetupPage() {
       <BusinessSetup 
         isFullPage={true}
         onBusinessSetup={(_businessId: string) => {
-          notifications.success('¡Negocio configurado exitosamente! Redirigiendo al dashboard...')
+          notifications.success('¡Negocio configurado exitosamente! Redirigiendo a la paywall...')
           
           // Pequeño delay para mostrar el mensaje de éxito
           setTimeout(() => {
-            navigate({ to: '/dashboard' })
+            navigate({ to: '/paywall' })
           }, 1500)
         }}
       />
