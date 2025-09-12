@@ -164,9 +164,7 @@ function RouteComponent() {
       console.log('✅ Login exitoso, redirigiendo a dashboard...')
       // Reset redirect attempts on successful login
       redirectAttemptsRef.current = 0
-      setIsRedirecting(true)
-      
-      // The redirect will be handled by the useEffect above
+      // Nota: no establecemos isRedirecting aquí; el useEffect manejará el estado y la navegación
       
     } catch (error) {
       console.error('Login error:', error)
@@ -341,7 +339,7 @@ function RouteComponent() {
         showSuccess('¡Éxito!', '¡Cuenta creada exitosamente!')
         // Reset redirect attempts on successful registration
         redirectAttemptsRef.current = 0
-        setIsRedirecting(true)
+        // Nota: no establecemos isRedirecting aquí; el useEffect manejará el estado y la navegación
       }
     } catch (error) {
       console.error('Register error:', error)
