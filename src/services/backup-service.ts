@@ -7,6 +7,27 @@
 import { BACKEND_URL } from '../config.ts'
 import { supabase } from '../utils/supabase.ts'
 
+// Constants
+const BACKUP_ENDPOINTS = {
+  CREATE: '/api/backup/create',
+  LIST: '/api/backup/list',
+  RESTORE: '/api/backup/restore',
+  STATUS: '/api/backup/status',
+  CLEANUP: '/api/backup/cleanup'
+} as const
+
+const BACKUP_TYPE_LABELS = {
+  full: 'Completo',
+  incremental: 'Incremental',
+  manual: 'Manual'
+} as const
+
+const BACKUP_STATUS_LABELS = {
+  completed: { text: 'Completado', color: 'text-green-600' },
+  pending: { text: 'En progreso', color: 'text-yellow-600' },
+  failed: { text: 'Fallido', color: 'text-red-600' }
+} as const
+
 export interface BackupInfo {
   id: string
   timestamp: string
@@ -55,6 +76,41 @@ export interface RestoreBackupResponse {
 
 export class BackupService {
   /**
+   * Handle API errors with user-friendly messages
+   */
+  private static handleApiError(error: unknown): never {
+    console.error('API Error:', error)
+    
+    if (error instanceof Error) {
+      if (error.message.includes('No authentication token')) {
+        throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
+      }
+      if (error.message.includes('Failed to fetch')) {
+        throw new Error('Error de conexión. Verifica tu conexión a internet.')
+      }
+    }
+    throw error
+  }
+
+  /**
+   * Make authenticated API request
+   */
+  private static async makeAuthenticatedRequest(
+    url: string, 
+    options: RequestInit = {}
+  ): Promise<Response> {
+    const token = await BackupService.getAuthToken()
+    
+    return fetch(url, {
+      ...options,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        ...options.headers
+      }
+    })
+  }
+
+  /**
    * Get authentication token
    */
   private static async getAuthToken(): Promise<string> {
@@ -84,13 +140,10 @@ export class BackupService {
    */
   static async createBackup(request: CreateBackupRequest = {}): Promise<CreateBackupResponse> {
     try {
-      const token = await this.getAuthToken();
-      
-      const response = await fetch(`${BACKEND_URL}/api/backup/create`, {
+      const response = await BackupService.makeAuthenticatedRequest(`${BACKEND_URL}${BACKUP_ENDPOINTS.CREATE}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(request)
       })
@@ -102,17 +155,7 @@ export class BackupService {
 
       return await response.json()
     } catch (error) {
-      console.error('Error creating backup:', error)
-      // Provide more user-friendly error messages
-      if (error instanceof Error) {
-        if (error.message.includes('No authentication token')) {
-          throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
-        }
-        if (error.message.includes('Failed to fetch')) {
-          throw new Error('Error de conexión. Verifica tu conexión a internet.')
-        }
-      }
-      throw error
+      BackupService.handleApiError(error)
     }
   }
 
@@ -121,13 +164,8 @@ export class BackupService {
    */
   static async listBackups(): Promise<BackupInfo[]> {
     try {
-      const token = await this.getAuthToken();
-      
-      const response = await fetch(`${BACKEND_URL}/api/backup/list`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await BackupService.makeAuthenticatedRequest(`${BACKEND_URL}${BACKUP_ENDPOINTS.LIST}`, {
+        method: 'GET'
       })
 
       if (!response.ok) {
@@ -138,17 +176,7 @@ export class BackupService {
       const data = await response.json()
       return data.backups || []
     } catch (error) {
-      console.error('Error listing backups:', error)
-      // Provide more user-friendly error messages
-      if (error instanceof Error) {
-        if (error.message.includes('No authentication token')) {
-          throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
-        }
-        if (error.message.includes('Failed to fetch')) {
-          throw new Error('Error de conexión. Verifica tu conexión a internet.')
-        }
-      }
-      throw error
+      BackupService.handleApiError(error)
     }
   }
 
@@ -157,26 +185,22 @@ export class BackupService {
    */
   static async restoreBackup(request: RestoreBackupRequest): Promise<RestoreBackupResponse> {
     try {
-      const token = await this.getAuthToken();
-      
-      const response = await fetch(`${BACKEND_URL}/api/backup/restore`, {
+      const response = await BackupService.makeAuthenticatedRequest(`${BACKEND_URL}${BACKUP_ENDPOINTS.RESTORE}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(request)
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to restore backup')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `Failed to restore backup (${response.status})`)
       }
 
       return await response.json()
     } catch (error) {
-      console.error('Error restoring backup:', error)
-      throw error
+      BackupService.handleApiError(error)
     }
   }
 
@@ -185,13 +209,8 @@ export class BackupService {
    */
   static async getBackupStatus(): Promise<BackupStatus> {
     try {
-      const token = await this.getAuthToken();
-      
-      const response = await fetch(`${BACKEND_URL}/api/backup/status`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await BackupService.makeAuthenticatedRequest(`${BACKEND_URL}${BACKUP_ENDPOINTS.STATUS}`, {
+        method: 'GET'
       })
 
       if (!response.ok) {
@@ -202,17 +221,7 @@ export class BackupService {
       const data = await response.json()
       return data.status
     } catch (error) {
-      console.error('Error getting backup status:', error)
-      // Provide more user-friendly error messages
-      if (error instanceof Error) {
-        if (error.message.includes('No authentication token')) {
-          throw new Error('No estás autenticado. Por favor, inicia sesión nuevamente.')
-        }
-        if (error.message.includes('Failed to fetch')) {
-          throw new Error('Error de conexión. Verifica tu conexión a internet.')
-        }
-      }
-      throw error
+      BackupService.handleApiError(error)
     }
   }
 
@@ -221,24 +230,18 @@ export class BackupService {
    */
   static async cleanupOldBackups(): Promise<{ success: boolean; message: string }> {
     try {
-      const token = await this.getAuthToken();
-      
-      const response = await fetch(`${BACKEND_URL}/api/backup/cleanup`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+      const response = await BackupService.makeAuthenticatedRequest(`${BACKEND_URL}${BACKUP_ENDPOINTS.CLEANUP}`, {
+        method: 'DELETE'
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to clean up backups')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        throw new Error(errorData.error || `Failed to clean up backups (${response.status})`)
       }
 
       return await response.json()
     } catch (error) {
-      console.error('Error cleaning up backups:', error)
-      throw error
+      BackupService.handleApiError(error)
     }
   }
 
@@ -273,32 +276,15 @@ export class BackupService {
    * Get backup type display name
    */
   static getBackupTypeDisplayName(type: string): string {
-    switch (type) {
-      case 'full':
-        return 'Completo'
-      case 'incremental':
-        return 'Incremental'
-      case 'manual':
-        return 'Manual'
-      default:
-        return type
-    }
+    return BACKUP_TYPE_LABELS[type as keyof typeof BACKUP_TYPE_LABELS] || type
   }
 
   /**
    * Get backup status display name and color
    */
   static getBackupStatusDisplay(status: string): { text: string; color: string } {
-    switch (status) {
-      case 'completed':
-        return { text: 'Completado', color: 'text-green-600' }
-      case 'pending':
-        return { text: 'En progreso', color: 'text-yellow-600' }
-      case 'failed':
-        return { text: 'Fallido', color: 'text-red-600' }
-      default:
-        return { text: status, color: 'text-gray-600' }
-    }
+    return BACKUP_STATUS_LABELS[status as keyof typeof BACKUP_STATUS_LABELS] || 
+           { text: status, color: 'text-gray-600' }
   }
 }
 
