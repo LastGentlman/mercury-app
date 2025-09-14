@@ -283,7 +283,7 @@ function RouteComponent() {
       })
       
       // Verificar si se requiere confirmación de email
-      if (result.emailConfirmationRequired || result.message.includes('check your email')) {
+      if (result.emailConfirmationRequired) {
         setSuccessMessage(
           `¡Cuenta creada exitosamente! 🎉\n\nHemos enviado un email de confirmación a ${formData.email}.\n\nPor favor, revisa tu bandeja de entrada y haz clic en el enlace de confirmación para activar tu cuenta.`
         )
@@ -291,10 +291,12 @@ function RouteComponent() {
         setShowResendEmail(true)
         setFormData({ email: '', password: '', confirmPassword: '', name: '' })
       } else {
-        // 🎯 OPTIMIZACIÓN: Redirección más suave con manejo de estado
-        showSuccess('¡Éxito!', '¡Cuenta creada exitosamente!')
-        // Registration successful - redirect will be handled by useAuthRedirect hook
-        // Nota: no establecemos isRedirecting aquí; el useEffect manejará el estado y la navegación
+        // Usuario registrado y confirmado automáticamente - mostrar mensaje de éxito
+        setSuccessMessage(
+          `¡Cuenta creada exitosamente! 🎉\n\nTu cuenta ha sido activada automáticamente. Ya puedes iniciar sesión.`
+        )
+        setFormData({ email: '', password: '', confirmPassword: '', name: '' })
+        // No redirigir automáticamente, permitir que el usuario vea el mensaje
       }
     } catch (error) {
       console.error('Register error:', error)
