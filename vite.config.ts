@@ -50,8 +50,13 @@ export default defineConfig({
         globIgnores: [
           '**/index.html',
           '**/sw.js',
-          '**/workbox-*.js'
+          '**/workbox-*.js',
+          '**/registerSW.js'
         ],
+        
+        // ✅ Deshabilitar precaching automático de index.html
+        dontCacheBustURLsMatching: /\.\w{8}\./,
+        maximumFileSizeToCacheInBytes: 5000000,
         
         // ✅ Configuración de runtime caching optimizada
         runtimeCaching: [
@@ -100,6 +105,19 @@ export default defineConfig({
               expiration: {
                 maxEntries: 10,
                 maxAgeSeconds: 60 * 60 * 24 // 1 día
+              }
+            }
+          },
+          {
+            // Manejar index.html específicamente
+            urlPattern: /^\/$/,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'index-cache',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 1,
+                maxAgeSeconds: 60 * 60 // 1 hora
               }
             }
           }

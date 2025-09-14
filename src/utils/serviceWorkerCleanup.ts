@@ -18,10 +18,22 @@ export async function cleanupServiceWorker(): Promise<void> {
       
       for (const registration of registrations) {
         console.log('🗑️ Unregistering service worker:', registration.scope)
-        await registration.unregister()
+        
+        // Force unregister and wait for completion
+        const unregisterPromise = registration.unregister()
+        
+        // Also try to stop the worker if possible
+        if (registration.active) {
+          registration.active.postMessage({ type: 'SKIP_WAITING' })
+        }
+        
+        await unregisterPromise
       }
       
       console.log('✅ All service workers unregistered')
+      
+      // Wait a moment for cleanup to complete
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
     
     // Clear all caches

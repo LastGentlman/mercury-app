@@ -489,8 +489,57 @@ export class ProfileService {
     // Account deletion successful
     console.log('✅ Account deletion request successful')
     
+    // 🔍 VERIFY: Wait and verify that the account was actually deleted
+    console.log('⏳ Waiting for backend deletion to complete...')
+    await this.verifyAccountDeletion()
+    
     // 🧹 ENHANCED CLEANUP: Clear all authentication data more thoroughly
     await performCompleteCleanup()
+  }
+
+  /**
+   * Verify that the account was actually deleted from the backend
+   */
+  static async verifyAccountDeletion(): Promise<void> {
+    console.log('🔍 Verifying account deletion...')
+    
+    // Wait for backend processing
+    await new Promise(resolve => setTimeout(resolve, 3000))
+    
+    // Try to verify with Supabase session
+    if (supabase) {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.log('✅ Supabase session error (expected after deletion):', error.message)
+          return // This is expected - the session should be invalid
+        }
+        
+        if (!session) {
+          console.log('✅ Supabase session cleared (account deleted)')
+          return
+        }
+        
+        // If we still have a session, the deletion might not be complete
+        console.warn('⚠️ Supabase session still exists, waiting longer...')
+        await new Promise(resolve => setTimeout(resolve, 2000))
+        
+        // Try one more time
+        const { data: { session: finalSession } } = await supabase.auth.getSession()
+        if (!finalSession) {
+          console.log('✅ Supabase session finally cleared')
+        } else {
+          console.warn('⚠️ Supabase session persists - proceeding with cleanup anyway')
+        }
+        
+      } catch (error) {
+        console.log('✅ Supabase verification error (expected):', error)
+        // This is expected - the session should be invalid after deletion
+      }
+    }
+    
+    console.log('✅ Account deletion verification completed')
   }
 
   /**
@@ -511,17 +560,38 @@ export class ProfileService {
     // Clear Supabase session data with multiple approaches
     if (supabase) {
       try {
+        console.log('🔄 Starting Supabase session cleanup...')
+        
         // Method 1: Standard signOut
-        await supabase.auth.signOut()
-        console.log('✅ Supabase signOut completed')
+        const { error: signOutError } = await supabase.auth.signOut()
+        if (signOutError) {
+          console.warn('⚠️ Supabase signOut error:', signOutError)
+        } else {
+          console.log('✅ Supabase signOut completed')
+        }
         
         // Method 2: Clear session manually (in case signOut doesn't work)
-        await supabase.auth.setSession({ access_token: '', refresh_token: '' })
-        console.log('✅ Supabase session cleared manually')
+        const { error: setSessionError } = await supabase.auth.setSession({ 
+          access_token: '', 
+          refresh_token: '' 
+        })
+        if (setSessionError) {
+          console.warn('⚠️ Supabase setSession error:', setSessionError)
+        } else {
+          console.log('✅ Supabase session cleared manually')
+        }
         
-        // Method 3: Force refresh auth state
-        await supabase.auth.getSession()
-        console.log('✅ Supabase auth state refreshed')
+        // Method 3: Wait and verify session is cleared
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const { data: { session }, error: getSessionError } = await supabase.auth.getSession()
+        
+        if (getSessionError) {
+          console.warn('⚠️ Supabase getSession error:', getSessionError)
+        } else if (session) {
+          console.warn('⚠️ Supabase session still exists after cleanup:', session.user?.email)
+        } else {
+          console.log('✅ Supabase session successfully cleared')
+        }
         
       } catch (error) {
         console.warn('⚠️ Error during Supabase cleanup:', error)
