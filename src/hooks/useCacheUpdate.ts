@@ -80,7 +80,7 @@ export function useCacheUpdate() {
   // ✅ Listener para mensajes del service worker
   useEffect(() => {
     if ('serviceWorker' in navigator) {
-      const handleMessage = (event: MessageEvent) => {
+      const handleMessage = (event: MessageEvent): void => {
         const { type } = event.data || {}
         
         switch (type) {
@@ -92,6 +92,10 @@ export function useCacheUpdate() {
           case 'UPDATE_AVAILABLE':
             showUpdateNotification()
             break
+            
+          default:
+            // Handle unknown message types
+            break
         }
       }
       
@@ -101,6 +105,7 @@ export function useCacheUpdate() {
         navigator.serviceWorker.removeEventListener('message', handleMessage)
       }
     }
+    return undefined
   }, [showUpdateNotification])
 
   // ✅ Verificar actualizaciones periódicamente
