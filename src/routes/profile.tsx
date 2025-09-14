@@ -461,18 +461,8 @@ function ProfilePage() {
         confirmButtonText: 'Entendido'
       })
 
-      // 🚀 STEP 6: Limpiar completamente el estado y redirigir
-      // Clear all localStorage data
-      localStorage.clear()
-      sessionStorage.clear()
-      
-      // Clear all cookies
-      document.cookie.split(";").forEach(function(c) { 
-        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-      })
-      
-      // Force redirect to auth page with hard refresh
-      window.location.replace('/auth')
+      // 🚀 STEP 6: La limpieza y redirección se maneja automáticamente en el hook
+      // No necesitamos hacer limpieza adicional aquí ya que se maneja en useProfile
 
     } catch (error) {
       console.error('Delete account error:', error)

@@ -19,15 +19,14 @@ export function useProfile() {
   // Delete account mutation - defined first to use in query enabled conditions
   const deleteAccount = useMutation({
     mutationFn: ProfileService.deleteAccount,
-    onSuccess: () => {
-      // Clear all cache
+    onSuccess: async () => {
+      console.log('🧹 Starting post-deletion cleanup...')
+      
+      // Clear all React Query cache
       queryClient.clear()
       
-      // Clear all authentication data
-      localStorage.removeItem('authToken')
-      sessionStorage.clear()
-      
-      console.log('✅ Account deleted successfully')
+      // The complete cleanup (including Service Worker, cookies, etc.) is handled by ProfileService
+      console.log('✅ Account deleted successfully and cleanup completed')
     },
     onError: (error) => {
       console.error('❌ Error deleting account:', error)

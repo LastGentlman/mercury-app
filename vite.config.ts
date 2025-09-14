@@ -46,6 +46,13 @@ export default defineConfig({
           '!index.html' // Excluir index.html del precaching automático
         ],
         
+        // ✅ Excluir index.html del precaching manualmente
+        globIgnores: [
+          '**/index.html',
+          '**/sw.js',
+          '**/workbox-*.js'
+        ],
+        
         // ✅ Configuración de runtime caching optimizada
         runtimeCaching: [
           {

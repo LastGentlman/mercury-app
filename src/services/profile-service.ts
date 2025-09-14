@@ -15,6 +15,7 @@ import type {
   AuthProvider 
 } from '../types/auth.ts'
 import { optimizeImage, DEFAULT_AVATAR_OPTIONS, formatFileSize } from '../utils/imageOptimization.ts'
+import { performCompleteCleanup } from '../utils/serviceWorkerCleanup.ts'
 
 export interface ProfileData {
   id: string
@@ -488,18 +489,55 @@ export class ProfileService {
     // Account deletion successful
     console.log('✅ Account deletion request successful')
     
-    // Clear all local authentication data immediately
-    localStorage.removeItem('authToken')
+    // 🧹 ENHANCED CLEANUP: Clear all authentication data more thoroughly
+    await performCompleteCleanup()
+  }
+
+  /**
+   * Perform complete authentication cleanup after account deletion
+   */
+  static async performCompleteAuthCleanup(): Promise<void> {
+    console.log('🧹 Starting complete authentication cleanup...')
+    
+    // Clear all local storage data
+    localStorage.clear()
     sessionStorage.clear()
     
-    // Clear any Supabase session data
+    // Clear all cookies
+    document.cookie.split(";").forEach(function(c) { 
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+    })
+    
+    // Clear Supabase session data with multiple approaches
     if (supabase) {
       try {
+        // Method 1: Standard signOut
         await supabase.auth.signOut()
+        console.log('✅ Supabase signOut completed')
+        
+        // Method 2: Clear session manually (in case signOut doesn't work)
+        await supabase.auth.setSession({ access_token: '', refresh_token: '' })
+        console.log('✅ Supabase session cleared manually')
+        
+        // Method 3: Force refresh auth state
+        await supabase.auth.getSession()
+        console.log('✅ Supabase auth state refreshed')
+        
       } catch (error) {
-        console.warn('⚠️ Error signing out from Supabase:', error)
+        console.warn('⚠️ Error during Supabase cleanup:', error)
+        // Continue with cleanup even if Supabase fails
       }
     }
+    
+    // Clear any cached auth data in memory
+    if (typeof window !== 'undefined') {
+      const globalWindow = window as any
+      // Clear any global auth state
+      globalWindow.__AUTH_STATE__ = null
+      globalWindow.__USER_DATA__ = null
+    }
+    
+    console.log('✅ Complete authentication cleanup finished')
   }
 
   /**
