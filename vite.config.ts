@@ -35,14 +35,15 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       workbox: {
-        // ✅ Patrones seguros para el precaching
+        // ✅ Patrones seguros para el precaching - excluir index.html del precaching automático
         globPatterns: [
-          '**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp}',
+          '**/*.{js,css,ico,png,svg,jpg,jpeg,gif,webp}',
           '!**/*.map',
           '!**/node_modules/**',
           '!**/tests/**',
           '!**/test-*/**',
-          '!**/mock*/**'
+          '!**/mock*/**',
+          '!index.html' // Excluir index.html del precaching automático
         ],
         
         // ✅ Configuración de runtime caching optimizada
@@ -81,11 +82,24 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 5 // 5 minutos
               }
             }
+          },
+          {
+            // Manejar rutas de navegación con NetworkFirst
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'navigation-cache',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 // 1 día
+              }
+            }
           }
         ],
         
-        // ✅ Configuración de archivos a ignorar
-        navigateFallback: '/index.html',
+        // ✅ Configuración de archivos a ignorar - usar NetworkFirst para index.html
+        navigateFallback: null, // Deshabilitar navigateFallback automático
         navigateFallbackDenylist: [/^\/_/, /\/api\//],
         
         // ✅ Limpieza de caches obsoletos
