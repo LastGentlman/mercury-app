@@ -48,7 +48,7 @@ export default function Header() {
 
             {/* Mobile Authentication Section */}
             {!isAuthenticated && (
-              <div className="flex items-center">
+              <div className="flex items-center justify-center">
                 {isLoading ? (
                   <div className="flex items-center space-x-2 text-gray-500">
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -56,7 +56,10 @@ export default function Header() {
                   </div>
                 ) : (
                   <Link to={buttonRoute}>
-                    <Button className="bg-gray-900 text-white p-3 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105">
+                    <Button 
+                      size="icon"
+                      className="bg-gray-900 text-white rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 h-10 w-10 flex items-center justify-center"
+                    >
                       {isOnAuthPage ? (
                         <Home className="h-5 w-5" />
                       ) : (
@@ -119,7 +122,7 @@ export default function Header() {
             )}
 
             {/* Desktop Authentication Section */}
-            <div className="flex items-center space-x-4 justify-self-end">
+            <div className="flex items-center justify-end space-x-4">
               {isLoading ? (
                 <div className="flex items-center space-x-2 text-gray-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -147,9 +150,9 @@ export default function Header() {
                   </Button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center">
                   <Link to={buttonRoute}>
-                    <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2">
+                    <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2 h-9">
                       {isOnAuthPage ? (
                         <Home className="h-4 w-4" />
                       ) : (
