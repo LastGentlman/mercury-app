@@ -109,7 +109,7 @@ async function initializePWA() {
       console.log('🔄 Initializing PWA...')
       
       // Importación dinámica para evitar problemas en development
-      const { registerPWA, listenForInstallPrompt } = await import('./pwa-fixed.ts')
+      const { registerPWA, listenForInstallPrompt } = await import('./pwa.ts')
       
       // Registrar PWA con timeout
       const registration = await Promise.race([

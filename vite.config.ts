@@ -32,7 +32,7 @@ export default defineConfig({
     
     // ✅ PWA SOLO en producción y cuando no esté deshabilitado
     !isDev && !isPWADisabled && VitePWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo192.png', 'logo512.png'],
       workbox: {
         // ✅ Patrones seguros para el precaching
@@ -45,12 +45,7 @@ export default defineConfig({
           '!**/mock*/**'
         ],
         
-        // ✅ Fix: Ensure index.html is properly precached
-        additionalManifestEntries: [
-          { url: '/index.html', revision: null }
-        ],
-        
-        // ✅ Configuración de runtime caching simplificada
+        // ✅ Configuración de runtime caching optimizada
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -72,6 +67,18 @@ export default defineConfig({
               expiration: {
                 maxEntries: 50,
                 maxAgeSeconds: 60 * 60 // 1 hora
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/.*\.pedidolist\.com\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 5 // 5 minutos
               }
             }
           }

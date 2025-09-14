@@ -1,20 +1,10 @@
 {
-  "buildCommand": "npm run build:no-pwa",
+  "buildCommand": "npm run build",
   "env": {
-    "VITE_PWA_DISABLED": "true",
+    "VITE_PWA_DISABLED": "false",
     "VITE_BACKEND_URL": "https://api.pedidolist.com"
   },
   "redirects": [
-    {
-      "source": "/registerSW.js",
-      "destination": "/404",
-      "permanent": false
-    },
-    {
-      "source": "/sw.js",
-      "destination": "/404",
-      "permanent": false
-    },
     {
       "source": "/dev-email-confirm.js",
       "destination": "/404",
@@ -43,24 +33,6 @@
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/registerSW.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    },
-    {
-      "source": "/sw.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     },
@@ -99,16 +71,16 @@
       "source": "/(.*)",
       "headers": [
         {
-          "key": "X-Content-Type-Options",
-          "value": "nosniff"
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         },
         {
-          "key": "X-Frame-Options",
-          "value": "DENY"
+          "key": "Pragma",
+          "value": "no-cache"
         },
         {
-          "key": "X-XSS-Protection",
-          "value": "1; mode=block"
+          "key": "Expires",
+          "value": "0"
         }
       ]
     }
