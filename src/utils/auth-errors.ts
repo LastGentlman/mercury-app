@@ -26,9 +26,23 @@ const ERROR_TRANSLATIONS: Record<string, string> = {
     'Email no confirmado. Por favor verifica tu email y haz clic en el enlace de confirmación antes de iniciar sesión.',
   'Invalid email or password. Please check your credentials and try again.': 
     'Email o contraseña incorrectos. Por favor verifica tus credenciales e intenta de nuevo.',
-  'Too many requests': 'Demasiados intentos. Por favor espera un momento.',
+  'Too many requests': 'Demasiados intentos. Has excedido el límite de intentos permitidos.',
   'Server error': 'Error del servidor. Por favor intenta más tarde.'
 } as const
+
+/**
+ * Formats rate limiting error messages with detailed information
+ */
+export function formatRateLimitError(error: any): string {
+  if (error?.details) {
+    const { maxAttempts, timeWindow, retryAfterSeconds } = error.details;
+    const minutes = Math.ceil(retryAfterSeconds / 60);
+    
+    return `Has excedido el límite de ${maxAttempts} intentos por ${timeWindow}. Por favor espera ${minutes} minuto(s) antes de intentar de nuevo.`;
+  }
+  
+  return 'Demasiados intentos. Por favor espera un momento antes de intentar de nuevo.';
+}
 
 /**
  * Translates error messages to Spanish
@@ -72,9 +86,10 @@ export async function handleApiError(
   provider?: AuthProvider
 ): Promise<never> {
   let errorMessage = 'Error durante la operación. Por favor intenta de nuevo.'
+  let errorData: any = null
   
   try {
-    const errorData = await response.json()
+    errorData = await response.json()
     if (errorData.error) {
       errorMessage = errorData.error
     } else if (errorData.message) {
@@ -85,6 +100,11 @@ export async function handleApiError(
   } catch (parseError) {
     console.error('Failed to parse error response:', parseError)
     errorMessage = response.statusText || `Error HTTP ${response.status}: ${errorMessage}`
+  }
+  
+  // Handle rate limiting errors with detailed information
+  if (response.status === 429 && errorData?.code?.includes('RATE_LIMIT')) {
+    errorMessage = formatRateLimitError(errorData)
   }
   
   throw createAuthError(errorMessage, response.status.toString(), provider)

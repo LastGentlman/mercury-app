@@ -192,8 +192,8 @@ function RouteComponent() {
         )
       } else if (errorMessage.includes('Email o contraseña incorrectos') || errorMessage.includes('Credenciales inválidas')) {
         showError('Error de credenciales', 'Email o contraseña incorrectos. Verifica tus credenciales.')
-      } else if (errorMessage.includes('Demasiados intentos')) {
-        showWarning('Demasiados intentos', 'Por favor espera un momento antes de intentar de nuevo.')
+      } else if (errorMessage.includes('Demasiados intentos') || errorMessage.includes('excedido el límite')) {
+        showWarning('Demasiados intentos', errorMessage)
       } else {
         showError('Error de inicio de sesión', 'Error en el inicio de sesión. Verifica tus credenciales.')
       }
@@ -210,8 +210,8 @@ function RouteComponent() {
       console.error('Resend email error:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       
-      if (errorMessage.includes('Demasiados intentos')) {
-        showWarning('Demasiados intentos', 'Por favor espera un momento antes de intentar de nuevo.')
+      if (errorMessage.includes('Demasiados intentos') || errorMessage.includes('excedido el límite')) {
+        showWarning('Demasiados intentos', errorMessage)
       } else {
         showError('Error al reenviar', 'Error al reenviar el email. Por favor intenta de nuevo.')
       }
@@ -351,8 +351,8 @@ function RouteComponent() {
         showError('Email no verificado', 'Por favor verifica tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
       } else if (errorMessage.includes('already registered')) {
         showError('Cuenta existente', 'Ya existe una cuenta con este email. Intenta iniciar sesión en su lugar.')
-      } else if (errorMessage.includes('For security purposes') || errorMessage.includes('rate limit')) {
-        showWarning('Demasiados intentos', 'Por favor espera un momento antes de intentar de nuevo.')
+      } else if (errorMessage.includes('For security purposes') || errorMessage.includes('rate limit') || errorMessage.includes('excedido el límite')) {
+        showWarning('Demasiados intentos', errorMessage)
       } else if (errorMessage.includes('email rate limit exceeded')) {
         showWarning('Límite excedido', 'Límite de emails excedido. Por favor espera unos minutos antes de intentar de nuevo.')
       } else {
