@@ -58,6 +58,10 @@ export default defineConfig({
         dontCacheBustURLsMatching: /\.\w{8}\./,
         maximumFileSizeToCacheInBytes: 5000000,
         
+        // ✅ Configuración adicional para evitar errores de precaching
+        mode: 'production',
+        sourcemap: false,
+        
         // ✅ Configuración de runtime caching optimizada
         runtimeCaching: [
           {
@@ -118,6 +122,25 @@ export default defineConfig({
               expiration: {
                 maxEntries: 1,
                 maxAgeSeconds: 60 * 60 // 1 hora
+              }
+            }
+          },
+          {
+            // Manejar todas las rutas de navegación que no sean archivos estáticos
+            urlPattern: ({ request, url }) => {
+              // Solo manejar requests de navegación (no archivos estáticos)
+              return request.mode === 'navigate' && 
+                     !url.pathname.includes('.') && 
+                     !url.pathname.startsWith('/api/') &&
+                     !url.pathname.startsWith('/_');
+            },
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-navigation-cache',
+              networkTimeoutSeconds: 3,
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 // 1 día
               }
             }
           }

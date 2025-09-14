@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Fix Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        #console-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 PWA Fix Test</h1>
+    
+    <div class="status info">
+        <strong>Testing the Workbox service worker fix for non-precached URL error</strong>
+    </div>
+
+    <div id="test-results"></div>
+
+    <div>
+        <button onclick="testServiceWorker()">Test Service Worker</button>
+        <button onclick="testNavigation()">Test Navigation</button>
+        <button onclick="clearCache()">Clear Cache</button>
+        <button onclick="clearConsole()">Clear Console</button>
+    </div>
+
+    <h3>Console Output:</h3>
+    <div id="console-output"></div>
+
+    <script>
+        const resultsDiv = document.getElementById('test-results');
+        const consoleOutput = document.getElementById('console-output');
+        
+        // Capture console logs
+        const originalLog = console.log;
+        const originalError = console.error;
+        const originalWarn = console.warn;
+        
+        function addToConsole(type, ...args) {
+            const timestamp = new Date().toLocaleTimeString();
+            const message = args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+            ).join(' ');
+            consoleOutput.textContent += `[${timestamp}] ${type.toUpperCase()}: ${message}\n`;
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        }
+        
+        console.log = (...args) => {
+            originalLog.apply(console, args);
+            addToConsole('log', ...args);
+        };
+        
+        console.error = (...args) => {
+            originalError.apply(console, args);
+            addToConsole('error', ...args);
+        };
+        
+        console.warn = (...args) => {
+            originalWarn.apply(console, args);
+            addToConsole('warn', ...args);
+        };
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `status ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        async function testServiceWorker() {
+            addResult('🔄 Testing Service Worker registration...', 'info');
+            
+            try {
+                if (!('serviceWorker' in navigator)) {
+                    addResult('❌ Service Worker not supported', 'error');
+                    return;
+                }
+
+                // Check if service worker is already registered
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                console.log('Current registrations:', registrations.length);
+
+                if (registrations.length > 0) {
+                    addResult('✅ Service Worker already registered', 'success');
+                    
+                    // Test if the service worker is working
+                    const registration = registrations[0];
+                    console.log('Service Worker registration:', registration);
+                    
+                    if (registration.active) {
+                        addResult('✅ Service Worker is active', 'success');
+                    } else {
+                        addResult('⚠️ Service Worker is not active', 'error');
+                    }
+                } else {
+                    addResult('⚠️ No Service Worker registered', 'error');
+                }
+
+                // Test navigation to see if the error occurs
+                await testNavigation();
+
+            } catch (error) {
+                console.error('Service Worker test failed:', error);
+                addResult(`❌ Service Worker test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function testNavigation() {
+            addResult('🔄 Testing navigation (this should not cause non-precached-url error)...', 'info');
+            
+            try {
+                // Simulate navigation to root
+                const response = await fetch('/', { method: 'GET' });
+                console.log('Navigation test response:', response.status, response.statusText);
+                
+                if (response.ok) {
+                    addResult('✅ Navigation test successful - no non-precached-url error', 'success');
+                } else {
+                    addResult(`⚠️ Navigation returned ${response.status}`, 'error');
+                }
+            } catch (error) {
+                console.error('Navigation test failed:', error);
+                addResult(`❌ Navigation test failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function clearCache() {
+            addResult('🔄 Clearing all caches...', 'info');
+            
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    addResult(`✅ Cleared ${cacheNames.length} caches`, 'success');
+                } else {
+                    addResult('⚠️ Cache API not supported', 'error');
+                }
+            } catch (error) {
+                console.error('Cache clearing failed:', error);
+                addResult(`❌ Cache clearing failed: ${error.message}`, 'error');
+            }
+        }
+
+        function clearConsole() {
+            consoleOutput.textContent = '';
+            resultsDiv.innerHTML = '';
+        }
+
+        // Auto-run tests on page load
+        window.addEventListener('load', () => {
+            console.log('PWA Fix Test page loaded');
+            testServiceWorker();
+        });
+
+        // Listen for service worker messages
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                console.log('Service Worker message:', event.data);
+            });
+        }
+    </script>
+</body>
+</html>
