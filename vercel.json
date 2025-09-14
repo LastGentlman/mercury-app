@@ -2,7 +2,9 @@
   "buildCommand": "npm run build",
   "env": {
     "VITE_PWA_DISABLED": "false",
-    "VITE_BACKEND_URL": "https://api.pedidolist.com"
+    "VITE_BACKEND_URL": "https://api.pedidolist.com",
+    "VITE_ENVIRONMENT": "production",
+    "NODE_ENV": "production"
   },
   "redirects": [
     {
@@ -68,7 +70,7 @@
       ]
     },
     {
-      "source": "/(.*)",
+      "source": "/index.html",
       "headers": [
         {
           "key": "Cache-Control",
@@ -81,6 +83,41 @@
         {
           "key": "Expires",
           "value": "0"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/workbox-*.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
         }
       ]
     }

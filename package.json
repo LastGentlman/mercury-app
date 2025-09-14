@@ -47,7 +47,10 @@
     "ci:all": "npm run ci:typecheck && npm run ci:lint && npm run ci:test && npm run ci:build",
     "build:clean": "rm -rf dist/ .vite/ && npm run build",
     "deploy:safe": "npm run build:no-pwa",
-    "deploy:pwa": "npm run build:pwa"
+    "deploy:pwa": "npm run build:pwa",
+    "deploy:production": "./scripts/deploy-production-optimized.sh",
+    "verify:deploy": "./scripts/verify-deployment.sh",
+    "deploy:full": "npm run deploy:production && npm run verify:deploy"
   },
   "dependencies": {
     "@faker-js/faker": "^9.6.0",
