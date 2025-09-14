@@ -72,8 +72,8 @@ export default function Header() {
             )}
           </div>
 
-          {/* Desktop Layout: Grid */}
-          <div className="hidden md:grid grid-cols-3 items-center">
+          {/* Desktop Layout: Dynamic Grid */}
+          <div className={`hidden md:grid items-center ${isAuthenticated ? 'grid-cols-3' : 'grid-cols-2'}`}>
             {/* Logo - Left aligned */}
             <div className="text-2xl font-bold tracking-tight">
               <Link 
@@ -84,7 +84,7 @@ export default function Header() {
               </Link>
             </div>
 
-            {/* Desktop Navigation */}
+            {/* Desktop Navigation - Only when authenticated */}
             {isAuthenticated && (
               <nav className="flex items-center space-x-8 justify-center">
                 <Link 
@@ -121,7 +121,7 @@ export default function Header() {
               </nav>
             )}
 
-            {/* Desktop Authentication Section */}
+            {/* Desktop Authentication Section - Always right-aligned */}
             <div className="flex items-center justify-end space-x-4">
               {isLoading ? (
                 <div className="flex items-center space-x-2 text-gray-500">
