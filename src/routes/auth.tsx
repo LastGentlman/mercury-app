@@ -1,6 +1,7 @@
-import { createFileRoute, useNavigate, Outlet } from '@tanstack/react-router'
-import { useState, useEffect, useRef } from 'react'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { useState } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
+import { useAuthRedirect } from '../hooks/useAuthRedirect.ts'
 import { Button } from '../components/ui/index.ts'
 import { Input } from '../components/ui/input.tsx'
 import { Label } from '../components/ui/label.tsx'
@@ -11,14 +12,42 @@ import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
-import { useRedirectManager } from '../utils/redirectManager.ts'
+import { AUTH_CONSTANTS } from '../utils/authConstants.ts'
+import { authLogger } from '../utils/authLogger.ts'
 
 export const Route = createFileRoute('/auth')({
   component: RouteComponent,
 })
 
+// Helper functions following Single Responsibility Principle
+function LoadingScreen({ isRedirecting }: { isRedirecting: boolean }) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="relative">
+          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+          <div className="absolute inset-0 rounded-full border-2 border-blue-200 animate-pulse"></div>
+        </div>
+        <div className="text-center">
+          <p className="text-gray-600 font-medium">
+            {isRedirecting ? 'Redirigiendo...' : 'Cargando...'}
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            {isRedirecting ? 'Te llevamos a tu dashboard' : 'Preparando tu sesión'}
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function isOAuthCallback(): boolean {
+  const pathname = globalThis.location?.pathname
+  return pathname === AUTH_CONSTANTS.ROUTES.AUTH_CALLBACK || 
+         pathname?.includes(AUTH_CONSTANTS.ROUTES.AUTH_CALLBACK)
+}
+
 function RouteComponent() {
-  const navigate = useNavigate()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -32,111 +61,39 @@ function RouteComponent() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [showResendEmail, setShowResendEmail] = useState(false)
   const [lastRegisteredEmail, setLastRegisteredEmail] = useState<string>('')
-  const [isRedirecting, setIsRedirecting] = useState(false)
-  const redirectAttemptsRef = useRef(0)
-  const MAX_REDIRECT_ATTEMPTS = 3
+  const [isRedirecting] = useState(false)
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading, user } = useAuth()
-  const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
+  
+  // Use the new clean redirect hook
+  const { shouldRedirect } = useAuthRedirect({
+    isAuthenticated,
+    isLoading,
+    isRedirecting,
+    user,
+    maxAttempts: AUTH_CONSTANTS.REDIRECT.MAX_ATTEMPTS,
+    redirectDelay: AUTH_CONSTANTS.REDIRECT.DELAY_MS
+  })
 
-  // ✅ FIX: Improved redirect logic with circuit breaker
-  useEffect(() => {
-    // Circuit breaker for redirects
-    if (redirectAttemptsRef.current >= MAX_REDIRECT_ATTEMPTS) {
-      console.error('❌ Max redirect attempts reached, stopping redirects')
-      return
-    }
-    
-    // Only redirect if user is authenticated, not already redirecting, not loading, and no redirect in progress
-    // ✅ FIX: Don't redirect if we're on OAuth callback route (let OptimizedAuthCallback handle it)
-    const isOAuthCallback = globalThis.location?.pathname === '/auth/callback' || 
-                           globalThis.location?.pathname?.includes('/auth/callback')
-    console.log('🔍 Auth route redirect check:', {
-      isAuthenticated,
-      isRedirecting,
-      isLoading,
-      isRedirectInProgress: isRedirectInProgress(),
-      isOAuthCallback,
-      currentPath: globalThis.location?.pathname,
-      shouldRedirect: isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress() && !isOAuthCallback
-    })
-    
-    // ✅ FIX: Completely skip redirect logic if we're on OAuth callback route
-    if (isOAuthCallback) {
-      console.log('🚫 Skipping auth route redirect - on OAuth callback route')
-      return undefined
-    }
-    
-    if (isAuthenticated && !isRedirecting && !isLoading && !isRedirectInProgress()) {
-      console.log('✅ Usuario autenticado, redirigiendo inmediatamente...', {
-        isAuthenticated,
-        isRedirecting,
-        isLoading,
-        isRedirectInProgress: isRedirectInProgress(),
-        user: user ? { id: user.id, email: user.email, provider: user.provider } : null
-      })
-      redirectAttemptsRef.current++
-      setIsRedirecting(true)
-      
-      if (startRedirect(5000)) {
-        // Increased timeout for better stability
-        const redirectTimer = setTimeout(() => {
-          try {
-            navigate({ to: '/dashboard', replace: true })
-            completeRedirect()
-            console.log('✅ Redirect completed successfully')
-          } catch (error) {
-            console.error('❌ Redirect failed:', error)
-            setIsRedirecting(false)
-            redirectAttemptsRef.current--
-          }
-        }, 100) // Reduced delay for faster redirect
-        
-        // Cleanup timer on unmount
-        return () => clearTimeout(redirectTimer)
-      } else {
-        setIsRedirecting(false)
-        redirectAttemptsRef.current--
-      }
-    }
-    
-    // Return undefined to fix TypeScript error
-    return undefined
-  }, [isAuthenticated, isRedirecting, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
+  // Clean redirect logic is now handled by useAuthRedirect hook
 
-  // 🎯 OPTIMIZACIÓN: Mostrar loading state consistente
+  // Show loading state
   if (isLoading || isRedirecting) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="flex flex-col items-center space-y-4">
-          <div className="relative">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <div className="absolute inset-0 rounded-full border-2 border-blue-200 animate-pulse"></div>
-          </div>
-          <div className="text-center">
-            <p className="text-gray-600 font-medium">
-              {isRedirecting ? 'Redirigiendo...' : 'Cargando...'}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              {isRedirecting ? 'Te llevamos a tu dashboard' : 'Preparando tu sesión'}
-            </p>
-          </div>
-        </div>
-      </div>
-    )
+    return <LoadingScreen isRedirecting={isRedirecting} />
   }
 
-  // 🎯 OPTIMIZACIÓN: No renderizar nada si ya está autenticado
-  // ✅ FIX: Also check if we're on OAuth callback route
-  const isOAuthCallback = globalThis.location?.pathname === '/auth/callback' || 
-                         globalThis.location?.pathname?.includes('/auth/callback')
-  
-  if (isAuthenticated && !isOAuthCallback) {
+  // Don't render auth form if user is authenticated
+  if (shouldRedirect) {
+    authLogger.debug('User is authenticated, not rendering auth form', { 
+      component: 'AuthRoute',
+      userId: user?.id || '',
+      email: user?.email || ''
+    })
     return null
   }
   
-  // ✅ FIX: If we're on OAuth callback route, render the Outlet for child routes
-  if (isOAuthCallback) {
+  // Handle OAuth callback route
+  if (isOAuthCallback()) {
     return <Outlet />
   }
 
@@ -162,8 +119,7 @@ function RouteComponent() {
       
       // 🎯 OPTIMIZACIÓN: Redirección más suave con manejo de estado
       console.log('✅ Login exitoso, redirigiendo a dashboard...')
-      // Reset redirect attempts on successful login
-      redirectAttemptsRef.current = 0
+      // Login successful - redirect will be handled by useAuthRedirect hook
       // Nota: no establecemos isRedirecting aquí; el useEffect manejará el estado y la navegación
       
     } catch (error) {
@@ -337,8 +293,7 @@ function RouteComponent() {
       } else {
         // 🎯 OPTIMIZACIÓN: Redirección más suave con manejo de estado
         showSuccess('¡Éxito!', '¡Cuenta creada exitosamente!')
-        // Reset redirect attempts on successful registration
-        redirectAttemptsRef.current = 0
+        // Registration successful - redirect will be handled by useAuthRedirect hook
         // Nota: no establecemos isRedirecting aquí; el useEffect manejará el estado y la navegación
       }
     } catch (error) {

@@ -22,6 +22,11 @@ export function useProfile() {
     onSuccess: () => {
       // Clear all cache
       queryClient.clear()
+      
+      // Clear all authentication data
+      localStorage.removeItem('authToken')
+      sessionStorage.clear()
+      
       console.log('✅ Account deleted successfully')
     },
     onError: (error) => {

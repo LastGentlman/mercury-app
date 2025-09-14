@@ -461,9 +461,18 @@ function ProfilePage() {
         confirmButtonText: 'Entendido'
       })
 
-      // 🔀 STEP 6: Logout y redirect
-      await logout.mutateAsync()
-      navigate({ to: '/auth' })
+      // 🚀 STEP 6: Limpiar completamente el estado y redirigir
+      // Clear all localStorage data
+      localStorage.clear()
+      sessionStorage.clear()
+      
+      // Clear all cookies
+      document.cookie.split(";").forEach(function(c) { 
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+      })
+      
+      // Force redirect to auth page with hard refresh
+      window.location.replace('/auth')
 
     } catch (error) {
       console.error('Delete account error:', error)

@@ -29,6 +29,51 @@ import type {
 import { AuthService } from '../services/auth-service.ts'
 import { useAuthToken } from './useStorageSync.ts'
 import { useOfflineAuth } from './useOfflineAuth.ts'
+import { AUTH_CONSTANTS } from '../utils/authConstants.ts'
+import { authLogger } from '../utils/authLogger.ts'
+
+/**
+ * Handles authentication state changes following Single Responsibility Principle
+ */
+function handleAuthStateChange(
+  event: string, 
+  session: any, 
+  queryClient: any, 
+  redirectAttemptsRef: React.MutableRefObject<number>
+) {
+  if (event === AUTH_CONSTANTS.EVENTS.SIGNED_IN && session) {
+    authLogger.oauthEvent('SIGNED_IN', { userId: session.user?.id })
+    redirectAttemptsRef.current++
+    
+    const currentUser = queryClient.getQueryData(['auth-user'])
+    if (!currentUser) {
+      authLogger.debug('Invalidating auth-user query due to OAuth sign in')
+      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+    } else {
+      authLogger.debug('User data already exists, skipping query invalidation')
+    }
+  } else if (event === AUTH_CONSTANTS.EVENTS.SIGNED_OUT) {
+    authLogger.oauthEvent('SIGNED_OUT')
+    redirectAttemptsRef.current = 0
+    queryClient.setQueryData(['auth-user'], null)
+    localStorage.removeItem(AUTH_CONSTANTS.STORAGE.AUTH_TOKEN_KEY)
+    sessionStorage.clear()
+  } else if (event === AUTH_CONSTANTS.EVENTS.INITIAL_SESSION) {
+    authLogger.authStateChange('INITIAL_SESSION', {
+      hasSession: !!session,
+      userEmail: session?.user?.email,
+      provider: session?.user?.app_metadata?.provider
+    })
+    
+    if (session?.user) {
+      const currentUser = queryClient.getQueryData(['auth-user'])
+      if (!currentUser) {
+        authLogger.debug('Invalidating auth-user query due to initial session')
+        queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+      }
+    }
+  }
+}
 
 /**
  * Main authentication hook
@@ -281,45 +326,28 @@ export function useAuth(): AuthHookReturn {
    */
   const lastEventTimeRef = useRef(0)
   const redirectAttemptsRef = useRef(0)
-  const MAX_REDIRECT_ATTEMPTS = 3
   
   useEffect(() => {
-    const eventThrottle = 5000 // 5 seconds throttle increased
-    
     const { data: { subscription } } = AuthService.onAuthStateChange(
       (event, session) => {
         const now = Date.now()
         
         // Circuit breaker for redirects
-        if (redirectAttemptsRef.current >= MAX_REDIRECT_ATTEMPTS) {
-          console.error('❌ Max OAuth redirect attempts reached, ignoring events')
+        if (redirectAttemptsRef.current >= AUTH_CONSTANTS.REDIRECT.MAX_ATTEMPTS) {
+          authLogger.error('Max OAuth redirect attempts reached, ignoring events')
           return
         }
         
         // Enhanced throttle events to prevent rapid fire
-        if (now - lastEventTimeRef.current < eventThrottle) {
-          console.log(`⏳ OAuth event throttled: ${event} (${eventThrottle}ms throttle)`)
+        if (now - lastEventTimeRef.current < AUTH_CONSTANTS.EVENTS.THROTTLE_MS) {
+          authLogger.debug(`OAuth event throttled: ${event}`, { 
+            throttleMs: AUTH_CONSTANTS.EVENTS.THROTTLE_MS 
+          })
           return
         }
         lastEventTimeRef.current = now
         
-        if (event === 'SIGNED_IN' && session) {
-          console.log('✅ OAuth sign in detected')
-          redirectAttemptsRef.current++
-          
-          // ✅ FIX: Only invalidate if we don't already have user data to prevent infinite loop
-          const currentUser = queryClient.getQueryData(['auth-user'])
-          if (!currentUser) {
-            console.log('🔄 Invalidating auth-user query due to OAuth sign in')
-            queryClient.invalidateQueries({ queryKey: ['auth-user'] })
-          } else {
-            console.log('ℹ️ User data already exists, skipping query invalidation')
-          }
-        } else if (event === 'SIGNED_OUT') {
-          console.log('✅ OAuth sign out detected')
-          redirectAttemptsRef.current = 0 // Reset on logout
-          queryClient.setQueryData(['auth-user'], null)
-        }
+        handleAuthStateChange(event, session, queryClient, redirectAttemptsRef)
       }
     )
 

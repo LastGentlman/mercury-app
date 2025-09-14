@@ -1,0 +1,85 @@
+/**
+ * Custom hook for handling authentication redirects
+ * Follows Single Responsibility Principle
+ */
+
+import { useEffect, useRef, useCallback } from 'react'
+import { useRedirectManager } from '../utils/redirectManager.ts'
+
+interface UseAuthRedirectOptions {
+  isAuthenticated: boolean
+  isLoading: boolean
+  isRedirecting: boolean
+  user: any
+  maxAttempts?: number
+  redirectDelay?: number
+}
+
+interface UseAuthRedirectReturn {
+  shouldRedirect: boolean
+  isRedirecting: boolean
+  startRedirect: () => void
+}
+
+const DEFAULT_MAX_ATTEMPTS = 3
+const DEFAULT_REDIRECT_DELAY = 100
+const DASHBOARD_ROUTE = '/dashboard'
+
+export function useAuthRedirect({
+  isAuthenticated,
+  isLoading,
+  isRedirecting,
+  user,
+  maxAttempts = DEFAULT_MAX_ATTEMPTS,
+  redirectDelay = DEFAULT_REDIRECT_DELAY
+}: UseAuthRedirectOptions): UseAuthRedirectReturn {
+  const redirectAttemptsRef = useRef(0)
+  const { isRedirectInProgress, startRedirect: startRedirectManager, completeRedirect } = useRedirectManager()
+
+  const isOAuthCallback = useCallback(() => {
+    const pathname = globalThis.location?.pathname
+    return pathname === '/auth/callback' || pathname?.includes('/auth/callback')
+  }, [])
+
+  const shouldRedirect = useCallback(() => {
+    return isAuthenticated && 
+           !isRedirecting && 
+           !isLoading && 
+           !isRedirectInProgress() && 
+           !isOAuthCallback()
+  }, [isAuthenticated, isRedirecting, isLoading, isRedirectInProgress, isOAuthCallback])
+
+  const performRedirect = useCallback(() => {
+    if (redirectAttemptsRef.current >= maxAttempts) {
+      console.error('Max redirect attempts reached')
+      return
+    }
+
+    redirectAttemptsRef.current++
+    
+    if (startRedirectManager(5000)) {
+      const redirectTimer = setTimeout(() => {
+        try {
+          window.location.href = DASHBOARD_ROUTE
+          completeRedirect()
+        } catch (error) {
+          console.error('Redirect failed:', error)
+        }
+      }, redirectDelay)
+      
+      return () => clearTimeout(redirectTimer)
+    }
+  }, [maxAttempts, startRedirectManager, completeRedirect, redirectDelay])
+
+  useEffect(() => {
+    if (shouldRedirect()) {
+      performRedirect()
+    }
+  }, [shouldRedirect, performRedirect])
+
+  return {
+    shouldRedirect: shouldRedirect(),
+    isRedirecting,
+    startRedirect: performRedirect
+  }
+}

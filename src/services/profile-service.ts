@@ -487,6 +487,19 @@ export class ProfileService {
 
     // Account deletion successful
     console.log('✅ Account deletion request successful')
+    
+    // Clear all local authentication data immediately
+    localStorage.removeItem('authToken')
+    sessionStorage.clear()
+    
+    // Clear any Supabase session data
+    if (supabase) {
+      try {
+        await supabase.auth.signOut()
+      } catch (error) {
+        console.warn('⚠️ Error signing out from Supabase:', error)
+      }
+    }
   }
 
   /**
