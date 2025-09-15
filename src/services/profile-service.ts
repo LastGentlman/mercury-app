@@ -493,6 +493,24 @@ export class ProfileService {
     console.log('⏳ Waiting for backend deletion to complete...')
     await this.verifyAccountDeletion()
     
+    // 🔍 ADDITIONAL VERIFICATION: Try to make a request to verify deletion
+    try {
+      const verifyResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/me`, {
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (verifyResponse.status === 401 || verifyResponse.status === 403) {
+        console.log('✅ Backend confirms user is deleted (401/403 response)')
+      } else if (verifyResponse.ok) {
+        console.warn('⚠️ Backend still recognizes user - deletion may not be complete')
+      }
+    } catch (verifyError) {
+      console.log('✅ Backend verification failed (expected after deletion):', verifyError)
+    }
+    
     // 🧹 ENHANCED CLEANUP: Clear all authentication data more thoroughly
     await performCompleteCleanup()
   }
