@@ -361,11 +361,29 @@ function RouteComponent() {
                 </Button>
               </div>
             )}
+
+            {/* Botón para regresar al inicio */}
+            <div className="mt-6">
+              <Button
+                type="button"
+                onClick={() => {
+                  setSuccessMessage(null)
+                  setShowResendEmail(false)
+                  setLastRegisteredEmail('')
+                  setShowEmailForm(false)
+                  setIsLogin(true)
+                }}
+                className="w-full"
+              >
+                Regresar al Inicio
+              </Button>
+            </div>
           </div>
         )}
 
-        {/* Auth Card */}
-        <Card className="shadow-xl border-0">
+        {/* Auth Card - Solo se muestra si no hay mensaje de éxito */}
+        {!successMessage && (
+          <Card className="shadow-xl border-0">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl font-bold">
               {isLogin ? 'Iniciar Sesión' : 'Crear Cuenta'}
@@ -638,6 +656,7 @@ function RouteComponent() {
             )}
           </CardContent>
         </Card>
+        )}
 
         {/* Footer */}
         <div className="text-center mt-8 text-sm text-gray-500">
