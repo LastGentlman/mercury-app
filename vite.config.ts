@@ -8,7 +8,7 @@ import process from 'node:process'
 // Remove Tailwind v4 import
 
 const isDev = process.env.NODE_ENV === 'development'
-const isPWADisabled = process.env.VITE_PWA_DISABLED === 'true'
+const isPWADisabled = process.env.VITE_PWA_DISABLED === 'true' || true // Force disable PWA temporarily
 
 export default defineConfig({
   plugins: [

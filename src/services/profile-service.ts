@@ -539,11 +539,29 @@ export class ProfileService {
           return
         }
         
-        // If we still have a session, the deletion might not be complete
-        console.warn('⚠️ Supabase session still exists, waiting longer...')
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        // If we still have a session, force cleanup
+        console.warn('⚠️ Supabase session still exists - forcing cleanup...')
         
-        // Try one more time
+        // Force signOut multiple times
+        for (let i = 0; i < 3; i++) {
+          try {
+            await supabase.auth.signOut()
+            console.log(`🔄 Force signOut attempt ${i + 1}`)
+            await new Promise(resolve => setTimeout(resolve, 1000))
+          } catch (signOutError) {
+            console.log(`✅ SignOut error (expected):`, signOutError)
+          }
+        }
+        
+        // Clear session manually
+        try {
+          await supabase.auth.setSession({ access_token: '', refresh_token: '' })
+          console.log('🔄 Manual session clear attempted')
+        } catch (setSessionError) {
+          console.log('✅ SetSession error (expected):', setSessionError)
+        }
+        
+        // Final verification
         const { data: { session: finalSession } } = await supabase.auth.getSession()
         if (!finalSession) {
           console.log('✅ Supabase session finally cleared')
@@ -578,41 +596,62 @@ export class ProfileService {
     // Clear Supabase session data with multiple approaches
     if (supabase) {
       try {
-        console.log('🔄 Starting Supabase session cleanup...')
+        console.log('🔄 Starting aggressive Supabase session cleanup...')
         
-        // Method 1: Standard signOut
-        const { error: signOutError } = await supabase.auth.signOut()
-        if (signOutError) {
-          console.warn('⚠️ Supabase signOut error:', signOutError)
-        } else {
-          console.log('✅ Supabase signOut completed')
+        // Method 1: Multiple signOut attempts
+        for (let i = 0; i < 5; i++) {
+          try {
+            const { error: signOutError } = await supabase.auth.signOut()
+            if (signOutError) {
+              console.log(`🔄 SignOut attempt ${i + 1} error (expected):`, signOutError.message)
+            } else {
+              console.log(`✅ SignOut attempt ${i + 1} completed`)
+            }
+            await new Promise(resolve => setTimeout(resolve, 500))
+          } catch (error) {
+            console.log(`✅ SignOut attempt ${i + 1} exception (expected):`, error)
+          }
         }
         
-        // Method 2: Clear session manually (in case signOut doesn't work)
-        const { error: setSessionError } = await supabase.auth.setSession({ 
-          access_token: '', 
-          refresh_token: '' 
-        })
-        if (setSessionError) {
-          console.warn('⚠️ Supabase setSession error:', setSessionError)
-        } else {
-          console.log('✅ Supabase session cleared manually')
+        // Method 2: Clear session manually multiple times
+        for (let i = 0; i < 3; i++) {
+          try {
+            const { error: setSessionError } = await supabase.auth.setSession({ 
+              access_token: '', 
+              refresh_token: '' 
+            })
+            if (setSessionError) {
+              console.log(`🔄 SetSession attempt ${i + 1} error (expected):`, setSessionError.message)
+            } else {
+              console.log(`✅ SetSession attempt ${i + 1} completed`)
+            }
+            await new Promise(resolve => setTimeout(resolve, 500))
+          } catch (error) {
+            console.log(`✅ SetSession attempt ${i + 1} exception (expected):`, error)
+          }
         }
         
         // Method 3: Wait and verify session is cleared
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, 2000))
         const { data: { session }, error: getSessionError } = await supabase.auth.getSession()
         
         if (getSessionError) {
-          console.warn('⚠️ Supabase getSession error:', getSessionError)
+          console.log('✅ Supabase getSession error (expected after deletion):', getSessionError.message)
         } else if (session) {
-          console.warn('⚠️ Supabase session still exists after cleanup:', session.user?.email)
+          console.warn('⚠️ Supabase session still exists after aggressive cleanup:', session.user?.email)
+          // Force one more cleanup attempt
+          try {
+            await supabase.auth.signOut()
+            console.log('🔄 Final forced signOut completed')
+          } catch (finalError) {
+            console.log('✅ Final signOut error (expected):', finalError)
+          }
         } else {
           console.log('✅ Supabase session successfully cleared')
         }
         
       } catch (error) {
-        console.warn('⚠️ Error during Supabase cleanup:', error)
+        console.log('✅ Supabase cleanup error (expected after deletion):', error)
         // Continue with cleanup even if Supabase fails
       }
     }
