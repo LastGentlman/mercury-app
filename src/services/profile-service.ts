@@ -520,6 +520,18 @@ export class ProfileService {
     if (typeof window !== 'undefined') {
       const globalWindow = window as any
       globalWindow.__ACCOUNT_DELETION_IN_PROGRESS__ = true
+      
+      // Force clear Supabase session to prevent any auth state conflicts
+      if (supabase) {
+        try {
+          console.log('🔄 Force clearing Supabase session...')
+          await supabase.auth.signOut()
+          // Also clear any cached session data
+          await supabase.auth.setSession({ access_token: '', refresh_token: '' })
+        } catch (error) {
+          console.log('✅ Supabase session clear error (expected after deletion):', error)
+        }
+      }
     }
     
     window.location.replace('/auth')
@@ -532,7 +544,7 @@ export class ProfileService {
     console.log('🔍 Verifying account deletion...')
     
     // Wait for backend processing
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    await new Promise(resolve => setTimeout(resolve, 2000))
     
     // Try to verify with Supabase session
     if (supabase) {
@@ -553,11 +565,11 @@ export class ProfileService {
         console.warn('⚠️ Supabase session still exists - forcing cleanup...')
         
         // Force signOut multiple times
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; i < 2; i++) {
           try {
             await supabase.auth.signOut()
             console.log(`🔄 Force signOut attempt ${i + 1}`)
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            await new Promise(resolve => setTimeout(resolve, 500))
           } catch (signOutError) {
             console.log(`✅ SignOut error (expected):`, signOutError)
           }
