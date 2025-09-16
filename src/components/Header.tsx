@@ -33,7 +33,7 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 z-50 transition-all duration-300">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+        <div className="w-full px-6 py-4">
           {/* Mobile Layout: Flex with space-between */}
           <div className="flex items-center justify-between md:hidden">
             {/* Logo - Left aligned */}
@@ -122,48 +122,44 @@ export default function Header() {
             )}
 
             {/* Desktop Authentication Section - Always right-aligned */}
-            <div className="flex items-center space-x-4">
-              {isLoading ? (
-                <div className="flex items-center space-x-2 text-gray-500">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  <span className="text-sm">Cargando...</span>
+            {isLoading ? (
+              <div className="flex items-center space-x-2 text-gray-500">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span className="text-sm">Cargando...</span>
+              </div>
+            ) : isAuthenticated ? (
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <User className="h-4 w-4" />
+                  <span className="hidden lg:inline">{user?.name || user?.email}</span>
                 </div>
-              ) : isAuthenticated ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <User className="h-4 w-4" />
-                    <span className="hidden lg:inline">{user?.name || user?.email}</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => logout.mutate()}
-                    disabled={logout.isPending}
-                    className="flex items-center space-x-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    {logout.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <LogOut className="h-4 w-4" />
-                    )}
-                    <span className="hidden lg:inline">Salir</span>
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center">
-                  <Link to={buttonRoute}>
-                    <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2 h-9">
-                      {isOnAuthPage ? (
-                        <Home className="h-4 w-4" />
-                      ) : (
-                        <Key className="h-4 w-4" />
-                      )}
-                      <span>{buttonText}</span>
-                    </Button>
-                  </Link>
-                </div>
-              )}
-            </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => logout.mutate()}
+                  disabled={logout.isPending}
+                  className="flex items-center space-x-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  {logout.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <LogOut className="h-4 w-4" />
+                  )}
+                  <span className="hidden lg:inline">Salir</span>
+                </Button>
+              </div>
+            ) : (
+              <Link to={buttonRoute}>
+                <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2 h-9">
+                  {isOnAuthPage ? (
+                    <Home className="h-4 w-4" />
+                  ) : (
+                    <Key className="h-4 w-4" />
+                  )}
+                  <span>{buttonText}</span>
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </header>
