@@ -15,7 +15,6 @@ import type {
   AuthProvider 
 } from '../types/auth.ts'
 import { optimizeImage, DEFAULT_AVATAR_OPTIONS, formatFileSize } from '../utils/imageOptimization.ts'
-import { performCompleteCleanup } from '../utils/serviceWorkerCleanup.ts'
 
 export interface ProfileData {
   id: string
@@ -516,6 +515,13 @@ export class ProfileService {
     
     // 🚀 FORCE REDIRECT: Use window.location.replace for immediate redirect
     console.log('🚀 Forcing immediate redirect to auth page...')
+    
+    // Disable any automatic redirect systems temporarily
+    if (typeof window !== 'undefined') {
+      const globalWindow = window as any
+      globalWindow.__ACCOUNT_DELETION_IN_PROGRESS__ = true
+    }
+    
     window.location.replace('/auth')
   }
 

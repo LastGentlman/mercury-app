@@ -100,11 +100,15 @@ export function forceImmediateRedirect(): void {
   console.log('🚀 Forcing immediate redirect...')
   
   // Clear any pending timeouts or intervals
-  const highestTimeoutId = setTimeout(() => {}, 0)
-  clearTimeout(highestTimeoutId)
+  const highestTimeoutId = setTimeout(() => {}, 0) as unknown as number
+  for (let i = 0; i < highestTimeoutId; i++) {
+    clearTimeout(i)
+  }
   
-  const highestIntervalId = setInterval(() => {}, 0)
-  clearInterval(highestIntervalId)
+  const highestIntervalId = setInterval(() => {}, 0) as unknown as number
+  for (let i = 0; i < highestIntervalId; i++) {
+    clearInterval(i)
+  }
   
   // Force redirect immediately
   window.location.replace('/auth')

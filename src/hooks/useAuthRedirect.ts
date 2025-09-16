@@ -42,6 +42,11 @@ export function useAuthRedirect({
   }, [])
 
   const shouldRedirect = useCallback(() => {
+    // Don't redirect if account deletion is in progress
+    if (typeof window !== 'undefined' && (window as any).__ACCOUNT_DELETION_IN_PROGRESS__) {
+      return false
+    }
+    
     return isAuthenticated && 
            !isRedirecting && 
            !isLoading && 
