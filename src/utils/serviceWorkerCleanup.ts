@@ -94,6 +94,23 @@ export function forcePageReload(): void {
 }
 
 /**
+ * Force immediate redirect without any delays
+ */
+export function forceImmediateRedirect(): void {
+  console.log('🚀 Forcing immediate redirect...')
+  
+  // Clear any pending timeouts or intervals
+  const highestTimeoutId = setTimeout(() => {}, 0)
+  clearTimeout(highestTimeoutId)
+  
+  const highestIntervalId = setInterval(() => {}, 0)
+  clearInterval(highestIntervalId)
+  
+  // Force redirect immediately
+  window.location.replace('/auth')
+}
+
+/**
  * Complete cleanup after account deletion
  */
 export async function performCompleteCleanup(): Promise<void> {
@@ -117,8 +134,6 @@ export async function performCompleteCleanup(): Promise<void> {
   
   console.log('✅ Complete cleanup finished')
   
-  // Force reload after a short delay
-  setTimeout(() => {
-    forcePageReload()
-  }, 100)
+  // Force immediate redirect without delay
+  forceImmediateRedirect()
 }

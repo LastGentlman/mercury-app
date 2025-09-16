@@ -461,8 +461,8 @@ function ProfilePage() {
         confirmButtonText: 'Entendido'
       })
 
-      // 🚀 STEP 6: La limpieza y redirección se maneja automáticamente en el hook
-      // No necesitamos hacer limpieza adicional aquí ya que se maneja en useProfile
+      // 🚀 STEP 6: La limpieza y redirección se maneja automáticamente en ProfileService
+      // No necesitamos hacer limpieza adicional aquí ya que se maneja en el servicio
 
     } catch (error) {
       console.error('Delete account error:', error)

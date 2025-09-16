@@ -512,7 +512,11 @@ export class ProfileService {
     }
     
     // 🧹 ENHANCED CLEANUP: Clear all authentication data more thoroughly
-    await performCompleteCleanup()
+    await this.performCompleteAuthCleanup()
+    
+    // 🚀 FORCE REDIRECT: Use window.location.replace for immediate redirect
+    console.log('🚀 Forcing immediate redirect to auth page...')
+    window.location.replace('/auth')
   }
 
   /**

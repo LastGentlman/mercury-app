@@ -26,6 +26,7 @@ export function useProfile() {
       queryClient.clear()
       
       // The complete cleanup (including Service Worker, cookies, etc.) is handled by ProfileService
+      // The redirect is also handled by ProfileService using window.location.replace
       console.log('✅ Account deleted successfully and cleanup completed')
     },
     onError: (error) => {
