@@ -31,8 +31,8 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       <>
         {!isAuthCallback && <Header />}
 
-        {/* ✅ Offline Authentication Banner */}
-        {!isAuthCallback && <AutoConnectionBanner className="sticky top-0 z-50" />}
+        {/* ✅ Offline Authentication Banner - placed below header height */}
+        {!isAuthCallback && <AutoConnectionBanner className="sticky top-[64px] z-40" />}
 
         <main className="min-h-screen">
           <Outlet />
