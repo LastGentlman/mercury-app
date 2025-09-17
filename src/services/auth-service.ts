@@ -18,6 +18,7 @@ import { supabase } from '../utils/supabase.ts'
 import { handleApiError, createAuthError as _createAuthError } from '../utils/auth-errors.ts'
 import { env } from '../env.ts'
 import { perf } from '../utils/perf.ts'
+import { AccountDeletionService } from './account-deletion-service.ts'
 
 /**
  * Gets the API base URL from environment
@@ -207,10 +208,22 @@ export class AuthService {
         } else {
           const userData = await response.json()
           console.log('✅ Traditional auth user found:', { email: userData.email, provider: 'email' })
-          return {
+          
+          const authUser = {
             ...userData,
             provider: 'email' as const
           }
+
+          // Validate account deletion status
+          const validationResult = await AccountDeletionService.validateAccountStatus(authUser)
+          if (!validationResult.isValid) {
+            console.log('❌ Account validation failed:', validationResult.message)
+            // Clear invalid session
+            localStorage.removeItem('authToken')
+            return null
+          }
+
+          return authUser
         }
       }
 
@@ -253,6 +266,14 @@ export class AuthService {
               }
             } else if (error) {
               console.warn('Could not fetch business ID from profile:', error)
+              // Handle specific Supabase errors
+              if (error.code === 'PGRST116') {
+                console.log('Profile not found - this is expected for new users')
+              } else if (error.message?.includes('406')) {
+                console.warn('Supabase RLS policy issue - profile access denied')
+              } else {
+                console.warn('Unexpected Supabase error:', error)
+              }
               // Continue without business ID - it will be set later when needed
             } else if (profile?.current_business_id) {
               oauthUser.businessId = profile.current_business_id
@@ -262,6 +283,16 @@ export class AuthService {
             // Continue without business ID - it will be set later when needed
           }
         }
+
+        // Validate account deletion status for OAuth users
+        const validationResult = await AccountDeletionService.validateAccountStatus(oauthUser)
+        if (!validationResult.isValid) {
+          console.log('❌ OAuth account validation failed:', validationResult.message)
+          // Clear OAuth session
+          await supabase?.auth.signOut()
+          return null
+        }
+
         return oauthUser
       }
 

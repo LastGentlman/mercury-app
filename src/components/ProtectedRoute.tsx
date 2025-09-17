@@ -1,17 +1,56 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Loader2 } from 'lucide-react'
 import { useRedirectManager } from '../utils/redirectManager.ts'
+import { useAccountValidation } from '../middleware/account-validation.ts'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isAuthenticated, isLoading, user, logout } = useAuth()
   const navigate = useNavigate()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
+  const { validateAccount, handleValidationResult } = useAccountValidation()
+  const [isValidatingAccount, setIsValidatingAccount] = useState(false)
+
+  // ✅ Account validation effect
+  useEffect(() => {
+    const validateUserAccount = async () => {
+      if (!isLoading && isAuthenticated && user && !isValidatingAccount) {
+        setIsValidatingAccount(true)
+        
+        try {
+          const currentPath = globalThis.location?.pathname || '/'
+          const validationResult = await validateAccount(user, currentPath)
+          
+          console.log('🔍 Account validation result:', validationResult)
+          
+          if (validationResult.shouldRedirect) {
+            handleValidationResult(
+              validationResult,
+              (path: string) => {
+                console.log('🔄 Redirecting due to account validation:', path)
+                navigate({ to: path, replace: true })
+              },
+              () => {
+                console.log('🚪 Force logout due to account deletion')
+                logout.mutate()
+              }
+            )
+          }
+        } catch (error) {
+          console.error('Error validating account:', error)
+        } finally {
+          setIsValidatingAccount(false)
+        }
+      }
+    }
+
+    validateUserAccount()
+  }, [isAuthenticated, isLoading, user, isValidatingAccount, validateAccount, handleValidationResult, navigate, logout])
 
   // ✅ FIX: More robust redirect logic with better conditions
   useEffect(() => {
@@ -19,7 +58,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
       isLoading,
       isAuthenticated,
       isRedirectInProgress: isRedirectInProgress(),
-      currentPath: globalThis.location?.pathname
+      currentPath: globalThis.location?.pathname,
+      isValidatingAccount
     })
 
     // Check if we're coming from OAuth callback (give more time for auth to establish)
@@ -29,7 +69,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
     // Only redirect if we're sure the user is not authenticated and not loading
     // Add extra delay if coming from OAuth callback
-    if (!isLoading && !isAuthenticated && !isRedirectInProgress()) {
+    if (!isLoading && !isAuthenticated && !isRedirectInProgress() && !isValidatingAccount) {
       console.log('🔒 ProtectedRoute: User not authenticated, redirecting to auth...', {
         isFromOAuthCallback,
         willDelay: isFromOAuthCallback
@@ -44,16 +84,18 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         }, delay)
       }
     } else {
-      console.log('⏳ ProtectedRoute: Skipping redirect - loading, authenticated, or redirect in progress')
+      console.log('⏳ ProtectedRoute: Skipping redirect - loading, authenticated, redirect in progress, or validating account')
     }
-  }, [isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
+  }, [isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect, isValidatingAccount])
 
-  if (isLoading) {
+  if (isLoading || isValidatingAccount) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">Loading...</span>
+          <span className="text-gray-600">
+            {isValidatingAccount ? 'Validando cuenta...' : 'Loading...'}
+          </span>
         </div>
       </div>
     )

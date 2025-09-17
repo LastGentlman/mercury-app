@@ -191,6 +191,14 @@ export class BusinessService {
 
       if (profileError) {
         console.warn('Could not fetch business ID from profile:', profileError);
+        // Handle specific Supabase errors
+        if (profileError.code === 'PGRST116') {
+          console.log('Profile not found - this is expected for new users');
+        } else if (profileError.message?.includes('406')) {
+          console.warn('Supabase RLS policy issue - profile access denied');
+        } else {
+          console.warn('Unexpected Supabase error:', profileError);
+        }
         return null;
       }
 

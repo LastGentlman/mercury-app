@@ -485,8 +485,24 @@ export class ProfileService {
       throw new Error(errorMessage)
     }
 
-    // Account deletion successful
-    console.log('✅ Account deletion request successful')
+    // Parse response to get deletion details
+    const responseData = await response.json()
+    console.log('✅ Account deletion initiated successfully:', responseData)
+    
+    // Check if this is the new grace period system
+    if (responseData.code === 'ACCOUNT_DELETION_INITIATED' && responseData.deletionLogId) {
+      console.log('📋 Account marked for deletion with grace period:', {
+        deletionLogId: responseData.deletionLogId,
+        gracePeriodEnd: responseData.gracePeriodEnd
+      })
+      
+      // Redirect to account recovery page
+      window.location.href = `/account-recovery?deletion-id=${responseData.deletionLogId}`
+      return
+    }
+    
+    // Legacy immediate deletion flow (fallback)
+    console.log('⚠️ Using legacy immediate deletion flow')
     
     // 🔍 VERIFY: Wait and verify that the account was actually deleted
     console.log('⏳ Waiting for backend deletion to complete...')

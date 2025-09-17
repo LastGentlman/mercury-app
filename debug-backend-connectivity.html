@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Connectivity Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .log {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .endpoint-test {
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .endpoint-test h4 {
+            margin: 0 0 10px 0;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Backend Connectivity Debug</h1>
+        <p>This tool helps diagnose backend connectivity and API endpoint issues.</p>
+        
+        <div>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <button onclick="testSpecificEndpoint()">Test Specific Endpoint</button>
+            <button onclick="clearLogs()">Clear Logs</button>
+        </div>
+        
+        <div id="results"></div>
+        <div id="logs" class="log"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logElement = document.getElementById('logs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `test-result ${type}`;
+            logEntry.innerHTML = `[${timestamp}] ${message}`;
+            logElement.appendChild(logEntry);
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+        
+        function clearLogs() {
+            document.getElementById('logs').innerHTML = '';
+            document.getElementById('results').innerHTML = '';
+            testResults = [];
+        }
+        
+        function addResult(testName, passed, message) {
+            testResults.push({ name: testName, passed, message });
+            const resultsElement = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${passed ? 'success' : 'error'}`;
+            resultDiv.innerHTML = `<strong>${testName}:</strong> ${passed ? '✅ PASSED' : '❌ FAILED'} - ${message}`;
+            resultsElement.appendChild(resultDiv);
+        }
+        
+        async function testBackendConnectivity() {
+            log('📋 Test 1: Checking Backend Connectivity...', 'info');
+            
+            try {
+                const backendUrls = [
+                    'https://api.pedidolist.com',
+                    'http://localhost:8000',
+                    'http://localhost:3030'
+                ];
+                
+                let workingUrl = null;
+                
+                for (const url of backendUrls) {
+                    try {
+                        log(`🔍 Testing ${url}...`, 'info');
+                        const response = await fetch(`${url}/api/auth/me`, {
+                            method: 'GET',
+                            headers: { 'Content-Type': 'application/json' },
+                            signal: AbortSignal.timeout(5000)
+                        });
+                        
+                        log(`📡 ${url} responded with status: ${response.status}`, 'info');
+                        
+                        if (response.status === 401 || response.ok) {
+                            workingUrl = url;
+                            log(`✅ ${url} is reachable`, 'success');
+                            break;
+                        }
+                    } catch (error) {
+                        log(`❌ ${url} failed: ${error.message}`, 'error');
+                    }
+                }
+                
+                if (workingUrl) {
+                    addResult('Backend Connectivity', true, `Backend reachable at ${workingUrl}`);
+                    return workingUrl;
+                } else {
+                    addResult('Backend Connectivity', false, 'No backend URLs are reachable');
+                    return null;
+                }
+            } catch (error) {
+                log(`❌ Error testing backend connectivity: ${error.message}`, 'error');
+                addResult('Backend Connectivity', false, error.message);
+                return null;
+            }
+        }
+        
+        async function testAuthEndpoints(backendUrl) {
+            log('📋 Test 2: Testing Authentication Endpoints...', 'info');
+            
+            if (!backendUrl) {
+                addResult('Auth Endpoints', false, 'No backend URL available');
+                return;
+            }
+            
+            const endpoints = [
+                { path: '/api/auth/me', method: 'GET', expectedStatus: 401, name: 'Get User Info' },
+                { path: '/api/auth/verify-token', method: 'POST', expectedStatus: 400, name: 'Verify Token' },
+                { path: '/api/auth/account', method: 'DELETE', expectedStatus: 401, name: 'Delete Account' },
+                { path: '/api/auth/logout', method: 'POST', expectedStatus: 401, name: 'Logout' }
+            ];
+            
+            let passedTests = 0;
+            let totalTests = endpoints.length;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    log(`🔍 Testing ${endpoint.name} (${endpoint.method} ${endpoint.path})...`, 'info');
+                    
+                    const response = await fetch(`${backendUrl}${endpoint.path}`, {
+                        method: endpoint.method,
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    
+                    log(`📡 ${endpoint.name} responded with status: ${response.status}`, 'info');
+                    
+                    if (response.status === endpoint.expectedStatus) {
+                        log(`✅ ${endpoint.name} working correctly`, 'success');
+                        passedTests++;
+                    } else {
+                        log(`⚠️ ${endpoint.name} unexpected status: ${response.status} (expected ${endpoint.expectedStatus})`, 'warning');
+                    }
+                } catch (error) {
+                    log(`❌ ${endpoint.name} failed: ${error.message}`, 'error');
+                }
+            }
+            
+            if (passedTests === totalTests) {
+                addResult('Auth Endpoints', true, `All ${totalTests} endpoints working correctly`);
+            } else {
+                addResult('Auth Endpoints', false, `${passedTests}/${totalTests} endpoints working`);
+            }
+        }
+        
+        async function testBusinessEndpoints(backendUrl) {
+            log('📋 Test 3: Testing Business Endpoints...', 'info');
+            
+            if (!backendUrl) {
+                addResult('Business Endpoints', false, 'No backend URL available');
+                return;
+            }
+            
+            const endpoints = [
+                { path: '/api/business', method: 'GET', expectedStatus: 401, name: 'Get Business' },
+                { path: '/api/business', method: 'POST', expectedStatus: 401, name: 'Create Business' },
+                { path: '/api/products', method: 'GET', expectedStatus: 401, name: 'Get Products' },
+                { path: '/api/orders', method: 'GET', expectedStatus: 401, name: 'Get Orders' }
+            ];
+            
+            let passedTests = 0;
+            let totalTests = endpoints.length;
+            
+            for (const endpoint of endpoints) {
+                try {
+                    log(`🔍 Testing ${endpoint.name} (${endpoint.method} ${endpoint.path})...`, 'info');
+                    
+                    const response = await fetch(`${backendUrl}${endpoint.path}`, {
+                        method: endpoint.method,
+                        headers: { 'Content-Type': 'application/json' },
+                        signal: AbortSignal.timeout(5000)
+                    });
+                    
+                    log(`📡 ${endpoint.name} responded with status: ${response.status}`, 'info');
+                    
+                    if (response.status === endpoint.expectedStatus) {
+                        log(`✅ ${endpoint.name} working correctly`, 'success');
+                        passedTests++;
+                    } else {
+                        log(`⚠️ ${endpoint.name} unexpected status: ${response.status} (expected ${endpoint.expectedStatus})`, 'warning');
+                    }
+                } catch (error) {
+                    log(`❌ ${endpoint.name} failed: ${error.message}`, 'error');
+                }
+            }
+            
+            if (passedTests === totalTests) {
+                addResult('Business Endpoints', true, `All ${totalTests} endpoints working correctly`);
+            } else {
+                addResult('Business Endpoints', false, `${passedTests}/${totalTests} endpoints working`);
+            }
+        }
+        
+        async function testNetworkIssues() {
+            log('📋 Test 4: Testing Network Issues...', 'info');
+            
+            try {
+                // Test basic internet connectivity
+                const response = await fetch('https://httpbin.org/get', {
+                    method: 'GET',
+                    signal: AbortSignal.timeout(5000)
+                });
+                
+                if (response.ok) {
+                    log('✅ Basic internet connectivity working', 'success');
+                    addResult('Network Issues', true, 'Internet connectivity is working');
+                } else {
+                    log(`⚠️ Internet connectivity issue: ${response.status}`, 'warning');
+                    addResult('Network Issues', false, `Internet connectivity issue: ${response.status}`);
+                }
+            } catch (error) {
+                log(`❌ Network connectivity failed: ${error.message}`, 'error');
+                addResult('Network Issues', false, `Network connectivity failed: ${error.message}`);
+            }
+        }
+        
+        async function testSpecificEndpoint() {
+            const endpoint = prompt('Enter endpoint to test (e.g., /api/auth/me):');
+            if (!endpoint) return;
+            
+            const backendUrl = prompt('Enter backend URL (e.g., https://api.pedidolist.com):');
+            if (!backendUrl) return;
+            
+            log(`🔍 Testing specific endpoint: ${endpoint}`, 'info');
+            
+            try {
+                const response = await fetch(`${backendUrl}${endpoint}`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                    signal: AbortSignal.timeout(10000)
+                });
+                
+                log(`📡 Response status: ${response.status}`, 'info');
+                log(`📡 Response headers: ${JSON.stringify([...response.headers.entries()])}`, 'info');
+                
+                const text = await response.text();
+                log(`📡 Response body: ${text.substring(0, 500)}${text.length > 500 ? '...' : ''}`, 'info');
+                
+                if (response.ok) {
+                    log(`✅ Endpoint ${endpoint} is working`, 'success');
+                } else {
+                    log(`⚠️ Endpoint ${endpoint} returned error status`, 'warning');
+                }
+            } catch (error) {
+                log(`❌ Endpoint ${endpoint} failed: ${error.message}`, 'error');
+            }
+        }
+        
+        async function runAllTests() {
+            log('🚀 Starting Backend Connectivity Diagnostics...', 'info');
+            clearLogs();
+            
+            const backendUrl = await testBackendConnectivity();
+            await testAuthEndpoints(backendUrl);
+            await testBusinessEndpoints(backendUrl);
+            await testNetworkIssues();
+            
+            log('', 'info');
+            log('📊 Diagnostic Results:', 'info');
+            
+            const passedTests = testResults.filter(r => r.passed).length;
+            const totalTests = testResults.length;
+            
+            log(`✅ Passed: ${passedTests}/${totalTests}`, passedTests === totalTests ? 'success' : 'warning');
+            log(`❌ Failed: ${totalTests - passedTests}/${totalTests}`, passedTests === totalTests ? 'success' : 'error');
+            
+            if (passedTests === totalTests) {
+                log('🎉 All tests passed! Backend connectivity looks good.', 'success');
+            } else {
+                log('⚠️ Some tests failed. Check the results above for details.', 'warning');
+                
+                if (passedTests < 2) {
+                    log('🔧 Issue: Backend connectivity problem', 'error');
+                } else if (passedTests < 4) {
+                    log('🔧 Issue: Some endpoints not working', 'warning');
+                } else {
+                    log('🔧 Issue: Network connectivity problem', 'error');
+                }
+            }
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            log('🔍 Backend Connectivity Debug Tool Loaded', 'info');
+            log('Click "Run All Tests" to start diagnostics', 'info');
+        });
+    </script>
+</body>
+</html>
+
