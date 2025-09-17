@@ -99,12 +99,8 @@ async function initializeSentry() {
 
 // ✅ PWA Registration con control de errores
 async function initializePWA() {
-  // Solo en producción y si no está deshabilitado
-  if (
-    import.meta.env.PROD && 
-    !import.meta.env.VITE_PWA_DISABLED &&
-    'serviceWorker' in navigator
-  ) {
+  // PWA completamente deshabilitado
+  if (false) {
     try {
       console.log('🔄 Initializing PWA...')
       
