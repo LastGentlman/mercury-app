@@ -1,9 +1,10 @@
-import { Calendar, Clock, MoreVertical, Phone, User } from 'lucide-react';
+import { Calendar, Clock, MoreVertical, Phone, User, Trash2 } from 'lucide-react';
 import type { Order } from '../../types/index.ts';
 import { Badge } from '../ui/index.ts';
 import { Button } from '../ui/index.ts';
 import { Card, CardContent, CardHeader } from '../ui/index.ts';
 import { StatusBadge } from '../ui/index.ts';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../ui/index.ts';
 import { formatCurrency, formatDate, formatTime } from '../../lib/utils.ts';
 
 interface OrderCardProps {
@@ -15,12 +16,13 @@ interface OrderCardProps {
   className?: string;
 }
 
-export function OrderCard({ 
-  order, 
-  onStatusChange, 
-  onEdit, 
+export function OrderCard({
+  order,
+  onStatusChange,
+  onEdit,
+  onDelete,
   onViewDetails,
-  className 
+  className
 }: OrderCardProps) {
   const totalAmount = order.items?.reduce((sum, item) => 
     sum + (item.quantity * item.unit_price), 0
@@ -80,9 +82,42 @@ export function OrderCard({
             <Badge variant="secondary" className="font-mono">
               {formatCurrency(totalAmount)}
             </Badge>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {onViewDetails && (
+                  <DropdownMenuItem onClick={() => onViewDetails(order)}>
+                    Ver Detalles
+                  </DropdownMenuItem>
+                )}
+                {order.status === 'pending' && onEdit && (
+                  <DropdownMenuItem onClick={() => onEdit(order)}>
+                    Editar
+                  </DropdownMenuItem>
+                )}
+                {(order.status === 'pending' || order.status === 'cancelled') && onDelete && (
+                  <>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const orderId = order.id || order.client_generated_id || '';
+                        if (confirm('¿Estás seguro de que quieres eliminar este pedido?')) {
+                          onDelete(orderId);
+                        }
+                      }}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </CardHeader>
@@ -128,32 +163,12 @@ export function OrderCard({
         {/* Actions */}
         <div className="flex gap-2">
           {canAdvanceStatus && onStatusChange && (
-            <Button 
+            <Button
               onClick={handleStatusClick}
               className="flex-1"
               size="sm"
             >
               {getStatusAction()}
-            </Button>
-          )}
-          
-          {onViewDetails && (
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => onViewDetails(order)}
-            >
-              Ver Detalles
-            </Button>
-          )}
-          
-          {order.status === 'pending' && (
-            <Button 
-              size="sm" 
-              variant="ghost" 
-              onClick={() => onEdit?.(order)}
-            >
-              Editar
             </Button>
           )}
         </div>

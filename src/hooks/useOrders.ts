@@ -124,12 +124,34 @@ export function useOrders(businessId: string) {
     }
   });
 
+  const deleteOrder = useMutation({
+    mutationFn: async (orderId: string) => {
+      // Delete from local database
+      await db.orders.delete(parseInt(orderId));
+
+      // Add to sync queue
+      await db.syncQueue.add({
+        entityType: 'order',
+        entityId: orderId,
+        action: 'delete',
+        timestamp: new Date().toISOString()
+      });
+
+      toast.success('Pedido eliminado correctamente');
+      return orderId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+    }
+  });
+
   return {
     orders,
     isLoading,
     error,
     createOrder,
     createOrderFromForm, // ✅ NUEVO: Para usar con formularios
-    updateOrderStatus
+    updateOrderStatus,
+    deleteOrder
   };
 } 

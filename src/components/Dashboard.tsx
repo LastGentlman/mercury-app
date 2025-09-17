@@ -14,7 +14,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ businessId }: DashboardProps) {
-  const { orders, isLoading, updateOrderStatus } = useOrders(businessId);
+  const { orders, isLoading, updateOrderStatus, deleteOrder } = useOrders(businessId);
   const [showCreateDialog, setShowCreateDialog] = React.useState(false);
   const [selectedOrder, setSelectedOrder] = React.useState<Order | null>(null);
   const [showOrderDetails, setShowOrderDetails] = React.useState(false);
@@ -184,11 +184,14 @@ export function Dashboard({ businessId }: DashboardProps) {
           </Card>
         ) : (
           sortedOrders.map(order => (
-            <OrderCard 
-              key={order.id || order.clientGeneratedId} 
+            <OrderCard
+              key={order.id || order.clientGeneratedId}
               order={order}
-              onStatusChange={(orderId, status) => 
+              onStatusChange={(orderId, status) =>
                 updateOrderStatus.mutate({ orderId, status })
+              }
+              onDelete={(orderId) =>
+                deleteOrder.mutate(orderId)
               }
               onViewDetails={(orderToView) => {
                 setSelectedOrder(orderToView);
