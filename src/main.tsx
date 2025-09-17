@@ -131,15 +131,20 @@ async function initializePWA() {
       if ('serviceWorker' in navigator) {
         const registrations = await navigator.serviceWorker.getRegistrations()
         if (registrations.length > 0) {
+          console.log(`🧹 Found ${registrations.length} Service Workers to unregister`)
           for (const registration of registrations) {
+            console.log('🧹 Unregistering Service Worker:', registration.scope)
             await registration.unregister()
           }
           // Also clear caches to prevent stale assets when SW is removed
           if ('caches' in window) {
             const cacheNames = await caches.keys()
+            console.log(`🧹 Clearing ${cacheNames.length} caches`)
             await Promise.all(cacheNames.map((name) => caches.delete(name)))
           }
           console.log('🧹 Unregistered existing Service Workers and cleared caches')
+        } else {
+          console.log('🧹 No Service Workers found to unregister')
         }
       }
     } catch (cleanupError) {
