@@ -8,6 +8,7 @@ import { CreateOrderDialog } from './CreateOrderDialog.tsx';
 import { OrderCard } from './orders/OrderCard.tsx';
 import { OrderDetails } from './orders/OrderDetails.tsx';
 import { TrialExtensionBanner } from './TrialExtensionBanner.tsx';
+import { BetaBanner } from './BetaBanner.tsx';
 
 interface DashboardProps {
   businessId: string;
@@ -85,6 +86,9 @@ export function Dashboard({ businessId }: DashboardProps) {
           </Button>
         </div>
       </div>
+
+      {/* Beta Development Banner */}
+      <BetaBanner />
 
       {/* Enhanced Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

@@ -72,94 +72,98 @@ export default function Header() {
             )}
           </div>
 
-          {/* Desktop Layout: Flexbox with proper spacing */}
-          <div className="hidden md:flex items-center justify-between">
+          {/* Desktop Layout: Three-column grid for proper alignment */}
+          <div className="hidden md:grid grid-cols-3 items-center w-full">
             {/* Logo - Left aligned */}
-            <div className="text-2xl font-bold tracking-tight">
-              <Link 
-                to="/" 
+            <div className="text-2xl font-bold tracking-tight justify-self-start">
+              <Link
+                to="/"
                 className="text-gray-900 hover:text-gray-700 transition-colors duration-300"
               >
                 PedidoList
               </Link>
             </div>
 
-            {/* Desktop Navigation - Only when authenticated */}
-            {isAuthenticated && (
-              <nav className="flex items-center space-x-8">
-                <Link 
-                  to="/dashboard" 
-                  className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
-                >
-                  Dashboard
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
-                </Link>
-                
-                <Link 
-                  to="/clients" 
-                  className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
-                >
-                  Clientes
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
-                </Link>
-                
-                <Link 
-                  to="/products" 
-                  className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
-                >
-                  Productos
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
-                </Link>
-                
-                <Link 
-                  to="/profile" 
-                  className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
-                >
-                  Perfil
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
-                </Link>
-              </nav>
-            )}
+            {/* Desktop Navigation - Center aligned when authenticated */}
+            <nav className="justify-self-center">
+              {isAuthenticated && (
+                <div className="flex items-center space-x-8">
+                  <Link
+                    to="/dashboard"
+                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                  >
+                    Dashboard
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
 
-            {/* Desktop Authentication Section - Always right-aligned */}
-            {isLoading ? (
-              <div className="flex items-center space-x-2 text-gray-500">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-sm">Cargando...</span>
-              </div>
-            ) : isAuthenticated ? (
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2 text-sm text-gray-600">
-                  <User className="h-4 w-4" />
-                  <span className="hidden lg:inline">{user?.name || user?.email}</span>
+                  <Link
+                    to="/clients"
+                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                  >
+                    Clientes
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+
+                  <Link
+                    to="/products"
+                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                  >
+                    Productos
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
+
+                  <Link
+                    to="/profile"
+                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                  >
+                    Perfil
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                  </Link>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => logout.mutate()}
-                  disabled={logout.isPending}
-                  className="flex items-center space-x-2 border-gray-300 text-gray-700 hover:bg-gray-50"
-                >
-                  {logout.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <LogOut className="h-4 w-4" />
-                  )}
-                  <span className="hidden lg:inline">Salir</span>
-                </Button>
-              </div>
-            ) : (
-              <Link to={buttonRoute}>
-                <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2 h-9">
-                  {isOnAuthPage ? (
-                    <Home className="h-4 w-4" />
-                  ) : (
-                    <Key className="h-4 w-4" />
-                  )}
-                  <span>{buttonText}</span>
-                </Button>
-              </Link>
-            )}
+              )}
+            </nav>
+
+            {/* Desktop Authentication Section - Right aligned */}
+            <div className="justify-self-end">
+              {isLoading ? (
+                <div className="flex items-center space-x-2 text-gray-500">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span className="text-sm">Cargando...</span>
+                </div>
+              ) : isAuthenticated ? (
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                    <User className="h-4 w-4" />
+                    <span className="hidden lg:inline">{user?.name || user?.email}</span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => logout.mutate()}
+                    disabled={logout.isPending}
+                    className="flex items-center space-x-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    {logout.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="h-4 w-4" />
+                    )}
+                    <span className="hidden lg:inline">Salir</span>
+                  </Button>
+                </div>
+              ) : (
+                <Link to={buttonRoute}>
+                  <Button className="bg-gray-900 text-white px-4 py-2 rounded-full hover:bg-gray-800 transition-all transform hover:scale-105 text-sm flex items-center space-x-2 h-9">
+                    {isOnAuthPage ? (
+                      <Home className="h-4 w-4" />
+                    ) : (
+                      <Key className="h-4 w-4" />
+                    )}
+                    <span>{buttonText}</span>
+                  </Button>
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       </header>
