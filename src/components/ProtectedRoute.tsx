@@ -16,9 +16,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { validateAccount, handleValidationResult } = useAccountValidation()
   const [isValidatingAccount, setIsValidatingAccount] = useState(false)
 
-  // ✅ Account validation effect
+  // ✅ Account validation effect - DISABLED TEMPORARILY TO PREVENT LOOPS
   useEffect(() => {
     const validateUserAccount = async () => {
+      // 🚨 EMERGENCY FIX: Skip account validation for now to prevent infinite loops
+      // This will be re-enabled after fixing the underlying validation conflicts
+      console.log('🔍 Account validation temporarily disabled to prevent infinite loops')
+      return
+      
       if (!isLoading && isAuthenticated && user && !isValidatingAccount) {
         setIsValidatingAccount(true)
         

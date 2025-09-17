@@ -51,68 +51,87 @@ export class AccountDeletionService {
         throw new Error('Supabase client not initialized')
       }
       
-      // First check user metadata for immediate deletion flag
-      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      // 🚨 EMERGENCY FIX: Add timeout and error handling to prevent hanging
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Account validation timeout')), 5000)
+      })
       
-      if (userError || !user) {
+      const validationPromise = this.performAccountValidation(userId)
+      
+      return await Promise.race([validationPromise, timeoutPromise])
+      
+    } catch (error) {
+      console.error('Error checking account deletion status:', error)
+      // 🚨 EMERGENCY FIX: Return safe defaults to prevent blocking users
+      return {
+        isDeleted: false,
+        isInGracePeriod: false,
+        canCancel: false
+      }
+    }
+  }
+
+  /**
+   * Perform the actual account validation
+   */
+  private static async performAccountValidation(userId: string): Promise<AccountDeletionStatus> {
+    if (!supabase) {
+      throw new Error('Supabase client not initialized')
+    }
+    
+    // First check user metadata for immediate deletion flag
+    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    
+    if (userError || !user) {
+      return {
+        isDeleted: false,
+        isInGracePeriod: false,
+        canCancel: false
+      }
+    }
+
+    // Check if account is marked as deleted in metadata
+    const isDeletedInMetadata = user.user_metadata?.account_deleted === true
+    
+    if (isDeletedInMetadata) {
+      // Check deletion logs for grace period info
+      const { data: deletionLog, error: logError } = await supabase
+        .from('account_deletion_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'pending')
+        .single()
+
+      if (logError || !deletionLog) {
+        // Account is marked as deleted but no log found - immediate deletion
         return {
-          isDeleted: false,
+          isDeleted: true,
           isInGracePeriod: false,
           canCancel: false
         }
       }
 
-      // Check if account is marked as deleted in metadata
-      const isDeletedInMetadata = user.user_metadata?.account_deleted === true
-      
-      if (isDeletedInMetadata) {
-        // Check deletion logs for grace period info
-        const { data: deletionLog, error: logError } = await supabase
-          .from('account_deletion_logs')
-          .select('*')
-          .eq('user_id', userId)
-          .eq('status', 'pending')
-          .single()
-
-        if (logError || !deletionLog) {
-          // Account is marked as deleted but no log found - immediate deletion
-          return {
-            isDeleted: true,
-            isInGracePeriod: false,
-            canCancel: false
-          }
-        }
-
-        const gracePeriodEnd = new Date(deletionLog.grace_period_end)
-        const now = new Date()
-        const isInGracePeriod = now < gracePeriodEnd
-        const daysRemaining = isInGracePeriod 
-          ? Math.ceil((gracePeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-          : 0
-
-        return {
-          isDeleted: true,
-          isInGracePeriod,
-          deletionLogId: deletionLog.id,
-          gracePeriodEnd,
-          daysRemaining,
-          canCancel: isInGracePeriod
-        }
-      }
+      const gracePeriodEnd = new Date(deletionLog.grace_period_end)
+      const now = new Date()
+      const isInGracePeriod = now < gracePeriodEnd
+      const daysRemaining = isInGracePeriod 
+        ? Math.ceil((gracePeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        : 0
 
       return {
-        isDeleted: false,
-        isInGracePeriod: false,
-        canCancel: false
+        isDeleted: true,
+        isInGracePeriod,
+        deletionLogId: deletionLog.id,
+        gracePeriodEnd,
+        daysRemaining,
+        canCancel: isInGracePeriod
       }
+    }
 
-    } catch (error) {
-      console.error('Error checking account deletion status:', error)
-      return {
-        isDeleted: false,
-        isInGracePeriod: false,
-        canCancel: false
-      }
+    return {
+      isDeleted: false,
+      isInGracePeriod: false,
+      canCancel: false
     }
   }
 

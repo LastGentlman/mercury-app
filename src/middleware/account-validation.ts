@@ -46,6 +46,20 @@ export class AccountValidationMiddleware {
       return { isValid: true, shouldRedirect: false }
     }
 
+    // 🚨 EMERGENCY FIX: Add additional path exclusions to prevent loops
+    const additionalExcludedPaths = [
+      '/dashboard',
+      '/products',
+      '/clients',
+      '/profile',
+      '/setup'
+    ]
+    
+    if (additionalExcludedPaths.some(path => currentPath.startsWith(path))) {
+      console.log('🔍 Skipping account validation for protected route:', currentPath)
+      return { isValid: true, shouldRedirect: false }
+    }
+
     try {
       // Check account deletion status
       const deletionStatus = await AccountDeletionService.checkAccountDeletionStatus(user.id)

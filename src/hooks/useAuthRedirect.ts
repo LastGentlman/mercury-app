@@ -47,6 +47,16 @@ export function useAuthRedirect({
       return false
     }
     
+    // 🚨 EMERGENCY FIX: Add additional checks to prevent infinite loops
+    const currentPath = globalThis.location?.pathname
+    const isOnAuthPage = currentPath === '/auth' || currentPath?.startsWith('/auth')
+    
+    // Don't redirect if we're already on auth page to prevent loops
+    if (isOnAuthPage) {
+      console.log('🚨 Preventing redirect from auth page to prevent infinite loop')
+      return false
+    }
+    
     return isAuthenticated && 
            !isRedirecting && 
            !isLoading && 

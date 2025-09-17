@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useAuthRedirect } from '../hooks/useAuthRedirect.ts'
 import { Button } from '../components/ui/index.ts'
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.
 import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
+import { AuthDiagnostic } from '../components/AuthDiagnostic.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
 import { AUTH_CONSTANTS } from '../utils/authConstants.ts'
@@ -62,6 +63,7 @@ function RouteComponent() {
   const [showResendEmail, setShowResendEmail] = useState(false)
   const [lastRegisteredEmail, setLastRegisteredEmail] = useState<string>('')
   const [isRedirecting] = useState(false)
+  const [debugMode, setDebugMode] = useState(false)
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading, user } = useAuth()
   
@@ -75,7 +77,24 @@ function RouteComponent() {
     redirectDelay: AUTH_CONSTANTS.REDIRECT.DELAY_MS
   })
 
-  // Clean redirect logic is now handled by useAuthRedirect hook
+  // 🚨 EMERGENCY FIX: Bypass for users with valid session to prevent infinite loops
+  useEffect(() => {
+    if (user && isAuthenticated && !debugMode && !isLoading) {
+      console.log('🚨 EMERGENCY BYPASS: User has valid session, forcing direct navigation to dashboard')
+      authLogger.debug('Emergency bypass triggered - user has valid session', { 
+        component: 'AuthRoute',
+        userId: user?.id || '',
+        email: user?.email || '',
+        hasSession: !!user,
+        isAuthenticated
+      })
+      
+      // Force direct navigation without middleware interference
+      setTimeout(() => {
+        window.location.replace('/dashboard')
+      }, 100)
+    }
+  }, [user, isAuthenticated, debugMode, isLoading])
 
   // Show loading state
   if (isLoading || isRedirecting) {
@@ -318,6 +337,27 @@ function RouteComponent() {
     }
   }
 
+  // Show diagnostic panel in debug mode
+  if (debugMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-6 text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">PedidoList - Debug Mode</h1>
+            <p className="text-gray-600">Authentication Diagnostic Panel</p>
+            <button
+              onClick={() => setDebugMode(false)}
+              className="mt-4 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
+            >
+              Exit Debug Mode
+            </button>
+          </div>
+          <AuthDiagnostic />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className="w-full max-w-md">
@@ -325,6 +365,28 @@ function RouteComponent() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">PedidoList</h1>
           <p className="text-gray-600">Gestiona tus pedidos de manera eficiente</p>
+          
+          {/* 🚨 EMERGENCY DEBUG PANEL */}
+          {user && isAuthenticated && (
+            <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-yellow-800 font-medium">
+                    🚨 Sesión válida detectada
+                  </p>
+                  <p className="text-xs text-yellow-600 mt-1">
+                    Email: {user.email} | ID: {user.id}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setDebugMode(true)}
+                  className="px-3 py-1 text-xs bg-yellow-200 text-yellow-800 rounded hover:bg-yellow-300 transition-colors"
+                >
+                  Habilitar Debug
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Success Message */}
