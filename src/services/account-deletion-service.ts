@@ -91,7 +91,9 @@ export class AccountDeletionService {
     }
 
     // Check if account is marked as deleted in metadata
-    const isDeletedInMetadata = user.user_metadata?.account_deleted === true
+    // For OAuth users, check both user_metadata and raw_user_meta_data (fallback)
+    const isDeletedInMetadata = user.user_metadata?.account_deleted === true ||
+                               (user as any).raw_user_meta_data?.account_deleted === true
     
     if (isDeletedInMetadata) {
       // Check deletion logs for grace period info
