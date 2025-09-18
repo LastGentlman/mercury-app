@@ -87,8 +87,12 @@
       ]
     },
     {
-      "source": "/manifest.json",
+      "source": "/manifest.webmanifest",
       "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=86400"
@@ -96,8 +100,12 @@
       ]
     },
     {
-      "source": "/workbox-*.js",
+      "source": "/(workbox-.*\\.js|sw\\.js|registerSW\\.js)",
       "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript; charset=utf-8"
+        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=86400"
