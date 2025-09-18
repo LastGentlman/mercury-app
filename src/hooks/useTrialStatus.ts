@@ -74,6 +74,8 @@ export function useTrialStatus() {
       const business = await BusinessService.getCurrentBusiness(authToken);
       
       if (!business) {
+        // No business found - this is expected for new users who haven't set up their business yet
+        console.log('No business found - user needs to set up business first');
         setTrialStatus({
           isTrialing: false,
           daysRemaining: 0,
@@ -114,10 +116,14 @@ export function useTrialStatus() {
 
     } catch (error) {
       console.error('Error fetching trial status:', error);
+      // Don't show error for profile not found - this is expected for new users
+      const errorMessage = error instanceof Error ? error.message : 'Error al obtener estado del trial';
+      const isProfileNotFound = errorMessage.includes('Profile not found') || errorMessage.includes('PGRST116');
+      
       setTrialStatus(prev => ({
         ...prev,
         isLoading: false,
-        error: error instanceof Error ? error.message : 'Error al obtener estado del trial'
+        error: isProfileNotFound ? null : errorMessage
       }));
     }
   }, [authToken, calculateDaysRemaining, shouldShowInvitation]);

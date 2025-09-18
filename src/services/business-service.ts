@@ -194,6 +194,44 @@ export class BusinessService {
         // Handle specific Supabase errors
         if (profileError.code === 'PGRST116') {
           console.log('Profile not found - this is expected for new users');
+          // For traditional auth users, try to create profile if it doesn't exist
+          try {
+            // Get user info from traditional auth backend
+            const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/me`, {
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (response.ok) {
+              const userData = await response.json();
+              console.log('Creating profile for traditional auth user:', userData.email);
+              
+              // Create profile for traditional auth user
+              const { data: newProfile, error: createError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: userId,
+                  email: userData.email,
+                  fullName: userData.name || userData.email,
+                  avatar_url: userData.avatar_url,
+                  created_at: new Date().toISOString()
+                })
+                .select('current_business_id')
+                .single();
+
+              if (createError) {
+                console.warn('Could not create profile for traditional auth user:', createError);
+                return null;
+              }
+
+              // Return null if no business ID (user needs to set up business)
+              return newProfile?.current_business_id ? await this.getBusinessById(newProfile.current_business_id) : null;
+            }
+          } catch (createProfileError) {
+            console.warn('Error creating profile for traditional auth user:', createProfileError);
+          }
         } else if (profileError.message?.includes('406')) {
           console.warn('Supabase RLS policy issue - profile access denied');
         } else {
@@ -206,17 +244,28 @@ export class BusinessService {
         return null;
       }
 
-      const { data: business } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('id', profile.current_business_id)
-        .single();
-
-      return business;
+      return await this.getBusinessById(profile.current_business_id);
     } catch (error) {
       console.error('Error decoding token or fetching business:', error);
       return null;
     }
+  }
+
+  /**
+   * Helper method to get business by ID
+   */
+  private static async getBusinessById(businessId: string): Promise<Business | null> {
+    if (!supabase) {
+      throw new Error('Cliente Supabase no inicializado');
+    }
+    
+    const { data: business } = await supabase
+      .from('businesses')
+      .select('*')
+      .eq('id', businessId)
+      .single();
+
+    return business;
   }
 
   /**
@@ -330,7 +379,8 @@ export class BusinessService {
       const payload = JSON.parse(atob(parts[1]));
       const userId = payload.sub;
       
-      const { error } = await supabase
+      // First, try to update existing profile
+      const { error: updateError } = await supabase
         .from('profiles')
         .update({ 
           current_business_id: businessId,
@@ -338,8 +388,43 @@ export class BusinessService {
         })
         .eq('id', userId);
 
-      if (error) {
-        throw new Error('Error al actualizar el perfil del usuario');
+      if (updateError) {
+        // If update fails because profile doesn't exist, create it
+        if (updateError.code === 'PGRST116' || updateError.message?.includes('no rows')) {
+          console.log('Profile not found, creating new profile with business ID');
+          
+          // Get user info from traditional auth backend
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/me`, {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            const userData = await response.json();
+            
+            // Create profile with business ID
+            const { error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                email: userData.email,
+                fullName: userData.name || userData.email,
+                avatar_url: userData.avatar_url,
+                current_business_id: businessId,
+                created_at: new Date().toISOString()
+              });
+
+            if (createError) {
+              throw new Error('Error al crear el perfil del usuario');
+            }
+          } else {
+            throw new Error('Error al obtener información del usuario');
+          }
+        } else {
+          throw new Error('Error al actualizar el perfil del usuario');
+        }
       }
 
       // ✅ Invalidar la query del usuario para que se actualice inmediatamente
