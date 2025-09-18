@@ -14,6 +14,7 @@ import type { AuthUser } from '../types/auth.ts'
 export interface AccountDeletionRequest {
   reason?: string
   gracePeriodDays?: number
+  immediate?: boolean
 }
 
 export interface AccountDeletionStatus {
@@ -138,9 +139,9 @@ export class AccountDeletionService {
   }
 
   /**
-   * Initiate account deletion with grace period
+   * Initiate account deletion with grace period or immediate deletion
    */
-  static async initiateAccountDeletion(options: AccountDeletionRequest = {}): Promise<DeletionLog> {
+  static async initiateAccountDeletion(options: AccountDeletionRequest = {}): Promise<DeletionLog | { success: boolean; message: string; userId: string; deletionMethod: string; tablesCleaned?: string[] }> {
     if (!supabase) {
       throw new Error('Supabase client not initialized')
     }
@@ -151,6 +152,12 @@ export class AccountDeletionService {
       throw new Error('Usuario no autenticado')
     }
 
+    // If immediate deletion is requested, use the backend endpoint
+    if (options.immediate) {
+      return await this.deleteUserAccountImmediate(options.reason)
+    }
+
+    // Otherwise, use the grace period approach
     const gracePeriodDays = options.gracePeriodDays || this.DEFAULT_GRACE_PERIOD_DAYS
     const gracePeriodEnd = new Date(Date.now() + gracePeriodDays * 24 * 60 * 60 * 1000)
 
@@ -185,6 +192,94 @@ export class AccountDeletionService {
     } catch (error) {
       console.error('Error initiating account deletion:', error)
       throw error
+    }
+  }
+
+  /**
+   * Delete user account immediately using the backend endpoint
+   */
+  static async deleteUserAccountImmediate(reason?: string): Promise<{ success: boolean; message: string; userId: string; deletionMethod: string; tablesCleaned?: string[] }> {
+    try {
+      const response = await fetch('/api/auth/account', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          immediate: true,
+          reason: reason || 'Eliminación inmediata solicitada por el usuario'
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error eliminando cuenta')
+      }
+
+      // Force logout after successful deletion
+      await this.forceLogout('Account deleted immediately')
+
+      return {
+        success: true,
+        message: result.message,
+        userId: result.userId,
+        deletionMethod: result.deletionMethod,
+        tablesCleaned: result.tablesCleaned
+      }
+
+    } catch (error) {
+      console.error('Error in immediate account deletion:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Delete user account using the SQL function (alternative approach)
+   */
+  static async deleteUserAccountWithFunction(userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      const { error } = await supabase.rpc('delete_user_completely', {
+        user_uuid: userId
+      })
+      
+      if (error) {
+        console.error('Error eliminando cuenta:', error)
+        return { success: false, error: error.message }
+      }
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Error:', error)
+      return { success: false, error: 'Error inesperado' }
+    }
+  }
+
+  /**
+   * Delete user account using trigger (simplest approach)
+   */
+  static async deleteUserAccountWithTrigger(userId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      // The trigger handles everything automatically
+      const { error } = await supabase.auth.admin.deleteUser(userId)
+      
+      if (error) {
+        console.error('Error eliminando usuario:', error)
+        return { success: false, error: error.message }
+      }
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Error:', error)
+      return { success: false, error: 'Error inesperado' }
     }
   }
 
@@ -363,6 +458,67 @@ export class AccountDeletionService {
   private static stopDeletionMonitoring(): void {
     // This would be called by the monitoring function
     // Implementation depends on how you want to manage the interval
+  }
+
+  /**
+   * Delete business completely
+   */
+  static async deleteBusiness(businessId: string, reason?: string): Promise<{ success: boolean; message: string; businessId: string; deletionMethod: string; tablesCleaned?: string[] }> {
+    try {
+      const response = await fetch(`/api/auth/business/${businessId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          immediate: true,
+          reason: reason || 'Eliminación de negocio solicitada por el usuario'
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error eliminando negocio')
+      }
+
+      return {
+        success: true,
+        message: result.message,
+        businessId: result.businessId,
+        deletionMethod: result.deletionMethod,
+        tablesCleaned: result.tablesCleaned
+      }
+
+    } catch (error) {
+      console.error('Error in business deletion:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Delete business using SQL function (alternative approach)
+   */
+  static async deleteBusinessWithFunction(businessId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      const { error } = await supabase.rpc('delete_business_completely', {
+        business_uuid: businessId
+      })
+      
+      if (error) {
+        console.error('Error eliminando negocio:', error)
+        return { success: false, error: error.message }
+      }
+      
+      return { success: true }
+    } catch (error) {
+      console.error('Error:', error)
+      return { success: false, error: 'Error inesperado' }
+    }
   }
 
   /**
