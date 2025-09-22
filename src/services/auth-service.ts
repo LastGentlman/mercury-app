@@ -249,7 +249,7 @@ export class AuthService {
                   .insert({
                     id: oauthUser.id,
                     email: oauthUser.email,
-                    name: oauthUser.name,
+                    fullName: oauthUser.name,
                     avatar_url: oauthUser.avatar_url,
                     created_at: new Date().toISOString()
                   })

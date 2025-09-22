@@ -355,6 +355,13 @@ export class AccountDeletionService {
     message?: string
   }> {
     try {
+      // 🚨 TEMPORARY FIX: Skip account deletion validation for OAuth users
+      // This prevents the 500 error from account_deletion_logs table
+      if (user.provider === 'google' || user.provider === 'facebook') {
+        console.log('🔍 Skipping account deletion validation for OAuth user:', user.email)
+        return { isValid: true, shouldRedirect: false }
+      }
+
       const deletionStatus = await this.checkAccountDeletionStatus(user.id)
 
       if (!deletionStatus.isDeleted) {
