@@ -24,6 +24,8 @@ export interface AccountDeletionStatus {
   gracePeriodEnd?: Date
   daysRemaining?: number
   canCancel: boolean
+  canRecover: boolean
+  recoveryAvailable: boolean
 }
 
 export interface DeletionLog {
@@ -39,9 +41,25 @@ export interface DeletionLog {
   cancelled_at?: string
 }
 
+export interface AccountRecoveryRequest {
+  email: string
+  reason: string
+  businessName?: string
+  phoneNumber?: string
+}
+
+export interface AccountRecoveryStatus {
+  canRecover: boolean
+  recoveryAvailable: boolean
+  daysSinceDeletion: number
+  recoveryDeadline?: Date
+  message: string
+}
+
 export class AccountDeletionService {
   private static readonly DEFAULT_GRACE_PERIOD_DAYS = 90
   private static readonly DELETION_CHECK_INTERVAL = 30000 // 30 seconds
+  private static readonly RECOVERY_PERIOD_DAYS = 30 // 30 days to recover after deletion
 
   /**
    * Check if user account is marked for deletion
@@ -67,7 +85,9 @@ export class AccountDeletionService {
       return {
         isDeleted: false,
         isInGracePeriod: false,
-        canCancel: false
+        canCancel: false,
+        canRecover: false,
+        recoveryAvailable: false
       }
     }
   }
@@ -87,7 +107,9 @@ export class AccountDeletionService {
       return {
         isDeleted: false,
         isInGracePeriod: false,
-        canCancel: false
+        canCancel: false,
+        canRecover: false,
+        recoveryAvailable: false
       }
     }
 
@@ -106,11 +128,14 @@ export class AccountDeletionService {
         .single()
 
       if (logError || !deletionLog) {
-        // Account is marked as deleted but no log found - immediate deletion
+        // Account is marked as deleted but no log found - check if recovery is possible
+        const recoveryStatus = await this.checkRecoveryAvailability(userId)
         return {
           isDeleted: true,
           isInGracePeriod: false,
-          canCancel: false
+          canCancel: false,
+          canRecover: recoveryStatus.canRecover,
+          recoveryAvailable: recoveryStatus.recoveryAvailable
         }
       }
 
@@ -121,20 +146,26 @@ export class AccountDeletionService {
         ? Math.ceil((gracePeriodEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         : 0
 
+      const recoveryStatus = await this.checkRecoveryAvailability(userId)
+      
       return {
         isDeleted: true,
         isInGracePeriod,
         deletionLogId: deletionLog.id,
         gracePeriodEnd,
         daysRemaining,
-        canCancel: isInGracePeriod
+        canCancel: isInGracePeriod,
+        canRecover: recoveryStatus.canRecover,
+        recoveryAvailable: recoveryStatus.recoveryAvailable
       }
     }
 
     return {
       isDeleted: false,
       isInGracePeriod: false,
-      canCancel: false
+      canCancel: false,
+      canRecover: false,
+      recoveryAvailable: false
     }
   }
 
@@ -381,11 +412,22 @@ export class AccountDeletionService {
         if (supabase) {
           await supabase.auth.signOut()
         }
-        return {
-          isValid: false,
-          shouldRedirect: true,
-          redirectPath: '/auth?message=account-deleted',
-          message: 'Tu cuenta ha sido eliminada. Contacta soporte@pedidolist.com si crees que esto es un error.'
+        
+        // Check if recovery is available
+        if (deletionStatus.canRecover && deletionStatus.recoveryAvailable) {
+          return {
+            isValid: false,
+            shouldRedirect: true,
+            redirectPath: '/account-recovery?deleted=true',
+            message: 'Tu cuenta ha sido eliminada, pero puedes solicitar su recuperación.'
+          }
+        } else {
+          return {
+            isValid: false,
+            shouldRedirect: true,
+            redirectPath: '/auth?message=account-deleted&recovery=unavailable',
+            message: 'Tu cuenta ha sido eliminada. Puedes crear una nueva cuenta o contactar soporte@pedidolist.com si crees que esto es un error.'
+          }
         }
       }
 
@@ -549,6 +591,181 @@ export class AccountDeletionService {
       return `${hours} horas y ${minutes} minutos`
     } else {
       return `${minutes} minutos`
+    }
+  }
+
+  /**
+   * Check if account recovery is available for a deleted account
+   */
+  static async checkRecoveryAvailability(userId: string): Promise<AccountRecoveryStatus> {
+    try {
+      if (!supabase) {
+        throw new Error('Supabase client not initialized')
+      }
+
+      // Get the most recent deletion log
+      const { data: deletionLog, error } = await supabase
+        .from('account_deletion_logs')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('status', 'completed')
+        .order('completed_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (error || !deletionLog) {
+        return {
+          canRecover: false,
+          recoveryAvailable: false,
+          daysSinceDeletion: 0,
+          message: 'No se encontró registro de eliminación'
+        }
+      }
+
+      const deletionDate = new Date(deletionLog.completed_at || deletionLog.created_at)
+      const now = new Date()
+      const daysSinceDeletion = Math.floor((now.getTime() - deletionDate.getTime()) / (1000 * 60 * 60 * 24))
+      const recoveryDeadline = new Date(deletionDate.getTime() + this.RECOVERY_PERIOD_DAYS * 24 * 60 * 60 * 1000)
+      const canRecover = daysSinceDeletion <= this.RECOVERY_PERIOD_DAYS
+
+      return {
+        canRecover,
+        recoveryAvailable: canRecover,
+        daysSinceDeletion,
+        recoveryDeadline,
+        message: canRecover 
+          ? `Puedes solicitar la recuperación de tu cuenta. Tienes ${this.RECOVERY_PERIOD_DAYS - daysSinceDeletion} días restantes.`
+          : `El período de recuperación ha expirado. Han pasado ${daysSinceDeletion} días desde la eliminación.`
+      }
+
+    } catch (error) {
+      console.error('Error checking recovery availability:', error)
+      return {
+        canRecover: false,
+        recoveryAvailable: false,
+        daysSinceDeletion: 0,
+        message: 'Error verificando disponibilidad de recuperación'
+      }
+    }
+  }
+
+  /**
+   * Request account recovery
+   */
+  static async requestAccountRecovery(request: AccountRecoveryRequest): Promise<{
+    success: boolean
+    message: string
+    recoveryId?: string
+  }> {
+    try {
+      const response = await fetch('/api/auth/account-recovery', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request)
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error solicitando recuperación de cuenta')
+      }
+
+      return {
+        success: true,
+        message: result.message,
+        recoveryId: result.recoveryId
+      }
+
+    } catch (error) {
+      console.error('Error requesting account recovery:', error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error inesperado'
+      }
+    }
+  }
+
+  /**
+   * Check recovery request status
+   */
+  static async checkRecoveryRequestStatus(email: string): Promise<{
+    hasPendingRequest: boolean
+    requestId?: string
+    status?: 'pending' | 'approved' | 'rejected'
+    message?: string
+  }> {
+    try {
+      const response = await fetch(`/api/auth/account-recovery/status?email=${encodeURIComponent(email)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error verificando estado de recuperación')
+      }
+
+      return {
+        hasPendingRequest: result.hasPendingRequest,
+        requestId: result.requestId,
+        status: result.status,
+        message: result.message
+      }
+
+    } catch (error) {
+      console.error('Error checking recovery request status:', error)
+      return {
+        hasPendingRequest: false,
+        message: error instanceof Error ? error.message : 'Error inesperado'
+      }
+    }
+  }
+
+  /**
+   * Create new account for deleted user
+   */
+  static async createNewAccountForDeletedUser(email: string, password: string, businessName?: string): Promise<{
+    success: boolean
+    message: string
+    userId?: string
+  }> {
+    try {
+      const response = await fetch('/api/auth/account-recovery/new-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          businessName,
+          isRecoveryAccount: true
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Error creando nueva cuenta')
+      }
+
+      return {
+        success: true,
+        message: result.message,
+        userId: result.userId
+      }
+
+    } catch (error) {
+      console.error('Error creating new account for deleted user:', error)
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Error inesperado'
+      }
     }
   }
 }

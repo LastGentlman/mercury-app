@@ -18,6 +18,7 @@ import { Route as DesignSystemRouteImport } from './routes/design-system'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ClientsRouteImport } from './routes/clients'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AccountRecoveryRouteImport } from './routes/account-recovery'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 
@@ -66,6 +67,11 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AccountRecoveryRoute = AccountRecoveryRouteImport.update({
+  id: '/account-recovery',
+  path: '/account-recovery',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -79,6 +85,7 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account-recovery': typeof AccountRecoveryRoute
   '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account-recovery': typeof AccountRecoveryRoute
   '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
@@ -106,6 +114,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account-recovery': typeof AccountRecoveryRoute
   '/auth': typeof AuthRouteWithChildren
   '/clients': typeof ClientsRoute
   '/dashboard': typeof DashboardRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/account-recovery'
     | '/auth'
     | '/clients'
     | '/dashboard'
@@ -134,6 +144,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/account-recovery'
     | '/auth'
     | '/clients'
     | '/dashboard'
@@ -147,6 +158,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/account-recovery'
     | '/auth'
     | '/clients'
     | '/dashboard'
@@ -161,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRecoveryRoute: typeof AccountRecoveryRoute
   AuthRoute: typeof AuthRouteWithChildren
   ClientsRoute: typeof ClientsRoute
   DashboardRoute: typeof DashboardRoute
@@ -237,6 +250,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/account-recovery': {
+      id: '/account-recovery'
+      path: '/account-recovery'
+      fullPath: '/account-recovery'
+      preLoaderRoute: typeof AccountRecoveryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -266,6 +286,7 @@ const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRecoveryRoute: AccountRecoveryRoute,
   AuthRoute: AuthRouteWithChildren,
   ClientsRoute: ClientsRoute,
   DashboardRoute: DashboardRoute,

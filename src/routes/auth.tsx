@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useAuthRedirect } from '../hooks/useAuthRedirect.ts'
@@ -12,7 +12,7 @@ import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { AuthDiagnostic } from '../components/AuthDiagnostic.tsx'
 import { BetaBanner } from '../components/BetaBanner.tsx'
-import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Mail, Lock, User, RotateCcw } from 'lucide-react'
 import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
 import { AUTH_CONSTANTS } from '../utils/authConstants.ts'
 import { authLogger } from '../utils/authLogger.ts'
@@ -50,6 +50,7 @@ function isOAuthCallback(): boolean {
 }
 
 function RouteComponent() {
+  const navigate = useNavigate()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -67,6 +68,30 @@ function RouteComponent() {
   const [debugMode, setDebugMode] = useState(false)
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading, user } = useAuth()
+  
+  // Handle URL parameters for account deletion messages
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const message = urlParams.get('message')
+    const recovery = urlParams.get('recovery')
+    
+    if (message === 'account-deleted') {
+      if (recovery === 'unavailable') {
+        showWarning(
+          'Cuenta Eliminada', 
+          'Tu cuenta ha sido eliminada. Puedes crear una nueva cuenta o contactar soporte@pedidolist.com si crees que esto es un error.'
+        )
+      } else {
+        showWarning(
+          'Cuenta Eliminada', 
+          'Tu cuenta ha sido eliminada. Contacta soporte@pedidolist.com si crees que esto es un error.'
+        )
+      }
+      
+      // Clean URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname)
+    }
+  }, [])
   
   // Use the new clean redirect hook
   const { shouldRedirect } = useAuthRedirect({
@@ -695,7 +720,7 @@ function RouteComponent() {
             </Tabs>
 
             {/* Footer */}
-            <div className="text-center text-sm text-gray-600">
+            <div className="text-center text-sm text-gray-600 space-y-2">
               {isLogin ? (
                 <p>
                   ¿No tienes cuenta?{' '}
@@ -719,6 +744,18 @@ function RouteComponent() {
                   </button>
                 </p>
               )}
+              
+              {/* Account Recovery Link */}
+              <div className="pt-2 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => navigate({ to: '/account-recovery' as any })}
+                  className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  ¿Tu cuenta fue eliminada? Solicita recuperación
+                </button>
+              </div>
             </div>
               </>
             )}

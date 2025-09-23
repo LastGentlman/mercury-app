@@ -18,6 +18,8 @@ export interface AccountValidationResult {
     isInGracePeriod: boolean
     daysRemaining?: number
     canCancel: boolean
+    canRecover: boolean
+    recoveryAvailable: boolean
   }
 }
 
@@ -84,12 +86,23 @@ export class AccountValidationMiddleware {
         }
       } else {
         // Grace period expired or account already deleted
-        return {
-          isValid: false,
-          shouldRedirect: true,
-          redirectPath: '/auth?message=account-deleted&contact=soporte@pedidolist.com',
-          message: 'Tu cuenta ha sido eliminada. Contacta soporte@pedidolist.com si crees que esto es un error.',
-          deletionStatus
+        // Check if recovery is available
+        if (deletionStatus.canRecover && deletionStatus.recoveryAvailable) {
+          return {
+            isValid: false,
+            shouldRedirect: true,
+            redirectPath: '/account-recovery?deleted=true',
+            message: 'Tu cuenta ha sido eliminada, pero puedes solicitar su recuperación.',
+            deletionStatus
+          }
+        } else {
+          return {
+            isValid: false,
+            shouldRedirect: true,
+            redirectPath: '/auth?message=account-deleted&recovery=unavailable',
+            message: 'Tu cuenta ha sido eliminada. Puedes crear una nueva cuenta o contactar soporte@pedidolist.com si crees que esto es un error.',
+            deletionStatus
+          }
         }
       }
 
