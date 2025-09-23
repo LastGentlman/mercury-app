@@ -391,7 +391,7 @@ export class AccountDeletionService {
         console.log('🔍 Validating OAuth user account status:', user.email)
         
         // For OAuth users, check metadata first (simpler and more reliable)
-        const isDeletedInMetadata = user.user_metadata?.account_deleted === true ||
+        const isDeletedInMetadata = (user as any).user_metadata?.account_deleted === true ||
                                    (user as any).raw_user_meta_data?.account_deleted === true
         
         if (isDeletedInMetadata) {
