@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useSearch, useNavigate } from '@tanstack/react-router'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import { AccountDeletionService, type AccountRecoveryRequest } from '@/services/
 type RecoveryStep = 'check' | 'request' | 'status' | 'new-account' | 'success'
 
 export default function AccountRecovery() {
-  const [searchParams] = useSearchParams()
+  const search = useSearch({ from: '/account-recovery' }) as { deleted?: string; 'deletion-id'?: string }
   const navigate = useNavigate()
   const [step, setStep] = useState<RecoveryStep>('check')
   const [loading, setLoading] = useState(false)
@@ -31,11 +31,9 @@ export default function AccountRecovery() {
   
   // Recovery status
   const [recoveryStatus, setRecoveryStatus] = useState<any>(null)
-  const [canRecover, setCanRecover] = useState(false)
-  const [hasPendingRequest, setHasPendingRequest] = useState(false)
 
-  const isDeleted = searchParams.get('deleted') === 'true'
-  const deletionId = searchParams.get('deletion-id')
+  const isDeleted = search.deleted === 'true'
+  const deletionId = search['deletion-id']
 
   useEffect(() => {
     if (isDeleted) {
@@ -58,7 +56,6 @@ export default function AccountRecovery() {
       // Check if recovery is available
       const status = await AccountDeletionService.checkRecoveryRequestStatus(email)
       setRecoveryStatus(status)
-      setHasPendingRequest(status.hasPendingRequest)
 
       if (status.hasPendingRequest) {
         setStep('status')
@@ -86,8 +83,8 @@ export default function AccountRecovery() {
       const request: AccountRecoveryRequest = {
         email: email.trim(),
         reason: reason.trim(),
-        businessName: businessName.trim() || undefined,
-        phoneNumber: phoneNumber.trim() || undefined
+        ...(businessName.trim() && { businessName: businessName.trim() }),
+        ...(phoneNumber.trim() && { phoneNumber: phoneNumber.trim() })
       }
 
       const result = await AccountDeletionService.requestAccountRecovery(request)
@@ -456,7 +453,7 @@ export default function AccountRecovery() {
         </Alert>
 
         <Button 
-          onClick={() => navigate('/auth')}
+          onClick={() => navigate({ to: '/auth' })}
           className="w-full"
         >
           Ir a Iniciar Sesión
