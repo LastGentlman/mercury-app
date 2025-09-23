@@ -9,6 +9,7 @@
  */
 
 import { supabase } from '../utils/supabase.ts'
+import { OAuthCleanup } from '../utils/oauth-cleanup.ts'
 import type { AuthUser } from '../types/auth.ts'
 
 export interface AccountDeletionRequest {
@@ -250,6 +251,9 @@ export class AccountDeletionService {
 
       // Force logout after successful deletion
       await this.forceLogout('Account deleted immediately')
+      
+      // Use aggressive OAuth cleanup to prevent auto-login
+      await OAuthCleanup.completeCleanupAndRedirect()
 
       return {
         success: true,
@@ -462,16 +466,37 @@ export class AccountDeletionService {
         throw new Error('Supabase client not initialized')
       }
       
+      console.log(`🚪 Starting force logout: ${reason}`)
+      
       // Clear all local storage
       localStorage.clear()
       sessionStorage.clear()
       
-      // Clear Supabase session
-      await supabase.auth.signOut()
-      
       // Clear any cached data
       if (typeof window !== 'undefined' && (window as any).queryClient) {
         (window as any).queryClient.clear()
+      }
+
+      // For OAuth users, we need to be more aggressive with session cleanup
+      try {
+        // Multiple signOut attempts to ensure OAuth session is cleared
+        await supabase.auth.signOut()
+        await new Promise(resolve => setTimeout(resolve, 100))
+        await supabase.auth.signOut()
+        await new Promise(resolve => setTimeout(resolve, 100))
+        await supabase.auth.signOut()
+        
+        console.log('✅ Multiple signOut attempts completed')
+      } catch (signOutError) {
+        console.error('Error during signOut:', signOutError)
+      }
+
+      // Clear any remaining auth state
+      if (typeof window !== 'undefined') {
+        // Clear any remaining cookies or storage
+        document.cookie.split(";").forEach(function(c) { 
+          document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+        });
       }
 
       console.log(`✅ Force logout completed: ${reason}`)
