@@ -386,10 +386,25 @@ export class AccountDeletionService {
     message?: string
   }> {
     try {
-      // 🚨 TEMPORARY FIX: Skip account deletion validation for OAuth users
-      // This prevents the 500 error from account_deletion_logs table
+      // ✅ IMPROVED: Handle OAuth users with proper validation
       if (user.provider === 'google' || user.provider === 'facebook') {
-        console.log('🔍 Skipping account deletion validation for OAuth user:', user.email)
+        console.log('🔍 Validating OAuth user account status:', user.email)
+        
+        // For OAuth users, check metadata first (simpler and more reliable)
+        const isDeletedInMetadata = user.user_metadata?.account_deleted === true ||
+                                   (user as any).raw_user_meta_data?.account_deleted === true
+        
+        if (isDeletedInMetadata) {
+          console.log('⚠️ OAuth user marked as deleted in metadata:', user.email)
+          return {
+            isValid: false,
+            shouldRedirect: true,
+            redirectPath: '/auth?message=account-deleted&recovery=unavailable',
+            message: 'Tu cuenta ha sido eliminada. Puedes crear una nueva cuenta o contactar soporte@pedidolist.com si crees que esto es un error.'
+          }
+        }
+        
+        // OAuth user is valid
         return { isValid: true, shouldRedirect: false }
       }
 

@@ -48,7 +48,7 @@ export class AccountValidationMiddleware {
       return { isValid: true, shouldRedirect: false }
     }
 
-    // 🚨 EMERGENCY FIX: Add additional path exclusions to prevent loops
+    // ✅ IMPROVED: Better path exclusions and OAuth user handling
     const additionalExcludedPaths = [
       '/dashboard',
       '/products',
@@ -60,6 +60,34 @@ export class AccountValidationMiddleware {
     if (additionalExcludedPaths.some(path => currentPath.startsWith(path))) {
       console.log('🔍 Skipping account validation for protected route:', currentPath)
       return { isValid: true, shouldRedirect: false }
+    }
+
+    // ✅ IMPROVED: Handle OAuth users more gracefully
+    if (user.provider === 'google' || user.provider === 'facebook') {
+      console.log('🔍 OAuth user detected, using simplified validation:', user.email)
+      // For OAuth users, only check if they're explicitly marked as deleted
+      // Skip complex deletion log checks that might cause issues
+      try {
+        const isDeletedInMetadata = user.user_metadata?.account_deleted === true ||
+                                   (user as any).raw_user_meta_data?.account_deleted === true
+        
+        if (isDeletedInMetadata) {
+          console.log('⚠️ OAuth user marked as deleted in metadata:', user.email)
+          return {
+            isValid: false,
+            shouldRedirect: true,
+            redirectPath: '/auth?message=account-deleted&recovery=unavailable',
+            message: 'Tu cuenta ha sido eliminada. Puedes crear una nueva cuenta o contactar soporte@pedidolist.com si crees que esto es un error.'
+          }
+        }
+        
+        // OAuth user is valid
+        return { isValid: true, shouldRedirect: false }
+      } catch (error) {
+        console.error('Error validating OAuth user:', error)
+        // On error, allow OAuth users to proceed
+        return { isValid: true, shouldRedirect: false }
+      }
     }
 
     try {

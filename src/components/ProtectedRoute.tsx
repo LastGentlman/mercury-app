@@ -16,19 +16,16 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { validateAccount, handleValidationResult } = useAccountValidation()
   const [isValidatingAccount, setIsValidatingAccount] = useState(false)
 
-  // ✅ Account validation effect - DISABLED TEMPORARILY TO PREVENT LOOPS
+  // ✅ Account validation effect - RE-ENABLED WITH IMPROVED ERROR HANDLING
   useEffect(() => {
     const validateUserAccount = async () => {
-      // 🚨 EMERGENCY FIX: Skip account validation for now to prevent infinite loops
-      // This will be re-enabled after fixing the underlying validation conflicts
-      console.log('🔍 Account validation temporarily disabled to prevent infinite loops')
-      return
-      
       if (!isLoading && isAuthenticated && user && !isValidatingAccount) {
         setIsValidatingAccount(true)
         
         try {
           const currentPath = globalThis.location?.pathname || '/'
+          console.log('🔍 Starting account validation for:', { userId: user.id, path: currentPath })
+          
           const validationResult = await validateAccount(user, currentPath)
           
           console.log('🔍 Account validation result:', validationResult)
@@ -48,6 +45,8 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           }
         } catch (error) {
           console.error('Error validating account:', error)
+          // On error, allow access but log the issue - this prevents blocking users
+          console.log('⚠️ Account validation failed, allowing access to prevent blocking user')
         } finally {
           setIsValidatingAccount(false)
         }
