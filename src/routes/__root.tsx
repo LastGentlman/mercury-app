@@ -9,6 +9,7 @@ import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
 import { AutoConnectionBanner, ConnectionBannerDemo } from '../components/ConnectionBanner.tsx'
 import { MobileScrollDebugger } from '../components/MobileScrollDebugger.tsx'
 import { RedirectDebugger } from '../components/RedirectDebugger.tsx'
+import { ThemeProvider } from '../contexts/ThemeContext.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
 import { useGlobalMobileScroll } from '../hooks/useGlobalMobileScroll.ts'
@@ -28,13 +29,13 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     const isAuthCallback = globalThis.location?.pathname === '/auth/callback'
     
     return (
-      <>
+      <ThemeProvider defaultTheme="system" storageKey="pedidolist-theme">
         {!isAuthCallback && <Header />}
 
         {/* ✅ Offline Authentication Banner - placed below header height */}
         {!isAuthCallback && <AutoConnectionBanner className="sticky top-[64px] z-40" />}
 
-        <main className="min-h-screen">
+        <main className="min-h-screen bg-background text-foreground">
           <Outlet />
         </main>
 
@@ -48,7 +49,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         {import.meta.env.DEV && !isAuthCallback && <ConnectionBannerDemo />}
         {import.meta.env.DEV && !isAuthCallback && <MobileScrollDebugger />}
         {import.meta.env.DEV && <RedirectDebugger />}
-      </>
+      </ThemeProvider>
     )
   },
 })

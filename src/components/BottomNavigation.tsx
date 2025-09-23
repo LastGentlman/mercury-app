@@ -21,8 +21,8 @@ function BottomNavItem({ href, icon, label, isActive }: BottomNavItemProps) {
       to={href}
       className={`flex flex-col items-center min-w-[60px] px-1 py-2 transition-all duration-300 ${
         isActive 
-          ? 'text-blue-600' 
-          : 'text-gray-500 hover:text-blue-600'
+          ? 'text-blue-600 dark:text-blue-400' 
+          : 'text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400'
       }`}
     >
       <div className="w-6 h-6 mb-1">
@@ -91,7 +91,7 @@ export default function BottomNavigation() {
   return (
     <>
       {/* Bottom Navigation - Mobile Only */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-40 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 md:hidden z-40 shadow-lg">
         <div 
           className="flex justify-around items-end px-2 py-3"
           style={{ paddingBottom: `calc(0.75rem + env(safe-area-inset-bottom))` }}

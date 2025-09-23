@@ -32,7 +32,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 bg-white/80 backdrop-blur-sm border-b border-gray-100 z-50 transition-all duration-300">
+      <header className="sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-100 dark:border-gray-800 z-50 transition-all duration-300">
         <div className="w-full px-6 py-4">
           {/* Mobile Layout: Flex with space-between */}
           <div className="flex items-center justify-between md:hidden">
@@ -40,7 +40,7 @@ export default function Header() {
             <div className="text-2xl font-bold tracking-tight">
               <Link 
                 to="/" 
-                className="text-gray-900 hover:text-gray-700 transition-colors duration-300"
+                className="text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-300"
               >
                 PedidoList
               </Link>
@@ -78,7 +78,7 @@ export default function Header() {
             <div className="text-2xl font-bold tracking-tight justify-self-start">
               <Link
                 to="/"
-                className="text-gray-900 hover:text-gray-700 transition-colors duration-300"
+                className="text-gray-900 dark:text-white hover:text-gray-700 dark:hover:text-gray-300 transition-colors duration-300"
               >
                 PedidoList
               </Link>
@@ -90,34 +90,34 @@ export default function Header() {
                 <div className="flex items-center space-x-8">
                   <Link
                     to="/dashboard"
-                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                    className="font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 py-2 relative group"
                   >
                     Dashboard
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 dark:bg-white transition-all duration-300 group-hover:w-full"></span>
                   </Link>
 
                   <Link
                     to="/clients"
-                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                    className="font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 py-2 relative group"
                   >
                     Clientes
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 dark:bg-white transition-all duration-300 group-hover:w-full"></span>
                   </Link>
 
                   <Link
                     to="/products"
-                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                    className="font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 py-2 relative group"
                   >
                     Productos
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 dark:bg-white transition-all duration-300 group-hover:w-full"></span>
                   </Link>
 
                   <Link
                     to="/profile"
-                    className="font-medium text-gray-600 hover:text-gray-900 transition-colors duration-300 py-2 relative group"
+                    className="font-medium text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors duration-300 py-2 relative group"
                   >
                     Perfil
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 transition-all duration-300 group-hover:w-full"></span>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-gray-900 dark:bg-white transition-all duration-300 group-hover:w-full"></span>
                   </Link>
                 </div>
               )}
@@ -132,7 +132,7 @@ export default function Header() {
                 </div>
               ) : isAuthenticated ? (
                 <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                     <User className="h-4 w-4" />
                     <span className="hidden lg:inline">{user?.name || user?.email}</span>
                   </div>

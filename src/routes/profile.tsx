@@ -46,6 +46,7 @@ import { UserAvatar } from '../components/UserAvatar.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { AuthService } from '../services/auth-service.ts'
 import BackupService from '../services/backup-service.ts'
+import { useTheme } from '../contexts/ThemeContext.tsx'
 import { 
   Button, 
   Input, 
@@ -155,9 +156,12 @@ function ProfilePage() {
     confirm: false
   })
 
-  // Settings state
-  const [settings, _setSettings] = useState({
-    darkMode: false,
+  // Theme context
+  const { actualTheme, setTheme } = useTheme()
+
+  // Settings state (keeping for future use)
+  const [_settings, _setSettings] = useState({
+    darkMode: actualTheme === 'dark',
     language: 'es'
   })
 
@@ -733,24 +737,23 @@ function ProfilePage() {
           <div className="space-y-6">
             {/* General Settings Section */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center gap-2">
                 <Settings className="h-4 w-4" />
                 Configuración General
               </h3>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <Palette className="h-4 w-4 text-gray-500" />
+                    <Palette className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                     <div>
-                      <div className="text-sm font-medium">Modo oscuro</div>
-                      <div className="text-xs text-gray-500">Cambiar tema de la aplicación</div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">Modo oscuro</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Cambiar tema de la aplicación</div>
                     </div>
                   </div>
                   <Switch
-                    checked={settings.darkMode}
-                    onCheckedChange={(_checked) => {
-                      showInfo('Feature en desarrollo', 'El modo oscuro estará disponible próximamente. ¡Mantente atento a las actualizaciones!')
-                      // No cambiar el estado para mantener la UI consistente
+                    checked={actualTheme === 'dark'}
+                    onCheckedChange={(checked) => {
+                      setTheme(checked ? 'dark' : 'light')
                     }}
                   />
                 </div>
