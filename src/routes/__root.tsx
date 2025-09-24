@@ -29,7 +29,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     const isAuthCallback = globalThis.location?.pathname === '/auth/callback'
     
     return (
-      <ThemeProvider defaultTheme="system" storageKey="pedidolist-theme">
+      <ThemeProvider defaultTheme="light" storageKey="pedidolist-theme">
         {!isAuthCallback && <Header />}
 
         {/* ✅ Offline Authentication Banner - placed below header height */}
