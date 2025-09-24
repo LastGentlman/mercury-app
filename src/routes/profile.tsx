@@ -535,13 +535,13 @@ function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-vscode-editor transition-colors duration-200">
 
 
-      <div className="max-w-md mx-auto bg-white min-h-screen">
+      <div className="max-w-md mx-auto bg-white dark:bg-vscode-sidebar min-h-screen transition-colors duration-200">
 
         {/* Profile Section */}
-        <div className="p-6 text-center border-b border-gray-100">
+        <div className="p-6 text-center border-b border-gray-100 dark:border-vscode-border transition-colors duration-200">
           <div className="relative inline-block mb-4">
             <UserAvatar
               user={user}

@@ -19,9 +19,11 @@ import {
   Search,
   Trash2,
   TrendingUp,
-  User
+  User,
+  Palette
 } from 'lucide-react'
 import { Alert, Badge, Button, Card, Input, Skeleton } from '../components/ui/index.ts'
+import { ThemeToggle } from '../components/ThemeToggle.tsx'
 
 // Status Badge Component for order states
 const StatusBadge = ({ status, size = 'md' }: { status: string; size?: 'sm' | 'md' }) => {
@@ -370,29 +372,106 @@ function DesignSystemPage() {
         </div>
       </section>
       
+      {/* VS Code Theme Showcase */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
+          <Palette className="h-6 w-6" />
+          VS Code Theme Showcase
+        </h2>
+        <div className="bg-white dark:bg-vscode-sidebar rounded-lg p-6 border border-gray-200 dark:border-vscode-border transition-colors duration-200">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                Theme Toggle
+              </h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Switch between Light, Dark, VS Code, and System themes
+              </p>
+            </div>
+            <ThemeToggle />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* VS Code Colors */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">VS Code Color Palette</h4>
+              <div className="space-y-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded bg-vscode-editor border border-gray-300"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Editor Background</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded bg-vscode-sidebar border border-gray-300"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Sidebar Background</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded bg-vscode-panel border border-gray-300"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Panel Background</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-6 h-6 rounded bg-vscode-hover border border-gray-300"></div>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">Hover Background</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Syntax Highlighting */}
+            <div>
+              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">Syntax Highlighting</h4>
+              <div className="bg-vscode-editor p-4 rounded border border-vscode-border">
+                <div className="text-sm font-mono space-y-1">
+                  <div><span className="syntax-keyword">const</span> <span className="syntax-variable">user</span> = <span className="syntax-string">&quot;PedidoList&quot;</span>;</div>
+                  <div><span className="syntax-comment">// VS Code theme colors</span></div>
+                  <div><span className="syntax-function">function</span> <span className="syntax-variable">getTheme</span>() &#123;</div>
+                  <div>  <span className="syntax-keyword">return</span> <span className="syntax-number">42</span>;</div>
+                  <div>&#125;</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* VS Code Components */}
+          <div className="mt-6">
+            <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">VS Code Style Components</h4>
+            <div className="flex flex-wrap gap-3">
+              <Button className="vscode-enhanced">VS Code Button</Button>
+              <Input 
+                placeholder="VS Code Input" 
+                className="vscode-enhanced w-48"
+              />
+              <div className="vscode-enhanced px-3 py-2 rounded text-sm">
+                VS Code Card
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      
       {/* Usage Guidelines */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Guías de Uso</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Guías de Uso</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white rounded-lg p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">✅ Hacer</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+          <div className="bg-white dark:bg-vscode-sidebar rounded-lg p-6 border border-gray-200 dark:border-vscode-border transition-colors duration-200">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">✅ Hacer</h3>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li>• Usar colores consistentes para estados</li>
               <li>• Mantener espaciado uniforme</li>
               <li>• Usar iconos de la misma familia (Lucide)</li>
               <li>• Seguir jerarquía tipográfica</li>
               <li>• Añadir transiciones suaves</li>
+              <li>• Usar el tema VS Code para mejor experiencia</li>
             </ul>
           </div>
           
-          <div className="bg-white rounded-lg p-6 border border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">❌ No hacer</h3>
-            <ul className="space-y-2 text-sm text-gray-600">
+          <div className="bg-white dark:bg-vscode-sidebar rounded-lg p-6 border border-gray-200 dark:border-vscode-border transition-colors duration-200">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">❌ No hacer</h3>
+            <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
               <li>• Mezclar familias de iconos</li>
               <li>• Usar colores arbitrarios</li>
               <li>• Crear variantes no documentadas</li>
               <li>• Ignorar estados de hover/focus</li>
               <li>• Usar espaciado inconsistente</li>
+              <li>• Ignorar el soporte para modo oscuro</li>
             </ul>
           </div>
         </div>

@@ -93,25 +93,43 @@
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 84% 4.9%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 94.1%;
+    /* VS Code Dark Theme Inspired Colors */
+    --background: 210 11% 15%; /* #1e1e1e - VS Code editor background */
+    --foreground: 0 0% 85%; /* #d4d4d4 - VS Code editor foreground */
+    --card: 210 11% 18%; /* #252526 - VS Code sidebar background */
+    --card-foreground: 0 0% 85%; /* #d4d4d4 - VS Code text */
+    --popover: 210 11% 18%; /* #252526 - VS Code popup background */
+    --popover-foreground: 0 0% 85%; /* #d4d4d4 - VS Code popup text */
+    --primary: 199 89% 48%; /* #007acc - VS Code blue accent */
+    --primary-foreground: 0 0% 100%; /* #ffffff - White text on blue */
+    --secondary: 210 11% 22%; /* #2d2d30 - VS Code secondary background */
+    --secondary-foreground: 0 0% 85%; /* #d4d4d4 - VS Code secondary text */
+    --muted: 210 11% 20%; /* #2a2d2e - VS Code muted background */
+    --muted-foreground: 0 0% 60%; /* #969696 - VS Code muted text */
+    --accent: 210 11% 25%; /* #3c3c3c - VS Code accent background */
+    --accent-foreground: 0 0% 85%; /* #d4d4d4 - VS Code accent text */
+    --destructive: 0 84% 60%; /* #f44747 - VS Code error red */
+    --destructive-foreground: 0 0% 100%; /* #ffffff - White text on red */
+    --border: 210 11% 25%; /* #3c3c3c - VS Code border color */
+    --input: 210 11% 20%; /* #2a2d2e - VS Code input background */
+    --ring: 199 89% 48%; /* #007acc - VS Code focus ring */
+    
+    /* VS Code specific colors for enhanced theming */
+    --vscode-editor-bg: 210 11% 15%; /* #1e1e1e */
+    --vscode-sidebar-bg: 210 11% 18%; /* #252526 */
+    --vscode-panel-bg: 210 11% 20%; /* #2a2d2e */
+    --vscode-titlebar-bg: 210 11% 12%; /* #1e1e1e */
+    --vscode-statusbar-bg: 210 11% 10%; /* #007acc */
+    --vscode-tab-bg: 210 11% 18%; /* #252526 */
+    --vscode-tab-active-bg: 210 11% 15%; /* #1e1e1e */
+    --vscode-selection-bg: 199 89% 48%; /* #007acc with opacity */
+    --vscode-hover-bg: 210 11% 25%; /* #3c3c3c */
+    --vscode-button-bg: 210 11% 25%; /* #3c3c3c */
+    --vscode-button-hover-bg: 210 11% 30%; /* #464647 */
+    --vscode-input-bg: 210 11% 20%; /* #2a2d2e */
+    --vscode-dropdown-bg: 210 11% 18%; /* #252526 */
+    --vscode-scrollbar-bg: 210 11% 25%; /* #3c3c3c */
+    --vscode-scrollbar-thumb: 210 11% 40%; /* #6a6a6a */
   }
 
   body {
@@ -263,26 +281,172 @@
     }
   }
 
-  /* 🌃 Dark mode support for auth pages */
-  @media (prefers-color-scheme: dark) {
-    .auth-mobile-bg-dark {
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  /* 🌃 VS Code Dark Theme Support */
+  .dark {
+    /* VS Code-style scrollbars */
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--vscode-scrollbar-thumb)) hsl(var(--vscode-scrollbar-bg));
+  }
+  
+  .dark ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .dark ::-webkit-scrollbar-track {
+    background: hsl(var(--vscode-scrollbar-bg));
+  }
+  
+  .dark ::-webkit-scrollbar-thumb {
+    background: hsl(var(--vscode-scrollbar-thumb));
+    border-radius: 4px;
+  }
+  
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--vscode-scrollbar-thumb) / 0.8);
+  }
+  
+  /* VS Code-style selection */
+  .dark ::selection {
+    background: hsl(var(--vscode-selection-bg) / 0.3);
+  }
+  
+  /* VS Code-style focus states */
+  .dark .vscode-focus:focus {
+    outline: 1px solid hsl(var(--vscode-primary));
+    outline-offset: 2px;
+  }
+  
+  /* VS Code-style buttons */
+  .dark .vscode-button {
+    background: hsl(var(--vscode-button-bg));
+    border: 1px solid hsl(var(--vscode-border));
+    color: hsl(var(--foreground));
+    transition: all 0.2s ease;
+  }
+  
+  .dark .vscode-button:hover {
+    background: hsl(var(--vscode-button-hover-bg));
+  }
+  
+  /* VS Code-style inputs */
+  .dark .vscode-input {
+    background: hsl(var(--vscode-input-bg));
+    border: 1px solid hsl(var(--vscode-border));
+    color: hsl(var(--foreground));
+  }
+  
+  .dark .vscode-input:focus {
+    border-color: hsl(var(--vscode-primary));
+    box-shadow: 0 0 0 1px hsl(var(--vscode-primary));
+  }
+  
+  /* VS Code-style cards */
+  .dark .vscode-card {
+    background: hsl(var(--vscode-sidebar-bg));
+    border: 1px solid hsl(var(--vscode-border));
+  }
+  
+  /* VS Code-style dropdowns */
+  .dark .vscode-dropdown {
+    background: hsl(var(--vscode-dropdown-bg));
+    border: 1px solid hsl(var(--vscode-border));
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* VS Code-style tabs */
+  .dark .vscode-tab {
+    background: hsl(var(--vscode-tab-bg));
+    border-bottom: 1px solid hsl(var(--vscode-border));
+    color: hsl(var(--muted-foreground));
+  }
+  
+  .dark .vscode-tab-active {
+    background: hsl(var(--vscode-tab-active-bg));
+    color: hsl(var(--foreground));
+    border-bottom: 1px solid hsl(var(--vscode-primary));
+  }
+  
+  /* VS Code-style hover effects */
+  .dark .vscode-hover:hover {
+    background: hsl(var(--vscode-hover-bg));
+  }
+  
+  /* VS Code-style auth pages */
+  .dark .auth-mobile-bg-dark {
+      background: linear-gradient(135deg, hsl(var(--vscode-editor-bg)) 0%, hsl(var(--vscode-sidebar-bg)) 50%, hsl(var(--vscode-panel-bg)) 100%);
     }
     
-    .auth-mobile-card-dark {
-      background-color: #1f2937;
-      border-color: #374151;
+    .dark .auth-mobile-card-dark {
+      background-color: hsl(var(--vscode-sidebar-bg));
+      border-color: hsl(var(--vscode-border));
     }
     
-    .auth-mobile-text-dark {
-      color: #e5e7eb;
+    .dark .auth-mobile-text-dark {
+      color: hsl(var(--foreground));
     }
     
-    .auth-mobile-input-dark {
-      background-color: #374151;
-      border-color: #4b5563;
-      color: #ffffff;
+    .dark .auth-mobile-input-dark {
+      background-color: hsl(var(--vscode-input-bg));
+      border-color: hsl(var(--vscode-border));
+      color: hsl(var(--foreground));
     }
+  }
+
+  /* VS Code Theme Specific Enhancements */
+  .vscode-theme {
+    /* Enhanced VS Code styling when vscode theme is active */
+    --primary: 199 89% 48%; /* #007acc - VS Code blue */
+    --primary-foreground: 0 0% 100%;
+    --background: 210 11% 15%; /* #1e1e1e */
+    --foreground: 0 0% 85%; /* #d4d4d4 */
+    --card: 210 11% 18%; /* #252526 */
+    --card-foreground: 0 0% 85%;
+    --border: 210 11% 25%; /* #3c3c3c */
+    --input: 210 11% 20%; /* #2a2d2e */
+    --ring: 199 89% 48%; /* #007acc */
+  }
+
+  .vscode-theme .vscode-enhanced {
+    /* Enhanced VS Code styling for specific components */
+    background: hsl(var(--vscode-sidebar-bg));
+    border: 1px solid hsl(var(--vscode-border));
+    color: hsl(var(--foreground));
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .vscode-theme .vscode-enhanced:hover {
+    background: hsl(var(--vscode-hover-bg));
+  }
+
+  .vscode-theme .vscode-enhanced:focus {
+    outline: 1px solid hsl(var(--vscode-primary));
+    outline-offset: 2px;
+  }
+
+  /* VS Code-style syntax highlighting colors */
+  .vscode-theme .syntax-keyword {
+    color: #569cd6; /* VS Code blue */
+  }
+
+  .vscode-theme .syntax-string {
+    color: #ce9178; /* VS Code orange */
+  }
+
+  .vscode-theme .syntax-comment {
+    color: #6a9955; /* VS Code green */
+  }
+
+  .vscode-theme .syntax-number {
+    color: #b5cea8; /* VS Code light green */
+  }
+
+  .vscode-theme .syntax-function {
+    color: #dcdcaa; /* VS Code yellow */
+  }
+
+  .vscode-theme .syntax-variable {
+    color: #9cdcfe; /* VS Code light blue */
   }
 
   /* 🎯 Mobile-first animations */
