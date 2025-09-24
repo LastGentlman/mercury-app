@@ -1,8 +1,8 @@
 // ===== CLIENT-SIDE PERFORMANCE OPTIMIZATION =====
 // SchemaManager.ts - Implements application-level caching and batching
 
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { env } from '../env.ts';
+import { SupabaseClient } from '@supabase/supabase-js';
+import { supabase } from './supabase.ts';
 
 interface CacheEntry<T> {
   data: T;
@@ -41,30 +41,12 @@ export class OptimizedSchemaManager {
   // };
 
   constructor() {
-    const supabaseUrl = env.VITE_SUPABASE_URL;
-    const supabaseKey = env.VITE_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      throw new Error('Supabase configuration is missing');
+    if (!supabase) {
+      throw new Error('Supabase client is not configured. Please check your environment variables.');
     }
 
-    this.supabase = createClient(supabaseUrl, supabaseKey, {
-      db: {
-        schema: 'public',
-      },
-      global: {
-        headers: { 
-          'x-client-info': 'optimized-schema-manager',
-          'x-connection-pool': 'enabled'
-        },
-      },
-      // Optimize realtime to reduce connection overhead
-      realtime: {
-        params: {
-          eventsPerSecond: 5, // Reduced from default 10
-        },
-      },
-    });
+    // Use the centralized Supabase client instance
+    this.supabase = supabase;
 
     // Set up periodic cache cleanup
     this.setupCacheCleanup();
@@ -385,7 +367,7 @@ export function getSchemaManager(): OptimizedSchemaManager {
 
 // ===== INITIALIZATION FUNCTION =====
 export async function initializeSchemaManager(): Promise<void> {
-  const importantTables = ['users', 'businesses', 'orders', 'products', 'employees', 'profiles', 'branches'];
+  const importantTables = ['profiles', 'businesses', 'orders', 'products', 'employees', 'branches'];
   const manager = getSchemaManager();
   
   try {
