@@ -97,6 +97,23 @@ async function initializeSentry() {
   }
 }
 
+// ✅ Schema Manager initialization
+async function initializeSchemaManager() {
+  try {
+    console.log('🔄 Initializing Schema Manager...')
+    
+    // Dynamic import to avoid issues during development
+    const { initializeSchemaManager } = await import('./utils/schema-manager.ts')
+    
+    await initializeSchemaManager()
+    console.log('✅ Schema Manager initialized successfully')
+    
+  } catch (error) {
+    console.warn('⚠️ Schema Manager initialization failed, continuing without optimization:', error)
+    // App continues without schema optimization
+  }
+}
+
 // ✅ PWA Registration con control de errores
 async function initializePWA() {
   // Solo en producción y si no está deshabilitado
@@ -193,6 +210,7 @@ function initializeApp() {
   // Inicializar servicios después de que React esté montado
   setTimeout(() => {
     initializeSentry()
+    initializeSchemaManager()
     initializePWA()
   }, 1000)
 }
