@@ -54,7 +54,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
 
     validateUserAccount()
-  }, [isAuthenticated, isLoading, user, isValidatingAccount, validateAccount, handleValidationResult, navigate, logout])
+  }, [isAuthenticated, isLoading, user?.id, isValidatingAccount, validateAccount, handleValidationResult, navigate, logout])
 
   // ✅ FIX: More robust redirect logic with better conditions
   useEffect(() => {

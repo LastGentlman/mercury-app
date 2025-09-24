@@ -109,6 +109,7 @@ function ProfilePage() {
   } = useProfile()
   
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const isInitializingRef = useRef(false)
   
   // Local state
   const [profileData, setProfileData] = useState<ProfileData>({
@@ -278,17 +279,33 @@ function ProfilePage() {
 
   // Initialize profile data when user or profile loads
   useEffect(() => {
-    if (user || profile) {
+    if ((user || profile) && !isInitializingRef.current) {
+      isInitializingRef.current = true
+      
       // Avatar system working correctly - debug logs removed
-
-      setProfileData(prev => ({
-        ...prev,
-        fullName: profile?.fullName || user?.name || '',
-        phone: profile?.phone || prev.phone || '',
-        avatar: profile?.avatar_url || user?.avatar_url || prev.avatar || ''
-      }))
+      setProfileData(prev => {
+        const newData = {
+          fullName: profile?.fullName || user?.name || '',
+          phone: profile?.phone || prev.phone || '',
+          avatar: profile?.avatar_url || user?.avatar_url || prev.avatar || ''
+        }
+        
+        // Only update if data actually changed to prevent infinite loops
+        if (prev.fullName !== newData.fullName || 
+            prev.phone !== newData.phone || 
+            prev.avatar !== newData.avatar) {
+          return { ...prev, ...newData }
+        }
+        
+        return prev
+      })
+      
+      // Reset initialization flag after a short delay
+      setTimeout(() => {
+        isInitializingRef.current = false
+      }, 100)
     }
-  }, [user, profile])
+  }, [user?.id, user?.name, user?.avatar_url, profile?.fullName, profile?.phone, profile?.avatar_url])
 
   // Handle form changes
   const handleInputChange = (field: keyof ProfileData, value: string) => {

@@ -24,14 +24,15 @@ export interface AccountValidationResult {
 }
 
 export class AccountValidationMiddleware {
-  private static readonly EXCLUDED_PATHS = [
+  private   static readonly EXCLUDED_PATHS = [
     '/auth',
     '/auth/callback',
     '/account-recovery',
     '/login',
     '/register',
     '/forgot-password',
-    '/reset-password'
+    '/reset-password',
+    '/profile' // Add profile page to excluded paths to prevent validation loops
   ]
 
   /**
@@ -49,18 +50,9 @@ export class AccountValidationMiddleware {
     }
 
     // ✅ IMPROVED: Better path exclusions and OAuth user handling
-    const additionalExcludedPaths = [
-      '/dashboard',
-      '/products',
-      '/clients',
-      '/profile',
-      '/setup'
-    ]
-    
-    if (additionalExcludedPaths.some(path => currentPath.startsWith(path))) {
-      console.log('🔍 Skipping account validation for protected route:', currentPath)
-      return { isValid: true, shouldRedirect: false }
-    }
+    // Note: These paths should NOT be excluded from validation - they need validation
+    // Only auth-related paths should be excluded
+    console.log('🔍 Account validation proceeding for protected route:', currentPath)
 
     // ✅ IMPROVED: Handle OAuth users more gracefully
     if (user.provider === 'google' || user.provider === 'facebook') {
@@ -68,7 +60,7 @@ export class AccountValidationMiddleware {
       // For OAuth users, only check if they're explicitly marked as deleted
       // Skip complex deletion log checks that might cause issues
       try {
-        const isDeletedInMetadata = user.user_metadata?.account_deleted === true ||
+        const isDeletedInMetadata = (user as any).user_metadata?.account_deleted === true ||
                                    (user as any).raw_user_meta_data?.account_deleted === true
         
         if (isDeletedInMetadata) {
