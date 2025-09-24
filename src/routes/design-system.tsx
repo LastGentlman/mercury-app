@@ -372,11 +372,11 @@ function DesignSystemPage() {
         </div>
       </section>
       
-      {/* VS Code Theme Showcase */}
+      {/* Dark Theme Showcase */}
       <section className="mb-12">
         <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center gap-2">
           <Palette className="h-6 w-6" />
-          VS Code Theme Showcase
+          Dark Theme (VS Code Inspired)
         </h2>
         <div className="bg-white dark:bg-vscode-sidebar rounded-lg p-6 border border-gray-200 dark:border-vscode-border transition-colors duration-200">
           <div className="flex items-center justify-between mb-6">
@@ -385,16 +385,16 @@ function DesignSystemPage() {
                 Theme Toggle
               </h3>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Switch between Light, Dark, VS Code, and System themes
+                Switch between Light, Dark, and System themes
               </p>
             </div>
             <ThemeToggle />
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* VS Code Colors */}
+            {/* Dark Theme Colors */}
             <div>
-              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">VS Code Color Palette</h4>
+              <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">Dark Theme Color Palette</h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
                   <div className="w-6 h-6 rounded bg-vscode-editor border border-gray-300"></div>
@@ -421,7 +421,7 @@ function DesignSystemPage() {
               <div className="bg-vscode-editor p-4 rounded border border-vscode-border">
                 <div className="text-sm font-mono space-y-1">
                   <div><span className="syntax-keyword">const</span> <span className="syntax-variable">user</span> = <span className="syntax-string">&quot;PedidoList&quot;</span>;</div>
-                  <div><span className="syntax-comment">// VS Code theme colors</span></div>
+                  <div><span className="syntax-comment">// VS Code inspired colors</span></div>
                   <div><span className="syntax-function">function</span> <span className="syntax-variable">getTheme</span>() &#123;</div>
                   <div>  <span className="syntax-keyword">return</span> <span className="syntax-number">42</span>;</div>
                   <div>&#125;</div>
@@ -430,17 +430,17 @@ function DesignSystemPage() {
             </div>
           </div>
           
-          {/* VS Code Components */}
+          {/* Dark Theme Components */}
           <div className="mt-6">
-            <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">VS Code Style Components</h4>
+            <h4 className="text-md font-medium text-gray-900 dark:text-white mb-3">Dark Theme Components</h4>
             <div className="flex flex-wrap gap-3">
-              <Button className="vscode-enhanced">VS Code Button</Button>
+              <Button>Default Button</Button>
               <Input 
-                placeholder="VS Code Input" 
-                className="vscode-enhanced w-48"
+                placeholder="Input Field" 
+                className="w-48"
               />
-              <div className="vscode-enhanced px-3 py-2 rounded text-sm">
-                VS Code Card
+              <div className="bg-card border border-border px-3 py-2 rounded text-sm">
+                Card Component
               </div>
             </div>
           </div>
@@ -459,7 +459,7 @@ function DesignSystemPage() {
               <li>• Usar iconos de la misma familia (Lucide)</li>
               <li>• Seguir jerarquía tipográfica</li>
               <li>• Añadir transiciones suaves</li>
-              <li>• Usar el tema VS Code para mejor experiencia</li>
+              <li>• Usar el tema oscuro para mejor experiencia</li>
             </ul>
           </div>
           

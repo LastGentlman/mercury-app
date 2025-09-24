@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 
-type Theme = 'light' | 'dark' | 'vscode' | 'system'
+type Theme = 'light' | 'dark' | 'system'
 
 interface ThemeContextType {
   theme: Theme
@@ -46,8 +46,6 @@ export function ThemeProvider({
 
       if (theme === 'system') {
         resolvedTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-      } else if (theme === 'vscode') {
-        resolvedTheme = 'dark' // VS Code theme is a dark theme variant
       } else {
         resolvedTheme = theme
       }
@@ -55,17 +53,10 @@ export function ThemeProvider({
       setActualTheme(resolvedTheme)
 
       // Remove previous theme classes
-      root.classList.remove('light', 'dark', 'vscode')
+      root.classList.remove('light', 'dark')
       
       // Add the new theme class
       root.classList.add(resolvedTheme)
-      
-      // Add VS Code specific class for enhanced styling
-      if (theme === 'vscode') {
-        root.classList.add('vscode-theme')
-      } else {
-        root.classList.remove('vscode-theme')
-      }
     }
 
     updateActualTheme()

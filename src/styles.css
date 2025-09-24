@@ -393,59 +393,28 @@
     }
   }
 
-  /* VS Code Theme Specific Enhancements */
-  .vscode-theme {
-    /* Enhanced VS Code styling when vscode theme is active */
-    --primary: 199 89% 48%; /* #007acc - VS Code blue */
-    --primary-foreground: 0 0% 100%;
-    --background: 210 11% 15%; /* #1e1e1e */
-    --foreground: 0 0% 85%; /* #d4d4d4 */
-    --card: 210 11% 18%; /* #252526 */
-    --card-foreground: 0 0% 85%;
-    --border: 210 11% 25%; /* #3c3c3c */
-    --input: 210 11% 20%; /* #2a2d2e */
-    --ring: 199 89% 48%; /* #007acc */
-  }
-
-  .vscode-theme .vscode-enhanced {
-    /* Enhanced VS Code styling for specific components */
-    background: hsl(var(--vscode-sidebar-bg));
-    border: 1px solid hsl(var(--vscode-border));
-    color: hsl(var(--foreground));
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .vscode-theme .vscode-enhanced:hover {
-    background: hsl(var(--vscode-hover-bg));
-  }
-
-  .vscode-theme .vscode-enhanced:focus {
-    outline: 1px solid hsl(var(--vscode-primary));
-    outline-offset: 2px;
-  }
-
-  /* VS Code-style syntax highlighting colors */
-  .vscode-theme .syntax-keyword {
+  /* VS Code-style syntax highlighting colors for dark mode */
+  .dark .syntax-keyword {
     color: #569cd6; /* VS Code blue */
   }
 
-  .vscode-theme .syntax-string {
+  .dark .syntax-string {
     color: #ce9178; /* VS Code orange */
   }
 
-  .vscode-theme .syntax-comment {
+  .dark .syntax-comment {
     color: #6a9955; /* VS Code green */
   }
 
-  .vscode-theme .syntax-number {
+  .dark .syntax-number {
     color: #b5cea8; /* VS Code light green */
   }
 
-  .vscode-theme .syntax-function {
+  .dark .syntax-function {
     color: #dcdcaa; /* VS Code yellow */
   }
 
-  .vscode-theme .syntax-variable {
+  .dark .syntax-variable {
     color: #9cdcfe; /* VS Code light blue */
   }
 
@@ -563,7 +532,6 @@
     transition: all 0.5s ease;
     transform-origin: left;
   }
-}
 
 code {
   font-family:

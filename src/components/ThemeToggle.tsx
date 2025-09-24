@@ -1,4 +1,4 @@
-import { Moon, Sun, Monitor, Code } from 'lucide-react'
+import { Moon, Sun, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -21,7 +21,7 @@ export function ThemeToggle() {
           <span className="sr-only">Cambiar tema</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem 
           onClick={() => setTheme('light')}
           className={`transition-colors ${theme === 'light' ? 'bg-accent' : ''}`}
@@ -35,13 +35,6 @@ export function ThemeToggle() {
         >
           <Moon className="mr-2 h-4 w-4" />
           <span>Oscuro</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem 
-          onClick={() => setTheme('vscode')}
-          className={`transition-colors ${theme === 'vscode' ? 'bg-accent' : ''}`}
-        >
-          <Code className="mr-2 h-4 w-4" />
-          <span>VS Code</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem 
