@@ -63,16 +63,16 @@ export function OrderCard({
         <div className="flex items-start justify-between">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-lg">#{order.client_generated_id}</h3>
+              <h3 className="font-semibold text-lg text-foreground">#{order.client_generated_id}</h3>
               <StatusBadge status={order.status} />
             </div>
             <div className="flex items-center text-sm text-muted-foreground">
               <User className="w-4 h-4 mr-1" />
-              {order.client_name}
+              <span className="text-foreground">{order.client_name}</span>
               {order.client_phone && (
                 <>
                   <Phone className="w-4 h-4 ml-3 mr-1" />
-                  {order.client_phone}
+                  <span className="text-foreground">{order.client_phone}</span>
                 </>
               )}
             </div>
@@ -109,7 +109,7 @@ export function OrderCard({
                           onDelete(orderId);
                         }
                       }}
-                      className="text-red-600 focus:text-red-600"
+                      className="text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400"
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Eliminar
@@ -141,8 +141,8 @@ export function OrderCard({
         <div className="space-y-1">
           {order.items?.slice(0, 2).map((item, index) => (
             <div key={index} className="flex justify-between text-sm">
-              <span>{item.quantity}x {item.product_name}</span>
-              <span>{formatCurrency(item.quantity * item.unit_price)}</span>
+              <span className="text-foreground">{item.quantity}x {item.product_name}</span>
+              <span className="text-foreground font-medium">{formatCurrency(item.quantity * item.unit_price)}</span>
             </div>
           ))}
           {order.items && order.items.length > 2 && (
@@ -154,8 +154,8 @@ export function OrderCard({
 
         {/* Notas */}
         {order.notes && (
-          <div className="bg-muted/50 p-2 rounded text-sm">
-            <p className="font-medium mb-1">Notas:</p>
+          <div className="bg-muted/50 dark:bg-muted/30 p-2 rounded text-sm border border-border">
+            <p className="font-medium mb-1 text-foreground">Notas:</p>
             <p className="text-muted-foreground">{order.notes}</p>
           </div>
         )}

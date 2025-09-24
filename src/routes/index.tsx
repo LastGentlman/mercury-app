@@ -47,26 +47,26 @@ function Index() {
   // ✅ Vista para usuarios autenticados
   if (isAuthenticated) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white dark:bg-gray-900">
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-2xl mx-auto">
             
             {/* Header con indicador de PWA */}
             <div className="flex items-center justify-center space-x-2 mb-6">
               {isPWA ? (
-                <Smartphone className="h-6 w-6 text-gray-600" />
+                <Smartphone className="h-6 w-6 text-gray-600 dark:text-gray-400" />
               ) : (
-                <Globe className="h-6 w-6 text-gray-600" />
+                <Globe className="h-6 w-6 text-gray-600 dark:text-gray-400" />
               )}
-              <h1 className="text-4xl font-bold text-gray-900">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
                 ¡Bienvenido de vuelta!
               </h1>
             </div>
 
-            <p className="text-xl text-gray-600 mb-8">
+            <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
               Tu aplicación PedidoList está lista para usar
               {isPWA && (
-                <span className="block text-sm text-gray-500 mt-2 font-medium">
+                <span className="block text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">
                   ✨ Ejecutándose como aplicación nativa
                 </span>
               )}
@@ -84,7 +84,7 @@ function Index() {
                 <Button 
                   variant="outline" 
                   size="lg" 
-                  className="border-gray-300 text-gray-700 hover:bg-gray-50 w-full sm:w-auto"
+                  className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 w-full sm:w-auto"
                 >
                   Ver Clientes
                 </Button>

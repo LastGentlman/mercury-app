@@ -84,12 +84,12 @@ export function ConflictResolver({ conflict, onResolve, onDismiss }: ConflictRes
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Versión Local */}
-          <div className="border rounded-lg p-4 bg-blue-50">
+          <div className="border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/20">
             {renderEntityDetails(conflict.localVersion, 'Versión Local')}
           </div>
 
           {/* Versión del Servidor */}
-          <div className="border rounded-lg p-4 bg-green-50">
+          <div className="border border-green-200 dark:border-green-800 rounded-lg p-4 bg-green-50 dark:bg-green-900/20">
             {renderEntityDetails(conflict.serverVersion, 'Versión del Servidor')}
           </div>
 

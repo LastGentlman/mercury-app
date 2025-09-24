@@ -51,12 +51,17 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
     `,
     secondary: `
       bg-gray-100
+      dark:bg-gray-800
       hover:bg-gray-200
+      dark:hover:bg-gray-700
       active:bg-gray-300
+      dark:active:bg-gray-600
       text-gray-700
+      dark:text-gray-200
       focus:ring-gray-500
       border
       border-gray-300
+      dark:border-gray-600
     `,
     success: `
       bg-green-500
@@ -79,8 +84,11 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
     ghost: `
       bg-transparent
       hover:bg-gray-100
+      dark:hover:bg-gray-800
       active:bg-gray-200
+      dark:active:bg-gray-700
       text-gray-700
+      dark:text-gray-200
       focus:ring-gray-500
     `,
     outline: `
@@ -88,8 +96,11 @@ export const EnhancedButton: React.FC<EnhancedButtonProps> = ({
       border-2
       border-blue-500
       hover:bg-blue-50
+      dark:hover:bg-blue-900/20
       active:bg-blue-100
+      dark:active:bg-blue-900/30
       text-blue-700
+      dark:text-blue-300
       focus:ring-blue-500
     `,
   }

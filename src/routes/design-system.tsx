@@ -138,28 +138,28 @@ function DesignSystemPage() {
   ]
   
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-gray-50 min-h-screen">
+    <div className="max-w-7xl mx-auto p-6 bg-gray-50 dark:bg-gray-900 min-h-screen">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">PedidoList Design System</h1>
-        <p className="text-gray-600">Componentes, colores y patrones de diseño</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">PedidoList Design System</h1>
+        <p className="text-gray-600 dark:text-gray-300">Componentes, colores y patrones de diseño</p>
       </div>
       
       {/* Color Palette */}
       <section className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Paleta de Colores</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Paleta de Colores</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           {colorPalette.map((palette) => (
-            <div key={palette.name} className="bg-white rounded-lg p-4 border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-3">{palette.name}</h3>
+            <div key={palette.name} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-3">{palette.name}</h3>
               <div className="space-y-2">
                 {palette.colors.map((color, index) => (
                   <div key={index} className="flex items-center gap-3">
                     <div 
-                      className="w-8 h-8 rounded border border-gray-200"
+                      className="w-8 h-8 rounded border border-gray-200 dark:border-gray-600"
                       style={{ backgroundColor: color }}
                     />
-                    <span className="text-sm font-mono text-gray-600">{color}</span>
+                    <span className="text-sm font-mono text-gray-600 dark:text-gray-300">{color}</span>
                   </div>
                 ))}
               </div>

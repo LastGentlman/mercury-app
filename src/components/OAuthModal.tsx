@@ -79,7 +79,7 @@ export const OAuthModal: React.FC<OAuthModalProps> = ({
       <div 
         ref={modalRef}
         tabIndex={-1}
-        className={`bg-white rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all duration-200 ${
+        className={`bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full overflow-hidden transform transition-all duration-200 ${
           isOpening ? 'scale-95 opacity-0' : 'scale-100 opacity-100'
         }`}
       >

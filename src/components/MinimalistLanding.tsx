@@ -61,28 +61,28 @@ export default function MinimalistLanding({ isPWA, isAuthenticated, debugInfo }:
   ]
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-gray-900 relative overflow-hidden">
       {/* Subtle geometric background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-white to-gray-50/30" />
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-blue-50/30 to-transparent rounded-full blur-3xl" />
-      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-green-50/20 to-transparent rounded-full blur-3xl" />
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-white to-gray-50/30 dark:from-gray-900/50 dark:via-gray-900 dark:to-gray-800/30" />
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-gradient-to-br from-blue-50/30 to-transparent dark:from-blue-900/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-gradient-to-br from-green-50/20 to-transparent dark:from-green-900/10 rounded-full blur-3xl" />
       
       <div className="relative z-10">
         {/* Hero section - Ultra minimal */}
         <section className="px-6 pt-32 pb-32">
           <div className="max-w-4xl mx-auto text-center">
             <div className={`transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-gray-900 tracking-tight mb-8 leading-none">
+              <h1 className="text-6xl md:text-7xl lg:text-8xl font-bold text-gray-900 dark:text-white tracking-tight mb-8 leading-none">
                 Órdenes
                 <br />
-                <span className="text-gray-400">sin fricción</span>
+                <span className="text-gray-400 dark:text-gray-500">sin fricción</span>
               </h1>
               
-              <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto leading-relaxed">
+              <p className="text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-2xl mx-auto leading-relaxed">
                 La forma más simple de gestionar pedidos. 
                 Sin complejidad. Sin curva de aprendizaje.
                 {isPWA && (
-                  <span className="block text-sm text-blue-600 mt-3 font-medium">
+                  <span className="block text-sm text-blue-600 dark:text-blue-400 mt-3 font-medium">
                     ✨ Ejecutándose como aplicación nativa
                   </span>
                 )}
