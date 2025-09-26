@@ -145,7 +145,7 @@ export function useAuth(): AuthHookReturn {
     mutationFn: async (credentials: LoginCredentials): Promise<LoginResponse> => {
       return await AuthService.login(credentials)
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       // Store auth token synchronously to avoid race with refetch
       try {
         localStorage.setItem('authToken', response.session.access_token)
@@ -155,19 +155,45 @@ export function useAuth(): AuthHookReturn {
       }
       // Also update via hook for state consistency
       setAuthToken(response.session.access_token)
-      
+
       // CRITICAL: Set user data immediately and then invalidate
       const userData = {
         ...response.user,
         provider: 'email' as const
       }
-      
+
       queryClient.setQueryData(['auth-user'], userData)
-      
-      // Invalidate immediately for consistency - no artificial delay
-      queryClient.invalidateQueries({ queryKey: ['auth-user'] })
-      
-      console.log('✅ Login successful, user state updated')
+
+      // ✅ CRITICAL FIX: Validate account status before showing success
+      try {
+        const validation = await offlineActions.verifyToken(response.session.access_token)
+        if (!validation.valid) {
+          console.log('❌ Token validation failed after login:', validation.reason)
+          // Clear invalid token and user data
+          localStorage.removeItem('authToken')
+          setAuthToken(null)
+          queryClient.setQueryData(['auth-user'], null)
+          throw new Error('Account validation failed')
+        }
+
+        // Token is valid - now show success and invalidate queries
+        console.log('✅ Login successful and validated')
+
+        // Dynamically import showSuccess to avoid circular dependencies
+        const { showSuccess } = await import('../utils/sweetalert.ts')
+        showSuccess('¡Éxito!', '¡Inicio de sesión exitoso!')
+
+        // Invalidate immediately for consistency
+        queryClient.invalidateQueries({ queryKey: ['auth-user'] })
+
+      } catch (validationError) {
+        console.error('❌ Post-login validation failed:', validationError)
+        // Clear all auth data
+        localStorage.removeItem('authToken')
+        setAuthToken(null)
+        queryClient.setQueryData(['auth-user'], null)
+        throw validationError
+      }
     },
     onError: (error) => {
       console.error('❌ Login failed:', error)

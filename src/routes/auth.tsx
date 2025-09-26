@@ -134,17 +134,15 @@ function RouteComponent() {
     }
 
     try {
-      await login.mutateAsync({
+      const loginResult = await login.mutateAsync({
         email: formData.email,
         password: formData.password
       })
-      
-      showSuccess('¡Éxito!', '¡Inicio de sesión exitoso!')
-      
-      // 🎯 OPTIMIZACIÓN: Redirección más suave con manejo de estado
-      console.log('✅ Login exitoso, redirigiendo a dashboard...')
-      // Login successful - redirect will be handled by useAuthRedirect hook
-      // Nota: no establecemos isRedirecting aquí; el useEffect manejará el estado y la navegación
+
+      // 🎯 CRITICAL FIX: Wait for token validation before showing success
+      // The success alert will be shown automatically when authentication is confirmed
+      console.log('✅ Login mutation completed, awaiting validation...')
+      // Success alert and redirect will be handled by useAuth hook after token verification
       
     } catch (error) {
       console.error('Login error:', error)
@@ -170,6 +168,8 @@ function RouteComponent() {
             )
           }
         )
+      } else if (errorMessage.includes('Account validation failed') || errorMessage.includes('validation failed')) {
+        showError('Cuenta no válida', 'Esta cuenta ya no está disponible. Si necesitas ayuda, contacta al soporte.')
       } else if (errorMessage.includes('Email o contraseña incorrectos') || errorMessage.includes('Credenciales inválidas')) {
         showError('Error de credenciales', 'Email o contraseña incorrectos. Verifica tus credenciales.')
       } else if (errorMessage.includes('Demasiados intentos') || errorMessage.includes('excedido el límite')) {
