@@ -20,7 +20,8 @@ function PaywallPage() {
   }
 
   const handleClose = () => {
-    window.location.href = '/dashboard'
+    // Redirigir al setup en lugar del dashboard para evitar loops
+    window.location.href = '/setup'
   }
 
   return (

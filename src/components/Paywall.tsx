@@ -109,7 +109,8 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
         const { loadStripe } = await import('@stripe/stripe-js');
         const stripeKey = env.VITE_STRIPE_PUBLISHABLE_KEY;
         if (!stripeKey) {
-          console.warn('Stripe publishable key not configured');
+          console.warn('Stripe publishable key not configured - trial will work without payment method');
+          setStripeLoading(false);
           return;
         }
         const stripeInstance = await loadStripe(stripeKey);
@@ -466,27 +467,29 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
                 </div>
               </div>
 
-              {/* Stripe Card Element */}
-              <div>
-                <Label className="flex items-center space-x-2 text-sm">
-                  <CreditCard className="w-4 h-4" />
-                  <span>Información de Tarjeta</span>
-                </Label>
-                <div 
-                  id="card-element" 
-                  className="border border-gray-300 rounded-md p-3 min-h-[40px] bg-white mt-1"
-                >
-                  {stripeLoading && (
-                    <div className="flex items-center justify-center h-8">
-                      <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
-                      <span className="text-xs text-gray-500 ml-2">Cargando...</span>
-                    </div>
-                  )}
+              {/* Stripe Card Element - Solo mostrar si Stripe está configurado */}
+              {env.VITE_STRIPE_PUBLISHABLE_KEY && (
+                <div>
+                  <Label className="flex items-center space-x-2 text-sm">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Información de Tarjeta</span>
+                  </Label>
+                  <div 
+                    id="card-element" 
+                    className="border border-gray-300 rounded-md p-3 min-h-[40px] bg-white mt-1"
+                  >
+                    {stripeLoading && (
+                      <div className="flex items-center justify-center h-8">
+                        <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+                        <span className="text-xs text-gray-500 ml-2">Cargando...</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Ingresa los datos de tu tarjeta
+                  </p>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Ingresa los datos de tu tarjeta
-                </p>
-              </div>
+              )}
 
               {/* Security Notice */}
               <div className="bg-green-50 border border-green-200 rounded-lg p-3">
@@ -548,7 +551,7 @@ export function Paywall({ businessData, onSuccess, onClose }: PaywallProps) {
                   // Opción para empezar sin método de pago (7 días base)
                   handleStartTrial();
                 }}
-                disabled={isLoading || stripeLoading}
+                disabled={isLoading}
                 className="w-full sm:w-auto bg-transparent border-2 border-white text-white hover:bg-white hover:text-blue-600 py-3 px-6 rounded-lg font-semibold transition-colors inline-flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <Gift className="w-4 h-4" />
