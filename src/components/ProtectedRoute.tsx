@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Loader2 } from 'lucide-react'
@@ -15,12 +15,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
   const { validateAccount, handleValidationResult } = useAccountValidation()
   const [isValidatingAccount, setIsValidatingAccount] = useState(false)
+  const validationAttemptedRef = useRef(false)
 
-  // ✅ Account validation effect - RE-ENABLED WITH IMPROVED ERROR HANDLING
+  // ✅ Account validation effect - FIXED TO PREVENT INFINITE LOOPS
   useEffect(() => {
     const validateUserAccount = async () => {
-      if (!isLoading && isAuthenticated && user && !isValidatingAccount) {
+      if (!isLoading && isAuthenticated && user && !isValidatingAccount && !validationAttemptedRef.current) {
         setIsValidatingAccount(true)
+        validationAttemptedRef.current = true
         
         try {
           const currentPath = globalThis.location?.pathname || '/'
@@ -54,7 +56,14 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
 
     validateUserAccount()
-  }, [isAuthenticated, isLoading, user?.id, isValidatingAccount, validateAccount, handleValidationResult, navigate, logout])
+  }, [isAuthenticated, isLoading, user?.id, isValidatingAccount])
+
+  // Reset validation flag when user changes
+  useEffect(() => {
+    if (user?.id) {
+      validationAttemptedRef.current = false
+    }
+  }, [user?.id])
 
   // ✅ FIX: More robust redirect logic with better conditions
   useEffect(() => {

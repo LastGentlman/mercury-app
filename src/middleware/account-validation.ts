@@ -5,6 +5,7 @@
  * This should be integrated into the authentication flow
  */
 
+import { useCallback } from 'react'
 import { AccountDeletionService } from '../services/account-deletion-service.ts'
 import type { AuthUser } from '../types/auth.ts'
 
@@ -173,17 +174,17 @@ export class AccountValidationMiddleware {
  * React hook for account validation
  */
 export function useAccountValidation() {
-  const validateAccount = async (user: AuthUser | null, currentPath: string): Promise<AccountValidationResult> => {
+  const validateAccount = useCallback(async (user: AuthUser | null, currentPath: string): Promise<AccountValidationResult> => {
     return AccountValidationMiddleware.validateAccount(user, currentPath)
-  }
+  }, [])
 
-  const handleValidationResult = (
+  const handleValidationResult = useCallback((
     result: AccountValidationResult,
     onRedirect: (path: string) => void,
     onLogout?: () => void
   ): void => {
     AccountValidationMiddleware.handleValidationResult(result, onRedirect, onLogout)
-  }
+  }, [])
 
   return {
     validateAccount,
