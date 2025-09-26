@@ -115,9 +115,13 @@ function RouteComponent() {
         isAuthenticated
       })
       
+      // Check if user has business - if not, redirect to setup instead
+      const targetRoute = user.businessId ? '/dashboard' : '/setup'
+      console.log('🎯 Redirecting to:', targetRoute, 'Business ID:', user.businessId)
+      
       // Force direct navigation without middleware interference
       setTimeout(() => {
-        window.location.replace('/dashboard')
+        window.location.replace(targetRoute)
       }, 100)
     }
   }, [user, isAuthenticated, debugMode, isLoading])

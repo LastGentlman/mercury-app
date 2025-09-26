@@ -14,22 +14,32 @@ function DashboardPage() {
   const navigate = useNavigate()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
 
-  // ✅ SIMPLIFIED: Let ProtectedRoute handle all redirects, dashboard only handles business setup
+  // ✅ IMPROVED: Better redirect logic with loop prevention
   useEffect(() => {
     console.log('🔍 Dashboard useEffect triggered:', {
       isLoading,
       isAuthenticated,
       user: user ? { id: user.id, email: user.email, businessId: user.businessId } : null,
-      isRedirectInProgress: isRedirectInProgress()
+      isRedirectInProgress: isRedirectInProgress(),
+      currentPath: globalThis.location?.pathname
     })
 
-    // Only handle business setup redirect, let ProtectedRoute handle auth redirects
-    if (!isLoading && !isRedirectInProgress() && isAuthenticated && user && !user.businessId) {
+    // Only redirect if we're actually on the dashboard page and user needs setup
+    const currentPath = globalThis.location?.pathname
+    const isOnDashboard = currentPath === '/dashboard'
+    
+    if (!isLoading && !isRedirectInProgress() && isAuthenticated && user && !user.businessId && isOnDashboard) {
       console.log('🔄 Dashboard: User authenticated but no business, redirecting to setup...')
-      if (startRedirect(5000)) {
-        navigate({ to: '/setup' })
-        completeRedirect()
-      }
+      
+      // Add a small delay to prevent rapid redirects
+      const redirectTimer = setTimeout(() => {
+        if (startRedirect(5000, '/setup')) {
+          navigate({ to: '/setup', replace: true })
+          completeRedirect()
+        }
+      }, 100)
+      
+      return () => clearTimeout(redirectTimer)
     }
   }, [user, isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 

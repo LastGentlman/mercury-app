@@ -79,7 +79,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         willDelay: isFromOAuthCallback
       })
       
-      if (startRedirect(3000)) {
+      if (startRedirect(3000, '/auth')) {
         // Use longer delay if coming from OAuth callback to allow auth to establish
         const delay = isFromOAuthCallback ? 2000 : 50
         setTimeout(() => {
