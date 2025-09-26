@@ -3,6 +3,9 @@ export interface AuthResult {
   valid: boolean
   reason: 'valid' | 'invalid_structure' | 'expired' | 'blacklisted' | 'pending_verification'
   needsSync?: boolean
+  error?: string
+  code?: string
+  metadata?: any
 }
 
 export interface PendingVerification {
@@ -72,12 +75,18 @@ export class OfflineAuthManager {
       // 4. Si hay conexión, verificar blacklist
       if (navigator.onLine) {
         try {
-          const isBlacklisted = await this.checkBlacklist(token)
-          if (isBlacklisted) {
+          const blacklistResult = await this.checkBlacklist(token)
+          if (!blacklistResult.valid) {
             // ✅ Marcar como inválido localmente también
             await this.markTokenInvalidLocally(token)
             console.log('❌ Token blacklisted, marked as invalid locally')
-            return { valid: false, reason: 'blacklisted' }
+            return {
+              valid: false,
+              reason: 'blacklisted',
+              error: blacklistResult.error,
+              code: blacklistResult.code,
+              metadata: blacklistResult.metadata
+            }
           }
         } catch (error) {
           console.warn('⚠️ Online blacklist check failed:', error)
@@ -162,7 +171,7 @@ export class OfflineAuthManager {
   /**
    * ✅ Verificar blacklist en servidor
    */
-  private async checkBlacklist(token: string): Promise<boolean> {
+  private async checkBlacklist(token: string): Promise<AuthResult> {
     try {
       const controller = new AbortController()
       const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 segundos timeout
@@ -181,11 +190,24 @@ export class OfflineAuthManager {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`)
+        const errorData = await response.json().catch(() => ({}))
+        return {
+          valid: false,
+          reason: 'blacklisted',
+          error: errorData.error || `HTTP ${response.status}`,
+          code: errorData.code,
+          metadata: errorData.metadata
+        }
       }
 
       const result = await response.json()
-      return !result.valid
+      return {
+        valid: result.valid,
+        reason: result.valid ? 'valid' : 'blacklisted',
+        error: result.error,
+        code: result.code,
+        metadata: result.metadata
+      }
     } catch (error) {
       console.error('❌ Blacklist check failed:', error)
       throw error
@@ -284,8 +306,8 @@ export class OfflineAuthManager {
 
       for (const pending of pendingTokens) {
         try {
-          const isBlacklisted = await this.checkBlacklist(pending.token)
-          if (isBlacklisted) {
+          const blacklistResult = await this.checkBlacklist(pending.token)
+          if (!blacklistResult.valid) {
             invalidTokens.push(pending.token)
             console.log('❌ Token blacklisted during sync:', pending.token.substring(0, 8) + '...')
           } else {

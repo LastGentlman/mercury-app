@@ -15,6 +15,8 @@ import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
 import { AUTH_CONSTANTS } from '../utils/authConstants.ts'
 import { authLogger } from '../utils/authLogger.ts'
+import { AccountRecoveryDialog } from '../components/AccountRecoveryDialog.tsx'
+import { AccountRecoveryService } from '../services/account-recovery-service.ts'
 
 export const Route = createFileRoute('/auth')({
   component: RouteComponent,
@@ -64,6 +66,12 @@ function RouteComponent() {
   const [lastRegisteredEmail, setLastRegisteredEmail] = useState<string>('')
   const [isRedirecting] = useState(false)
   const [debugMode, setDebugMode] = useState(false)
+  const [showRecoveryDialog, setShowRecoveryDialog] = useState(false)
+  const [recoveryData, setRecoveryData] = useState<{
+    email: string
+    canRecover: boolean
+    daysRemaining?: number
+  } | null>(null)
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading, user } = useAuth()
   
@@ -125,6 +133,74 @@ function RouteComponent() {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleDeletedAccountLogin = async (email: string, error: any) => {
+    try {
+      // Parse error metadata to check if account can be recovered
+      const metadata = AccountRecoveryService.parseErrorMetadata(error)
+
+      if (metadata.canRecover) {
+        // Show recovery dialog for accounts in grace period
+        setRecoveryData({
+          email,
+          canRecover: true,
+          daysRemaining: metadata.daysRemaining
+        })
+        setShowRecoveryDialog(true)
+      } else {
+        // Check recovery status from server for more info
+        const recoveryStatus = await AccountRecoveryService.checkRecoveryStatus(email)
+
+        setRecoveryData({
+          email,
+          canRecover: recoveryStatus.canRecover,
+          daysRemaining: recoveryStatus.daysRemaining
+        })
+        setShowRecoveryDialog(true)
+      }
+    } catch (recoveryError) {
+      console.error('Error checking account recovery:', recoveryError)
+      showError('Cuenta no válida', 'Esta cuenta ya no está disponible. Si necesitas ayuda, contacta al soporte.')
+    }
+  }
+
+  const handleAccountRecovery = async () => {
+    if (!recoveryData?.email) return
+
+    try {
+      const result = await AccountRecoveryService.recoverAccount(recoveryData.email)
+
+      if (result.success) {
+        setShowRecoveryDialog(false)
+        setRecoveryData(null)
+
+        // Clear form and show success message
+        setFormData({ email: '', password: '', confirmPassword: '', name: '' })
+
+        showSuccess(
+          '¡Cuenta recuperada!',
+          `Tu cuenta ha sido restaurada exitosamente. Ahora puedes iniciar sesión normalmente.`
+        )
+      } else {
+        throw new Error(result.message)
+      }
+    } catch (error) {
+      console.error('Account recovery failed:', error)
+      throw error // Re-throw to be handled by AccountRecoveryDialog
+    }
+  }
+
+  const handleCreateNewAccount = () => {
+    setShowRecoveryDialog(false)
+    setRecoveryData(null)
+    setIsLogin(false)
+    setShowEmailForm(true)
+  }
+
+  const handleCloseRecoveryDialog = () => {
+    setShowRecoveryDialog(false)
+    setRecoveryData(null)
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
@@ -169,7 +245,8 @@ function RouteComponent() {
           }
         )
       } else if (errorMessage.includes('Account validation failed') || errorMessage.includes('validation failed')) {
-        showError('Cuenta no válida', 'Esta cuenta ya no está disponible. Si necesitas ayuda, contacta al soporte.')
+        // Check if this is a deleted account that might be recoverable
+        await handleDeletedAccountLogin(formData.email, error)
       } else if (errorMessage.includes('Email o contraseña incorrectos') || errorMessage.includes('Credenciales inválidas')) {
         showError('Error de credenciales', 'Email o contraseña incorrectos. Verifica tus credenciales.')
       } else if (errorMessage.includes('Demasiados intentos') || errorMessage.includes('excedido el límite')) {
@@ -713,6 +790,18 @@ function RouteComponent() {
         <div className="text-center mt-8 text-sm text-gray-500">
           <p>© 2024 PedidoList. Todos los derechos reservados.</p>
         </div>
+
+        {/* Account Recovery Dialog */}
+        {showRecoveryDialog && recoveryData && (
+          <AccountRecoveryDialog
+            email={recoveryData.email}
+            canRecover={recoveryData.canRecover}
+            daysRemaining={recoveryData.daysRemaining}
+            onRecover={handleAccountRecovery}
+            onCreateNew={handleCreateNewAccount}
+            onClose={handleCloseRecoveryDialog}
+          />
+        )}
       </div>
     </div>
   )

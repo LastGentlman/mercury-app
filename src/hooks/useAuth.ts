@@ -173,7 +173,12 @@ export function useAuth(): AuthHookReturn {
           localStorage.removeItem('authToken')
           setAuthToken(null)
           queryClient.setQueryData(['auth-user'], null)
-          throw new Error('Account validation failed')
+
+          // Create enhanced error with metadata for deleted accounts
+          const error = new Error(validation.error || 'Account validation failed')
+          ;(error as any).metadata = validation.metadata || {}
+          ;(error as any).code = validation.code
+          throw error
         }
 
         // Token is valid - now show success and invalidate queries
