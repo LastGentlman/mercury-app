@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useAuthRedirect } from '../hooks/useAuthRedirect.ts'
@@ -11,7 +11,7 @@ import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { BetaBanner } from '../components/BetaBanner.tsx'
-import { Loader2, Eye, EyeOff, Mail, Lock, User, RotateCcw } from 'lucide-react'
+import { Loader2, Eye, EyeOff, Mail, Lock, User } from 'lucide-react'
 import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
 import { AUTH_CONSTANTS } from '../utils/authConstants.ts'
 import { authLogger } from '../utils/authLogger.ts'
@@ -49,7 +49,6 @@ function isOAuthCallback(): boolean {
 }
 
 function RouteComponent() {
-  const navigate = useNavigate()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -703,17 +702,6 @@ function RouteComponent() {
                 </p>
               )}
               
-              {/* Account Recovery Link */}
-              <div className="pt-2 border-t border-gray-200">
-                <button
-                  type="button"
-                  onClick={() => navigate({ to: '/account-recovery' as any })}
-                  className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-                >
-                  <RotateCcw className="h-4 w-4" />
-                  ¿Tu cuenta fue eliminada? Solicita recuperación
-                </button>
-              </div>
             </div>
               </>
             )}

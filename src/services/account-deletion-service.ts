@@ -48,7 +48,7 @@ export class AccountDeletionService {
       }
 
       // Clean up local auth data
-      await OAuthCleanup.performCompleteCleanup()
+      await OAuthCleanup.aggressiveCleanup()
       
       return {
         success: true,
@@ -67,7 +67,7 @@ export class AccountDeletionService {
   /**
    * Check if account deletion is in progress (simplified - always returns false)
    */
-  static async checkAccountDeletionStatus(userId: string): Promise<{
+  static async checkAccountDeletionStatus(_userId: string): Promise<{
     isDeleted: boolean
     isInGracePeriod: boolean
     canCancel: boolean
@@ -77,6 +77,28 @@ export class AccountDeletionService {
       isDeleted: false,
       isInGracePeriod: false,
       canCancel: false
+    }
+  }
+
+  /**
+   * Validate account status for authentication
+   */
+  static async validateAccountStatus(_user: AuthUser): Promise<{
+    isValid: boolean
+    message?: string
+  }> {
+    try {
+      // For now, all accounts are considered valid
+      // This can be extended to check for deleted accounts, suspended accounts, etc.
+      return {
+        isValid: true
+      }
+    } catch (error) {
+      console.error('Error validating account status:', error)
+      return {
+        isValid: false,
+        message: 'Account validation failed'
+      }
     }
   }
 }
