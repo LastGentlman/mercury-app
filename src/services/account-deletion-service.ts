@@ -13,6 +13,8 @@ export interface AccountDeletionRequest {
 }
 
 export class AccountDeletionService {
+  private static isDeleting = false;
+
   /**
    * Delete user account immediately
    */
@@ -20,6 +22,15 @@ export class AccountDeletionService {
     success: boolean
     message: string
   }> {
+    // Prevent concurrent deletion requests
+    if (this.isDeleting) {
+      return {
+        success: false,
+        message: 'Account deletion already in progress'
+      }
+    }
+
+    this.isDeleting = true;
     try {
       if (!supabase) {
         throw new Error('Supabase client not initialized')
@@ -49,7 +60,7 @@ export class AccountDeletionService {
 
       // Clean up local auth data
       await OAuthCleanup.aggressiveCleanup()
-      
+
       return {
         success: true,
         message: 'Account deleted successfully'
@@ -61,6 +72,8 @@ export class AccountDeletionService {
         success: false,
         message: error instanceof Error ? error.message : 'Failed to delete account'
       }
+    } finally {
+      this.isDeleting = false;
     }
   }
 
