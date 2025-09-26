@@ -5,10 +5,7 @@ import Header from '../components/Header.tsx'
 import BottomNavigation from '../components/BottomNavigation.tsx'
 import { PWAInstallButton } from '../components/PWAInstallButton.tsx'
 import { ConnectionStatus } from '../components/ConnectionStatus.tsx'
-import { OAuthDebugger } from '../components/OAuthDebugger.tsx'
 import { AutoConnectionBanner, ConnectionBannerDemo } from '../components/ConnectionBanner.tsx'
-import { MobileScrollDebugger } from '../components/MobileScrollDebugger.tsx'
-import { RedirectDebugger } from '../components/RedirectDebugger.tsx'
 import { ThemeProvider } from '../contexts/ThemeContext.tsx'
 
 import TanStackQueryLayout from '../integrations/tanstack-query/layout.tsx'
@@ -45,10 +42,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
         {!isAuthCallback && <TanStackQueryLayout />}
         {!isAuthCallback && <PWAInstallButton />}
         {!isAuthCallback && <ConnectionStatus />}
-        {import.meta.env.DEV && !isAuthCallback && <OAuthDebugger />}
         {import.meta.env.DEV && !isAuthCallback && <ConnectionBannerDemo />}
-        {import.meta.env.DEV && !isAuthCallback && <MobileScrollDebugger />}
-        {import.meta.env.DEV && <RedirectDebugger />}
       </ThemeProvider>
     )
   },

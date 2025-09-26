@@ -109,15 +109,6 @@ function Index() {
           </div>
         </div>
 
-        {/* Debug info en desarrollo */}
-        {debugInfo && (
-          <div className="fixed bottom-4 right-4 bg-black/80 text-white text-xs p-3 rounded-lg max-w-xs">
-            <div className="font-bold mb-1">🔧 Debug PWA</div>
-            <div>Source: {launchSource}</div>
-            <div>Redirects: {debugInfo.redirectAttempts}/{debugInfo.maxAttempts}</div>
-            <div>Path: {debugInfo.location}</div>
-          </div>
-        )}
       </div>
     )
   }

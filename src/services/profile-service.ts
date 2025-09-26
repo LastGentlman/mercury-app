@@ -485,72 +485,13 @@ export class ProfileService {
       throw new Error(errorMessage)
     }
 
-    // Parse response to get deletion details
-    const responseData = await response.json()
-    console.log('✅ Account deletion initiated successfully:', responseData)
-    
-    // Check if this is the new grace period system
-    if (responseData.code === 'ACCOUNT_DELETION_INITIATED' && responseData.deletionLogId) {
-      console.log('📋 Account marked for deletion with grace period:', {
-        deletionLogId: responseData.deletionLogId,
-        gracePeriodEnd: responseData.gracePeriodEnd
-      })
-      
-      // Redirect to account recovery page
-      window.location.href = `/account-recovery?deletion-id=${responseData.deletionLogId}`
-      return
-    }
-    
-    // Legacy immediate deletion flow (fallback)
-    console.log('⚠️ Using legacy immediate deletion flow')
-    
-    // 🔍 VERIFY: Wait and verify that the account was actually deleted
-    console.log('⏳ Waiting for backend deletion to complete...')
-    await this.verifyAccountDeletion()
-    
-    // 🔍 ADDITIONAL VERIFICATION: Try to make a request to verify deletion
-    try {
-      const verifyResponse = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (verifyResponse.status === 401 || verifyResponse.status === 403) {
-        console.log('✅ Backend confirms user is deleted (401/403 response)')
-      } else if (verifyResponse.ok) {
-        console.warn('⚠️ Backend still recognizes user - deletion may not be complete')
-      }
-    } catch (verifyError) {
-      console.log('✅ Backend verification failed (expected after deletion):', verifyError)
-    }
-    
-    // 🧹 ENHANCED CLEANUP: Clear all authentication data more thoroughly
+    // Clean up local auth data
     await this.performCompleteAuthCleanup()
     
-    // 🚀 FORCE REDIRECT: Use window.location.replace for immediate redirect
-    console.log('🚀 Forcing immediate redirect to auth page...')
-    
-    // Disable any automatic redirect systems temporarily
+    // Force immediate redirect to auth page
     if (typeof window !== 'undefined') {
-      const globalWindow = window as any
-      globalWindow.__ACCOUNT_DELETION_IN_PROGRESS__ = true
-      
-      // Force clear Supabase session to prevent any auth state conflicts
-      if (supabase) {
-        try {
-          console.log('🔄 Force clearing Supabase session...')
-          await supabase.auth.signOut()
-          // Also clear any cached session data
-          await supabase.auth.setSession({ access_token: '', refresh_token: '' })
-        } catch (error) {
-          console.log('✅ Supabase session clear error (expected after deletion):', error)
-        }
-      }
+      window.location.replace('/auth?message=account-deleted')
     }
-    
-    window.location.replace('/auth')
   }
 
   /**

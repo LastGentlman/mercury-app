@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs.
 import { SocialLoginButtons } from '../components/SocialLoginButtons.tsx'
 import { SuccessMessage } from '../components/SuccessMessage.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
-import { AuthDiagnostic } from '../components/AuthDiagnostic.tsx'
 import { BetaBanner } from '../components/BetaBanner.tsx'
 import { Loader2, Eye, EyeOff, Mail, Lock, User, RotateCcw } from 'lucide-react'
 import { showSuccess, showError, showWarning, showEmailNotConfirmed, showEmailResent, showChangeEmail } from '../utils/sweetalert.ts'
@@ -69,29 +68,6 @@ function RouteComponent() {
 
   const { login, register, resendConfirmationEmail, changeEmail, isAuthenticated, isLoading, user } = useAuth()
   
-  // Handle URL parameters for account deletion messages
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const message = urlParams.get('message')
-    const recovery = urlParams.get('recovery')
-    
-    if (message === 'account-deleted') {
-      if (recovery === 'unavailable') {
-        showWarning(
-          'Cuenta Eliminada', 
-          'Tu cuenta ha sido eliminada. Puedes crear una nueva cuenta o contactar soporte@pedidolist.com si crees que esto es un error.'
-        )
-      } else {
-        showWarning(
-          'Cuenta Eliminada', 
-          'Tu cuenta ha sido eliminada. Contacta soporte@pedidolist.com si crees que esto es un error.'
-        )
-      }
-      
-      // Clean URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname)
-    }
-  }, [])
   
   // Use the new clean redirect hook
   const { shouldRedirect } = useAuthRedirect({
@@ -382,7 +358,6 @@ function RouteComponent() {
               Exit Debug Mode
             </button>
           </div>
-          <AuthDiagnostic />
         </div>
       </div>
     )
@@ -402,27 +377,6 @@ function RouteComponent() {
           <BetaBanner />
         </div>
           
-        {/* 🚨 EMERGENCY DEBUG PANEL */}
-        {user && isAuthenticated && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-yellow-800 font-medium">
-                  🚨 Sesión válida detectada
-                </p>
-                <p className="text-xs text-yellow-600 mt-1">
-                  Email: {user.email} | ID: {user.id}
-                </p>
-              </div>
-              <button
-                onClick={() => setDebugMode(true)}
-                className="px-3 py-1 text-xs bg-yellow-200 text-yellow-800 rounded hover:bg-yellow-300 transition-colors"
-              >
-                Habilitar Debug
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Success Message */}
         {successMessage && (

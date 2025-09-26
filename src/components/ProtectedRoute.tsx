@@ -1,93 +1,27 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useAuth } from '../hooks/useAuth.ts'
 import { Loader2 } from 'lucide-react'
 import { useRedirectManager } from '../utils/redirectManager.ts'
-import { useAccountValidation } from '../middleware/account-validation.ts'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const { isAuthenticated, isLoading, user, logout } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
   const navigate = useNavigate()
   const { isRedirectInProgress, startRedirect, completeRedirect } = useRedirectManager()
-  const { validateAccount, handleValidationResult } = useAccountValidation()
-  const [isValidatingAccount, setIsValidatingAccount] = useState(false)
-  const validationAttemptedRef = useRef(false)
 
-  // ✅ Account validation effect - FIXED TO PREVENT INFINITE LOOPS
+  // Simple redirect logic - no account validation
   useEffect(() => {
-    const validateUserAccount = async () => {
-      if (!isLoading && isAuthenticated && user && !isValidatingAccount && !validationAttemptedRef.current) {
-        setIsValidatingAccount(true)
-        validationAttemptedRef.current = true
-        
-        try {
-          const currentPath = globalThis.location?.pathname || '/'
-          console.log('🔍 Starting account validation for:', { userId: user.id, path: currentPath })
-          
-          const validationResult = await validateAccount(user, currentPath)
-          
-          console.log('🔍 Account validation result:', validationResult)
-          
-          if (validationResult.shouldRedirect) {
-            handleValidationResult(
-              validationResult,
-              (path: string) => {
-                console.log('🔄 Redirecting due to account validation:', path)
-                navigate({ to: path, replace: true })
-              },
-              () => {
-                console.log('🚪 Force logout due to account deletion')
-                logout.mutate()
-              }
-            )
-          }
-        } catch (error) {
-          console.error('Error validating account:', error)
-          // On error, allow access but log the issue - this prevents blocking users
-          console.log('⚠️ Account validation failed, allowing access to prevent blocking user')
-        } finally {
-          setIsValidatingAccount(false)
-        }
-      }
-    }
-
-    validateUserAccount()
-  }, [isAuthenticated, isLoading, user?.id, isValidatingAccount])
-
-  // Reset validation flag when user changes
-  useEffect(() => {
-    if (user?.id) {
-      validationAttemptedRef.current = false
-    }
-  }, [user?.id])
-
-  // ✅ FIX: More robust redirect logic with better conditions
-  useEffect(() => {
-    console.log('🔍 ProtectedRoute useEffect triggered:', {
-      isLoading,
-      isAuthenticated,
-      isRedirectInProgress: isRedirectInProgress(),
-      currentPath: globalThis.location?.pathname,
-      isValidatingAccount
-    })
-
     // Check if we're coming from OAuth callback (give more time for auth to establish)
     const isFromOAuthCallback = globalThis.location?.search?.includes('source=') || 
                                globalThis.location?.hash?.includes('access_token') ||
                                globalThis.location?.search?.includes('access_token')
 
     // Only redirect if we're sure the user is not authenticated and not loading
-    // Add extra delay if coming from OAuth callback
-    if (!isLoading && !isAuthenticated && !isRedirectInProgress() && !isValidatingAccount) {
-      console.log('🔒 ProtectedRoute: User not authenticated, redirecting to auth...', {
-        isFromOAuthCallback,
-        willDelay: isFromOAuthCallback
-      })
-      
+    if (!isLoading && !isAuthenticated && !isRedirectInProgress()) {
       if (startRedirect(3000, '/auth')) {
         // Use longer delay if coming from OAuth callback to allow auth to establish
         const delay = isFromOAuthCallback ? 2000 : 50
@@ -96,19 +30,15 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
           completeRedirect()
         }, delay)
       }
-    } else {
-      console.log('⏳ ProtectedRoute: Skipping redirect - loading, authenticated, redirect in progress, or validating account')
     }
-  }, [isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect, isValidatingAccount])
+  }, [isAuthenticated, isLoading, navigate, isRedirectInProgress, startRedirect, completeRedirect])
 
-  if (isLoading || isValidatingAccount) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="text-gray-600">
-            {isValidatingAccount ? 'Validando cuenta...' : 'Loading...'}
-          </span>
+          <span className="text-gray-600">Loading...</span>
         </div>
       </div>
     )
@@ -119,4 +49,4 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   return <>{children}</>
-} 
+}
