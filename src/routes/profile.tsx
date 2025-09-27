@@ -33,19 +33,14 @@ import {
   CheckCircle,
   X,
   Eye,
-  EyeOff,
-  Database,
-  Download,
-  Clock
+  EyeOff
 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth.ts'
 import { useProfile } from '../hooks/useProfile.ts'
-import { useBackup } from '../hooks/useBackup.ts'
 import { ProtectedRoute } from '../components/ProtectedRoute.tsx'
 import { UserAvatar } from '../components/UserAvatar.tsx'
 import { PasswordStrengthMeter } from '../components/PasswordStrengthMeter.tsx'
 import { AuthService } from '../services/auth-service.ts'
-import BackupService from '../services/backup-service.ts'
 import { useTheme } from '../contexts/ThemeContext.tsx'
 import { 
   Button, 
@@ -124,19 +119,6 @@ function ProfilePage() {
   const [showSettingsDialog, setShowSettingsDialog] = useState(false)
   const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false)
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false)
-  const [showBackupDialog, setShowBackupDialog] = useState(false)
-
-  // Initialize backup hook after state declarations
-  const {
-    backups,
-    backupStatus,
-    isCreating,
-    isRestoring,
-    isCleaning,
-    createBackup,
-    restoreBackup,
-    cleanupBackups
-  } = useBackup(showBackupDialog) // Only load backup data when dialog is open
 
   // 🔒 NEW: Set password dialog state for OAuth users
   const [showSetPasswordDialog, setShowSetPasswordDialog] = useState(false)
@@ -239,38 +221,6 @@ function ProfilePage() {
     return true
   }
 
-  // 🔒 NEW: Backup functions
-  const handleCreateBackup = async (type: 'full' | 'incremental' = 'full') => {
-    try {
-      await createBackup.mutateAsync({ type })
-      showSuccess('Backup creado', `Backup ${type === 'full' ? 'completo' : 'incremental'} creado exitosamente`)
-      setShowBackupDialog(false)
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al crear backup'
-      showError('Error', errorMessage)
-    }
-  }
-
-  const handleRestoreBackup = async (backupId: string) => {
-    try {
-      await restoreBackup.mutateAsync({ backupId })
-      showSuccess('Backup restaurado', 'Los datos han sido restaurados exitosamente')
-      setShowBackupDialog(false)
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al restaurar backup'
-      showError('Error', errorMessage)
-    }
-  }
-
-  const handleCleanupBackups = async () => {
-    try {
-      await cleanupBackups.mutateAsync()
-      showSuccess('Limpieza completada', 'Los backups antiguos han sido eliminados')
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Error al limpiar backups'
-      showError('Error', errorMessage)
-    }
-  }
 
   // Reset expanded section to default state
   const resetExpandedSection = () => {
@@ -657,17 +607,6 @@ function ProfilePage() {
             <div className="text-gray-400">›</div>
           </div>
           
-          <div 
-            className="flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={() => setShowBackupDialog(true)}
-          >
-            <Database className="h-5 w-5 text-gray-500 mr-3" />
-            <div className="flex-1">
-              <div className="text-sm font-medium text-gray-900">Backup de datos</div>
-              <div className="text-xs text-gray-500">Crear y restaurar copias de seguridad</div>
-            </div>
-            <div className="text-gray-400">›</div>
-          </div>
           
           <div 
             className="flex items-center p-4 cursor-pointer hover:bg-gray-50 transition-colors"
@@ -1440,202 +1379,6 @@ function ProfilePage() {
         </DialogContent>
       </Dialog>
 
-      {/* Backup Management Dialog */}
-      <Dialog open={showBackupDialog} onOpenChange={setShowBackupDialog}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Database className="h-5 w-5" />
-              Gestión de Backups
-            </DialogTitle>
-            <DialogDescription>
-              Crea y gestiona copias de seguridad de tus datos en AWS S3
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-6">
-            {/* Backup Status */}
-            {backupStatus ? (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-800 mb-3">Estado de Backups</h3>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="text-blue-600">Total de backups:</span>
-                    <span className="ml-2 font-medium">{backupStatus.totalBackups}</span>
-                  </div>
-                  <div>
-                    <span className="text-blue-600">Exitosos:</span>
-                    <span className="ml-2 font-medium text-green-600">{backupStatus.successfulBackups}</span>
-                  </div>
-                  <div>
-                    <span className="text-blue-600">Fallidos:</span>
-                    <span className="ml-2 font-medium text-red-600">{backupStatus.failedBackups}</span>
-                  </div>
-                  <div>
-                    <span className="text-blue-600">Tamaño total:</span>
-                    <span className="ml-2 font-medium">{BackupService.formatFileSize(backupStatus.totalSize)}</span>
-                  </div>
-                </div>
-                {backupStatus.lastBackup && (
-                  <div className="mt-3 pt-3 border-t border-blue-200">
-                    <span className="text-blue-600 text-sm">Último backup:</span>
-                    <span className="ml-2 text-sm">
-                      {BackupService.formatTimestamp(backupStatus.lastBackup.timestamp)} 
-                      ({BackupService.getBackupTypeDisplayName(backupStatus.lastBackup.type)})
-                    </span>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <div className="flex items-center gap-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
-                  <span className="text-sm text-gray-600">Cargando estado de backups...</span>
-                </div>
-              </div>
-            )}
-
-            {/* Create Backup Section */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Crear Nuevo Backup</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button
-                  onClick={() => handleCreateBackup('full')}
-                  disabled={isCreating}
-                  className="w-full"
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Creando...
-                    </>
-                  ) : (
-                    <>
-                      <Database className="h-4 w-4 mr-2" />
-                      Backup Completo
-                    </>
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => handleCreateBackup('incremental')}
-                  disabled={isCreating}
-                  className="w-full"
-                >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Creando...
-                    </>
-                  ) : (
-                    <>
-                      <Clock className="h-4 w-4 mr-2" />
-                      Backup Incremental
-                    </>
-                  )}
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                • <strong>Completo:</strong> Incluye todos los datos<br/>
-                • <strong>Incremental:</strong> Solo datos modificados desde el último backup
-              </p>
-            </div>
-
-            {/* Backup List */}
-            <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Backups Disponibles</h3>
-              {backups === undefined ? (
-                <div className="text-center py-8 text-gray-500">
-                  <div className="flex items-center justify-center gap-2 mb-3">
-                    <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
-                    <span className="text-sm">Cargando backups...</span>
-                  </div>
-                </div>
-              ) : backups.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">
-                  <Database className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                  <p>No hay backups disponibles</p>
-                  <p className="text-sm">Crea tu primer backup para comenzar</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {backups.map((backup) => {
-                    const statusDisplay = BackupService.getBackupStatusDisplay(backup.status)
-                    return (
-                      <div key={backup.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-medium">
-                              {BackupService.getBackupTypeDisplayName(backup.type)}
-                            </span>
-                            <span className={`text-xs px-2 py-1 rounded-full ${statusDisplay.color} bg-gray-100`}>
-                              {statusDisplay.text}
-                            </span>
-                          </div>
-                          <div className="text-xs text-gray-500 mt-1">
-                            {BackupService.formatTimestamp(backup.timestamp)} • {BackupService.formatFileSize(backup.size)}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {backup.tables.length} tablas
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleRestoreBackup(backup.id)}
-                            disabled={isRestoring || backup.status !== 'completed'}
-                          >
-                            {isRestoring ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              <Download className="h-3 w-3" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Cleanup Section */}
-            {user?.role === 'owner' && (
-              <div className="border-t border-gray-200 pt-4">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Mantenimiento</h3>
-                <Button
-                  variant="outline"
-                  onClick={handleCleanupBackups}
-                  disabled={isCleaning}
-                  className="w-full"
-                >
-                  {isCleaning ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Limpiando...
-                    </>
-                  ) : (
-                    <>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      Limpiar Backups Antiguos
-                    </>
-                  )}
-                </Button>
-                <p className="text-xs text-gray-500 mt-2">
-                  Elimina backups completados de más de 30 días
-                </p>
-              </div>
-            )}
-          </div>
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowBackupDialog(false)}>
-              Cerrar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       </div>
     </ProtectedRoute>

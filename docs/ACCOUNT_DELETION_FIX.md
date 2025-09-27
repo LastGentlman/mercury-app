@@ -51,7 +51,6 @@ await supabase.auth.admin.deleteUser(user.id)
 3. `push_subscriptions` (user_id)
 4. `notification_logs` (user_id)
 5. `error_logs` (user_id)
-6. `backup_metadata` (user_id)
 7. `Indexes` (user_id)
 8. `conflict_resolutions` (resolved_by)
 9. `employees` (user_id)
@@ -139,7 +138,6 @@ DELETE FROM business_invitation_codes WHERE created_by = ':USER_UUID';
 DELETE FROM push_subscriptions WHERE user_id = ':USER_UUID';
 DELETE FROM notification_logs WHERE user_id = ':USER_UUID';
 DELETE FROM error_logs WHERE user_id = ':USER_UUID';
-DELETE FROM backup_metadata WHERE user_id = ':USER_UUID';
 DELETE FROM "Indexes" WHERE user_id = ':USER_UUID';
 DELETE FROM conflict_resolutions WHERE resolved_by = ':USER_UUID';
 DELETE FROM employees WHERE user_id = ':USER_UUID';
